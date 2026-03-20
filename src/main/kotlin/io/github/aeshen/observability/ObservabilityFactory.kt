@@ -1,67 +1,31 @@
 package io.github.aeshen.observability
 
 import io.github.aeshen.observability.codec.impl.JsonLineCodec
+import io.github.aeshen.observability.config.encryption.AesGcm
+import io.github.aeshen.observability.config.encryption.EncryptionConfig
+import io.github.aeshen.observability.config.encryption.RsaKeyWrapped
+import io.github.aeshen.observability.config.sink.SinkConfig
 import io.github.aeshen.observability.processor.ObservabilityProcessor
 import io.github.aeshen.observability.processor.encryption.EncryptingObservabilityProcessor
 import io.github.aeshen.observability.sink.ObservabilitySink
-import io.github.aeshen.observability.sink.impl.ConsoleObservabilitySink
-import io.github.aeshen.observability.sink.impl.FileObservabilitySink
-import io.github.aeshen.observability.sink.impl.Slf4JObservabilitySink
-import io.github.aeshen.observability.sink.impl.ZipFileObservabilitySink
+import io.github.aeshen.observability.sink.registry.SinkRegistry
 import io.github.aeshen.observability.util.CryptoUtils
-import java.nio.file.Path
-import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
-import kotlin.reflect.KClass
 
 object ObservabilityFactory {
     private const val BYTE_16 = 16
     private const val BYTE_24 = 24
     private const val BYTE_32 = 32
 
-    sealed interface EncryptionConfig {
-        data class AesGcm(
-            val aesKey: SecretKey,
-        ) : EncryptionConfig
-
-        data class RsaKeyWrapped(
-            val recipientPublicKeyPem: String,
-        ) : EncryptionConfig
-    }
-
-    data class Slf4jConfig(
-        val logger: KClass<*>,
-    )
-
-    sealed interface SinkConfig {
-        data object Console : SinkConfig
-
-        data class Slf4j(
-            val logger: KClass<*>,
-        ) : SinkConfig
-
-        data class File(
-            val path: Path,
-        ) : SinkConfig
-
-        data class ZipFile(
-            val path: Path,
-        ) : SinkConfig
-
-        // data class OpenTelemetry(
-        //     val openTelemetry: OpenTelemetry,
-        //     val serviceName: String = "app"
-        // ) : SinkConfig
-    }
-
     data class Config(
         val sinks: List<SinkConfig>,
         val encryption: EncryptionConfig? = null,
         val failOnSinkError: Boolean = false,
+        val sinkRegistry: SinkRegistry = SinkRegistry.default(),
     ) {
         companion object {
             fun aesGcmFromRawKeyBytes(rawKey: ByteArray) =
-                EncryptionConfig.AesGcm(SecretKeySpec(rawKey, "AES")).also {
+                AesGcm(SecretKeySpec(rawKey, "AES")).also {
                     require(
                         rawKey.size == BYTE_16 ||
                             rawKey.size == BYTE_24 ||
@@ -78,36 +42,64 @@ object ObservabilityFactory {
 
         require(sinks.isNotEmpty()) { "At least one sink must be configured." }
 
-        // Build processors (encryption, etc)
-        val processors: List<ObservabilityProcessor> = buildProcessors(config)
+        val processors: List<ObservabilityProcessor> = buildProcessors(config.encryption)
 
-        return ObservabilityPipeline(
-            codec = JsonLineCodec(),
-            processors = processors,
+        return pipeline(
             sinks = sinks,
+            processors = processors,
             failOnSinkError = config.failOnSinkError,
         )
     }
 
-    private fun buildSinks(config: Config): List<ObservabilitySink> =
-        config.sinks.map { sink ->
-            when (sink) {
-                is SinkConfig.Console -> ConsoleObservabilitySink()
-                is SinkConfig.Slf4j -> Slf4JObservabilitySink(sink.logger)
-                is SinkConfig.File -> FileObservabilitySink(sink.path)
-                is SinkConfig.ZipFile -> ZipFileObservabilitySink(sink.path)
-                // is SinkConfig.OpenTelemetry ->
-                //     OpenTelemetrySink(sink.openTelemetry, sink.serviceName)
-            }
-        }
+    fun create(
+        sinks: List<ObservabilitySink>,
+        encryption: EncryptionConfig? = null,
+        failOnSinkError: Boolean = false,
+    ): Observability {
+        require(sinks.isNotEmpty()) { "At least one sink must be configured." }
 
-    private fun buildProcessors(config: Config): List<ObservabilityProcessor> =
-        when (val enc = config.encryption) {
+        val processors: List<ObservabilityProcessor> = buildProcessors(encryption)
+
+        return pipeline(
+            sinks = sinks,
+            processors = processors,
+            failOnSinkError = failOnSinkError,
+        )
+    }
+
+    fun create(
+        vararg sinks: ObservabilitySink,
+        encryption: EncryptionConfig? = null,
+        failOnSinkError: Boolean = false,
+    ): Observability =
+        create(
+            sinks = sinks.toList(),
+            encryption = encryption,
+            failOnSinkError = failOnSinkError,
+        )
+
+    private fun pipeline(
+        sinks: List<ObservabilitySink>,
+        processors: List<ObservabilityProcessor>,
+        failOnSinkError: Boolean,
+    ): Observability {
+        return ObservabilityPipeline(
+            codec = JsonLineCodec(),
+            processors = processors,
+            sinks = sinks,
+            failOnSinkError = failOnSinkError,
+        )
+    }
+
+    private fun buildSinks(config: Config): List<ObservabilitySink> = config.sinkRegistry.resolveAll(config.sinks)
+
+    private fun buildProcessors(encryption: EncryptionConfig?): List<ObservabilityProcessor> =
+        when (val enc = encryption) {
             null -> {
                 emptyList()
             }
 
-            is EncryptionConfig.AesGcm -> {
+            is AesGcm -> {
                 listOf(
                     EncryptingObservabilityProcessor.aesGcm(
                         key = enc.aesKey,
@@ -116,7 +108,7 @@ object ObservabilityFactory {
                 )
             }
 
-            is EncryptionConfig.RsaKeyWrapped -> {
+            is RsaKeyWrapped -> {
                 val pub = CryptoUtils.loadPublicKeyFromPem(enc.recipientPublicKeyPem)
                 listOf(
                     EncryptingObservabilityProcessor.aesGcmWithRsaWrappedDataKey(

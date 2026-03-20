@@ -22,12 +22,16 @@ internal class ObservabilityPipeline internal constructor(
 ) : Observability {
     override fun emit(event: ObservabilityEvent) {
         // Encode
-        val encoded = codec.encode(event)
+        var encoded = codec.encode(event)
+        encoded.metadata["event"] = event.name.resolvedName()
+        encoded.metadata["level"] = event.level.name
+        encoded.metadata["size"] = encoded.encoded.size
 
         metadataEnrichers.forEach { it.enrich(encoded) }
 
         // Apply processors, e.g. first encrypt
-        processors.forEach { processor -> processor.process(encoded) }
+        processors.forEach { processor -> encoded = processor.process(encoded) }
+        encoded.metadata["size"] = encoded.encoded.size
 
         // Fan-out to sinks
         for (sink in sinks) {

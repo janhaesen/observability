@@ -21,7 +21,7 @@ internal class JsonLineCodec : ObservabilityCodec {
                 val v = it.value.toString()
                 "\"${escape(k)}\":\"${escape(v)}\""
             }
-        val payloadB64 = Base64.getEncoder().encodeToString(event.payload)
+        val payloadB64 = Base64.getEncoder().encodeToString(event.payload ?: byteArrayOf())
         val line =
             """
             {

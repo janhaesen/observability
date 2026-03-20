@@ -13,7 +13,7 @@ internal class FileObservabilitySink(
     private val path: Path,
 ) : ObservabilitySink {
     init {
-        Files.createDirectories(path.parent)
+        path.parent?.let { Files.createDirectories(it) }
     }
 
     override fun handle(event: EncodedEvent) {

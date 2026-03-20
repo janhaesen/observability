@@ -18,7 +18,7 @@ internal class Slf4JObservabilitySink(
     override fun handle(event: EncodedEvent) {
         val msg =
             event.original.name
-                .getName()
+                .resolvedName()
                 .trimEnd('\n')
 
         when (event.original.level) {

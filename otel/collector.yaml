@@ -1,0 +1,24 @@
+receivers:
+  otlp:
+    protocols:
+      grpc: {}
+      http: {}
+  filelog:
+    include:
+      - /data/events.jsonl
+    start_at: beginning
+
+processors:
+  batch: {}
+
+exporters:
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp, filelog]
+      processors: [batch]
+      exporters: [debug]
+

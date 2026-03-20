@@ -16,5 +16,5 @@ interface EventName {
     val name: String
     val eventName: String?
 
-    fun getName(): String = eventName.takeUnless { it.isNullOrBlank() } ?: name
+    fun resolvedName(): String = eventName.takeUnless { it.isNullOrBlank() } ?: name
 }

@@ -23,7 +23,7 @@ internal class ZipFileObservabilitySink(
     private val zos: ZipOutputStream
 
     init {
-        Files.createDirectories(zipPath.parent)
+        zipPath.parent?.let { Files.createDirectories(it) }
         zos = ZipOutputStream(BufferedOutputStream(Files.newOutputStream(zipPath)))
     }
 
