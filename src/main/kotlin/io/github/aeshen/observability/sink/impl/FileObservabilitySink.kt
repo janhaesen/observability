@@ -1,0 +1,28 @@
+package io.github.aeshen.observability.sink.impl
+
+import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.sink.ObservabilitySink
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+
+/**
+ * Framework implementation detail.
+ */
+internal class FileObservabilitySink(
+    private val path: Path,
+) : ObservabilitySink {
+    init {
+        Files.createDirectories(path.parent)
+    }
+
+    override fun handle(event: EncodedEvent) {
+        Files.write(
+            path,
+            event.encoded,
+            StandardOpenOption.CREATE,
+            StandardOpenOption.WRITE,
+            StandardOpenOption.APPEND,
+        )
+    }
+}
