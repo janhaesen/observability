@@ -31,6 +31,7 @@ class JsonLineCodec : ObservabilityCodec {
                 "\"error\":{\"type\":\"$type\",\"message\":$message,\"stacktrace\":\"$stacktrace\"},"
             } ?: ""
 
+        val payloadPresent = event.payload != null
         val payloadB64 = Base64.getEncoder().encodeToString(event.payload ?: byteArrayOf())
         val line =
             buildString {
@@ -41,6 +42,7 @@ class JsonLineCodec : ObservabilityCodec {
                 append("\"message\":").append(messageJson).append(',')
                 append(errorJson)
                 append("\"context\":").append(ctxJson).append(',')
+                append("\"payloadPresent\":").append(payloadPresent).append(',')
                 append("\"payloadBase64\":\"").append(payloadB64).append("\"")
                 append("}\n")
             }

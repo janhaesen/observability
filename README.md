@@ -240,7 +240,8 @@ val e =
     }
 ```
 
-The default JSONL codec Base64-encodes the payload into the `payloadBase64` field.
+The default JSONL codec Base64-encodes the payload into `payloadBase64` and includes
+`payloadPresent` so consumers can distinguish `null` payloads from empty byte arrays.
 
 ---
 
@@ -392,8 +393,8 @@ val config =
 |------------------|-----------------------------------------------------------|---------------------------------------------------|
 | `Console`        | Writes encoded event payload directly to `stdout`         | None                                              |
 | `Slf4j`          | Logs encoded payload through SLF4J at mapped levels       | `org.slf4j:slf4j-api`                             |
-| `File`           | Appends JSONL to a file; creates parent dirs if needed    | None                                              |
-| `ZipFile`        | Appends JSONL entries to a ZIP archive and preserves existing entries on reopen | None                                              |
+| `File`           | Appends JSONL to a buffered file writer; creates parent dirs if needed | None                                              |
+| `ZipFile`        | Appends JSONL entries to a ZIP archive, preserving existing entries via startup replay | None                                              |
 | `OpenTelemetry`  | Exports via OTLP HTTP to any OTel-compatible backend      | `opentelemetry-api`, `-sdk`, `-exporter-otlp`     |
 
 All sinks receive fan-out delivery; a failure in one does not block others (unless `failOnSinkError = true`).
@@ -409,6 +410,7 @@ Each event is written as a single JSON line with these fields:
   "timestamp": "2026-03-21T10:00:00Z",
   "message": "Request completed",
   "context": {"id": "req-123", "status_code": "200"},
+  "payloadPresent": false,
   "payloadBase64": ""
 }
 ```

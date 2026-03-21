@@ -19,6 +19,7 @@ import java.nio.file.Files
 import java.util.zip.ZipInputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -56,6 +57,20 @@ class SinkImplementationsTest {
 
         val content = Files.readString(path)
         assertEquals("one\ntwo\n", content)
+    }
+
+    @Test
+    fun `file sink rejects writes after close`() {
+        val dir = Files.createTempDirectory("obs-file-sink-close")
+        val path = dir.resolve("events.jsonl")
+        val sink = FileObservabilitySink(path)
+
+        sink.handle(encoded("one\n"))
+        sink.close()
+
+        assertFailsWith<IllegalStateException> {
+            sink.handle(encoded("two\n"))
+        }
     }
 
     @Test
@@ -167,6 +182,26 @@ class SinkImplementationsTest {
         assertNotNull(record.attributes.get(AttributeKey.stringKey("exception.stacktrace")))
 
         loggerProvider.shutdown().join(5, java.util.concurrent.TimeUnit.SECONDS)
+    }
+
+    @Test
+    fun `otel sink surfaces close action failures`() {
+        val openTelemetry =
+            OpenTelemetrySdk
+                .builder()
+                .setLoggerProvider(SdkLoggerProvider.builder().build())
+                .build()
+
+        val sink =
+            OpenTelemetryObservabilitySink(
+                openTelemetry = openTelemetry,
+            ) {
+                error("shutdown failed")
+            }
+
+        assertFailsWith<IllegalStateException> {
+            sink.close()
+        }
     }
 
     private fun encoded(

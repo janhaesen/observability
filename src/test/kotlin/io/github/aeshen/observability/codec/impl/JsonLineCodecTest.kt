@@ -30,8 +30,27 @@ class JsonLineCodecTest {
             )
 
         val encoded = JsonLineCodec().encode(event).encoded.toString(Charsets.UTF_8)
+        assertTrue(encoded.contains("\"payloadPresent\":false"))
         assertTrue(encoded.contains("\"payloadBase64\":\"\""))
         assertTrue(encoded.endsWith("\n"))
+    }
+
+    @Test
+    fun `codec distinguishes empty payload from null payload`() {
+        val encoded =
+            JsonLineCodec()
+                .encode(
+                    ObservabilityEvent(
+                        name = TestEvent.TEST,
+                        level = EventLevel.INFO,
+                        payload = byteArrayOf(),
+                        context = ObservabilityContext.empty(),
+                    ),
+                ).encoded
+                .toString(Charsets.UTF_8)
+
+        assertTrue(encoded.contains("\"payloadPresent\":true"))
+        assertTrue(encoded.contains("\"payloadBase64\":\"\""))
     }
 
     @Test

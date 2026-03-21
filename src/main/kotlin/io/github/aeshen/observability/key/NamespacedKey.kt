@@ -10,11 +10,14 @@ class NamespacedKey<T>(
     prefix: String,
     base: TypedKey<T>,
 ) : TypedKey<T> {
+    private val normalizedPrefix = prefix.trim().trim('.')
+    private val baseKey = base
+
     override val keyName: String =
-        if (prefix.isBlank()) {
-            base.keyName
+        if (normalizedPrefix.isBlank()) {
+            baseKey.keyName
         } else {
-            "$prefix.${base.keyName}"
+            "$normalizedPrefix.${baseKey.keyName}"
         }
 }
 

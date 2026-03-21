@@ -1,6 +1,8 @@
 package io.github.aeshen.observability
 
+import io.github.aeshen.observability.key.NamespacedKey
 import io.github.aeshen.observability.key.StringKey
+import io.github.aeshen.observability.key.putNamespaced
 import io.github.aeshen.observability.sink.EventLevel
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -67,5 +69,33 @@ class ObservabilityApiTest {
         assertEquals(payload.toList(), event.payload?.toList())
         assertEquals("/orders", event.context.get(StringKey.PATH))
         assertNotNull(event.timestamp)
+    }
+
+    @Test
+    fun `namespaced keys resolve by value equality`() {
+        val context =
+            ObservabilityContext
+                .builder()
+                .put(NamespacedKey("request", StringKey.PATH), "/orders")
+                .build()
+
+        assertEquals(
+            "/orders",
+            context.get(NamespacedKey("request", StringKey.PATH)),
+        )
+    }
+
+    @Test
+    fun `putNamespaced normalizes prefix and keeps retrieval consistent`() {
+        val context =
+            ObservabilityContext
+                .builder()
+                .putNamespaced(" request. ", StringKey.REQUEST_ID, "req-1")
+                .build()
+
+        assertEquals(
+            "req-1",
+            context.get(NamespacedKey("request", StringKey.REQUEST_ID)),
+        )
     }
 }

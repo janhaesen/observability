@@ -98,7 +98,12 @@ internal class OpenTelemetryObservabilitySink internal constructor(
                 openTelemetry = openTelemetry,
                 instrumentationScopeName = config.instrumentationScopeName,
             ) {
-                loggerProvider.shutdown().join(DEFAULT_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                val result = loggerProvider.shutdown()
+                result.join(DEFAULT_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                check(result.isSuccess) {
+                    "OpenTelemetry logger provider did not shut down cleanly within " +
+                        "$DEFAULT_CLOSE_TIMEOUT_SECONDS seconds."
+                }
             }
         }
     }

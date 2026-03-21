@@ -5,6 +5,7 @@ import io.github.aeshen.observability.sink.ObservabilitySink
 import java.io.BufferedOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -25,12 +26,10 @@ internal class ZipFileObservabilitySink(
 
     init {
         zipPath.parent?.let { Files.createDirectories(it) }
-        val existingEntries = loadExistingEntries(zipPath)
+        val replaySource = moveExistingToReplaySource(zipPath)
         zos = ZipOutputStream(BufferedOutputStream(Files.newOutputStream(zipPath)))
-        existingEntries.forEach { (name, bytes) ->
-            counter = maxOf(counter, parseCounter(name))
-            writeEntry(name, bytes)
-        }
+        replayExistingEntries(replaySource)
+        replaySource?.let { Files.deleteIfExists(it) }
     }
 
     @Synchronized
@@ -53,20 +52,27 @@ internal class ZipFileObservabilitySink(
         return "$entryPrefix$idx$suffix$entrySuffix"
     }
 
-    private fun loadExistingEntries(zipPath: Path): List<Pair<String, ByteArray>> {
+    private fun moveExistingToReplaySource(zipPath: Path): Path? {
         if (!Files.exists(zipPath) || Files.size(zipPath) == 0L) {
-            return emptyList()
+            return null
         }
+        val source = Files.createTempFile(zipPath.parent, "observability-zip-replay-", ".zip")
+        Files.move(zipPath, source, StandardCopyOption.REPLACE_EXISTING)
+        return source
+    }
 
-        val entries = mutableListOf<Pair<String, ByteArray>>()
-        ZipInputStream(Files.newInputStream(zipPath)).use { zis ->
+    private fun replayExistingEntries(source: Path?) {
+        if (source == null) {
+            return
+        }
+        ZipInputStream(Files.newInputStream(source)).use { zis ->
             var entry = zis.nextEntry
             while (entry != null) {
-                entries += entry.name to zis.readBytes()
+                counter = maxOf(counter, parseCounter(entry.name))
+                writeEntryFromStream(entry.name, zis)
                 entry = zis.nextEntry
             }
         }
-        return entries
     }
 
     private fun writeEntry(
@@ -81,6 +87,17 @@ internal class ZipFileObservabilitySink(
 
         zos.putNextEntry(entry)
         zos.write(bytes)
+        zos.closeEntry()
+        zos.flush()
+    }
+
+    private fun writeEntryFromStream(
+        entryName: String,
+        source: ZipInputStream,
+    ) {
+        val entry = ZipEntry(entryName).apply { method = ZipEntry.DEFLATED }
+        zos.putNextEntry(entry)
+        source.copyTo(zos)
         zos.closeEntry()
         zos.flush()
     }

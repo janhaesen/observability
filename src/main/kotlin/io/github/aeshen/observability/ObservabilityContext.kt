@@ -6,12 +6,12 @@ import io.github.aeshen.observability.key.TypedKey
  * Type-safe context container backed by a map of TypedKey<\*> -> Any.
  */
 class ObservabilityContext private constructor(
-    private val entries: Map<TypedKey<*>, Any>,
+    private val entriesByName: Map<String, Pair<TypedKey<*>, Any>>,
 ) {
     @Suppress("UNCHECKED_CAST")
-    fun <T> get(key: TypedKey<T>): T? = entries[key] as T?
+    fun <T> get(key: TypedKey<T>): T? = entriesByName[key.keyName]?.second as T?
 
-    fun asMap(): Map<TypedKey<*>, Any> = entries
+    fun asMap(): Map<TypedKey<*>, Any> = entriesByName.values.associate { it.first to it.second }
 
     companion object {
         fun builder(): Builder = Builder()
@@ -20,13 +20,13 @@ class ObservabilityContext private constructor(
     }
 
     class Builder internal constructor() {
-        private val map: MutableMap<TypedKey<*>, Any> = linkedMapOf()
+        private val mapByName: MutableMap<String, Pair<TypedKey<*>, Any>> = linkedMapOf()
 
         fun <T> put(
             key: TypedKey<T>,
             value: T,
         ): Builder {
-            map[key] = value as Any
+            mapByName[key.keyName] = key to (value as Any)
             return this
         }
 
@@ -42,10 +42,10 @@ class ObservabilityContext private constructor(
         }
 
         fun putAll(other: ObservabilityContext): Builder {
-            other.asMap().forEach { (k, v) -> map[k] = v }
+            other.entriesByName.forEach { (name, pair) -> mapByName[name] = pair }
             return this
         }
 
-        fun build(): ObservabilityContext = ObservabilityContext(map.toMap())
+        fun build(): ObservabilityContext = ObservabilityContext(mapByName.toMap())
     }
 }
