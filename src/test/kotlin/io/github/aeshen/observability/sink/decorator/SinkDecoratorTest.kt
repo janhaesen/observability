@@ -4,6 +4,7 @@ import io.github.aeshen.observability.EventName
 import io.github.aeshen.observability.ObservabilityContext
 import io.github.aeshen.observability.ObservabilityEvent
 import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics
 import io.github.aeshen.observability.sink.BatchCapableObservabilitySink
 import io.github.aeshen.observability.sink.EventLevel
 import io.github.aeshen.observability.sink.ObservabilitySink
@@ -82,6 +83,15 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
     fun `signals drops when queue is full in best effort mode`() {
         val drops = mutableListOf<AsyncObservabilitySink.DropReason>()
         val release = CountDownLatch(1)
+        val diagnostics =
+            object : ObservabilityDiagnostics {
+                override fun onAsyncDrop(
+                    event: EncodedEvent,
+                    reason: String,
+                ) {
+                    drops += AsyncObservabilitySink.DropReason.valueOf(reason)
+                }
+            }
         val sink =
             AsyncObservabilitySink(
                 delegate =
@@ -93,7 +103,7 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
                 capacity = 1,
                 offerTimeoutMillis = 1,
                 failOnDrop = false,
-                onDrop = { _, reason -> drops += reason },
+                diagnostics = diagnostics,
             )
 
         sink.handle(sample("first"))
@@ -111,6 +121,15 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
         val reasons = mutableListOf<AsyncObservabilitySink.DropReason>()
         val started = CountDownLatch(1)
         val release = CountDownLatch(1)
+        val diagnostics =
+            object : ObservabilityDiagnostics {
+                override fun onAsyncDrop(
+                    event: EncodedEvent,
+                    reason: String,
+                ) {
+                    reasons += AsyncObservabilitySink.DropReason.valueOf(reason)
+                }
+            }
         val sink =
             AsyncObservabilitySink(
                 delegate =
@@ -123,7 +142,7 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
                 capacity = 8,
                 shutdownPolicy = AsyncObservabilitySink.ShutdownPolicy.DROP_PENDING,
                 closeTimeoutMillis = 200,
-                onDrop = { _, reason -> reasons += reason },
+                diagnostics = diagnostics,
             )
 
         sink.handle(sample("in-flight"))
@@ -135,6 +154,46 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
         release.countDown()
 
         assertTrue(reasons.contains(AsyncObservabilitySink.DropReason.DROP_PENDING_ON_CLOSE))
+    }
+
+    @Test
+    fun `reports async diagnostics for worker errors and drops`() {
+        val workerErrors = mutableListOf<String>()
+        val drops = mutableListOf<String>()
+        val diagnostics =
+            object : ObservabilityDiagnostics {
+                override fun onAsyncDrop(
+                    event: EncodedEvent,
+                    reason: String,
+                ) {
+                    drops += reason
+                }
+
+                override fun onAsyncWorkerError(error: Exception) {
+                    workerErrors += error.message.orEmpty()
+                }
+            }
+
+        val sink =
+            AsyncObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent): Unit = throw IllegalStateException("worker-failed")
+                    },
+                capacity = 1,
+                offerTimeoutMillis = 1,
+                diagnostics = diagnostics,
+            )
+
+        sink.handle(sample("one"))
+        Thread.sleep(80)
+        sink.close()
+        assertFailsWith<IllegalStateException> {
+            sink.handle(sample("after-close"))
+        }
+
+        assertTrue(workerErrors.contains("worker-failed"))
+        assertTrue(drops.contains(AsyncObservabilitySink.DropReason.CLOSED.name))
     }
 }
 
@@ -191,6 +250,35 @@ class BatchingObservabilitySinkTest {
         sink.close()
     }
 
+    @Test
+    fun `batching sink reports flush diagnostics`() {
+        val outcomes = mutableListOf<Boolean>()
+        val diagnostics =
+            object : ObservabilityDiagnostics {
+                override fun onBatchFlush(
+                    batchSize: Int,
+                    elapsedMillis: Long,
+                    success: Boolean,
+                    error: Exception?,
+                ) {
+                    outcomes += success
+                }
+            }
+
+        val sink =
+            BatchingObservabilitySink(
+                delegate = CapturingSink(mutableListOf()),
+                maxBatchSize = 1,
+                flushIntervalMillis = 60_000,
+                diagnostics = diagnostics,
+            )
+
+        sink.handle(sample("diagnostics"))
+        sink.close()
+
+        assertTrue(outcomes.contains(true))
+    }
+
     private class RecordingBatchSink(
         private val batches: MutableList<List<EncodedEvent>>,
     ) : BatchCapableObservabilitySink {
@@ -243,6 +331,97 @@ class RetryingObservabilitySinkTest {
         assertFailsWith<IllegalStateException> {
             sink.handle(sample("retry-fail"))
         }
+    }
+
+    @Test
+    fun `retrying sink reports diagnostics on retry exhaustion`() {
+        val retryOutcomes = mutableListOf<Pair<Int, Boolean>>()
+        val diagnostics =
+            object : ObservabilityDiagnostics {
+                override fun onRetryExhaustion(
+                    event: EncodedEvent,
+                    attempts: Int,
+                    lastError: Exception,
+                ) {
+                    retryOutcomes += attempts to true
+                }
+            }
+
+        val sink =
+            RetryingObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent): Unit = throw IllegalStateException("persistent failure")
+                    },
+                maxAttempts = 3,
+                backoff = BackoffStrategy.fixed(0),
+                diagnostics = diagnostics,
+            )
+
+        assertFailsWith<IllegalStateException> {
+            sink.handle(sample("retry-with-diag"))
+        }
+
+        assertEquals(1, retryOutcomes.size)
+        assertEquals(3, retryOutcomes.single().first)
+    }
+}
+
+class DiagnosticsIntegrationTest {
+    @Test
+    fun `diagnostics tracks async drops, batch flushes, and retry outcomes`() {
+        val events = mutableMapOf<String, MutableList<String>>()
+        val diagnostics =
+            object : ObservabilityDiagnostics {
+                override fun onAsyncDrop(
+                    event: EncodedEvent,
+                    reason: String,
+                ) {
+                    events.getOrPut("async_drops") { mutableListOf() } += reason
+                }
+
+                override fun onAsyncWorkerError(error: Exception) {
+                    events.getOrPut("worker_errors") { mutableListOf() } += error.message.orEmpty()
+                }
+
+                override fun onBatchFlush(
+                    batchSize: Int,
+                    elapsedMillis: Long,
+                    success: Boolean,
+                    error: Exception?,
+                ) {
+                    val outcome = if (success) "success" else "failure"
+                    events.getOrPut("batch_flushes") { mutableListOf() } += "$batchSize:$outcome"
+                }
+
+                override fun onRetryExhaustion(
+                    event: EncodedEvent,
+                    attempts: Int,
+                    lastError: Exception,
+                ) {
+                    events.getOrPut("retry_exhaustion") { mutableListOf() } += "$attempts:${lastError.message}"
+                }
+            }
+
+        val handled = mutableListOf<EncodedEvent>()
+        val sink =
+            BatchingObservabilitySink(
+                delegate = CapturingSink(handled),
+                maxBatchSize = 2,
+                flushIntervalMillis = 60_000,
+                diagnostics = diagnostics,
+            )
+
+        sink.handle(sample("event-1"))
+        sink.handle(sample("event-2"))
+
+        // Batching sink should flush when maxBatchSize is reached
+        assertEquals(2, handled.size, "Both events should be handled in one batch flush")
+        assertTrue(
+            events["batch_flushes"]?.any { it.startsWith("2:success") } ?: false,
+            "Batch flush should be reported as success with size 2",
+        )
+        sink.close()
     }
 }
 

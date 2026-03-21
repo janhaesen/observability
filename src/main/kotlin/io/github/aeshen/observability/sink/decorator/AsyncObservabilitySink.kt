@@ -1,6 +1,7 @@
 package io.github.aeshen.observability.sink.decorator
 
 import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics
 import io.github.aeshen.observability.sink.ObservabilitySink
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -18,10 +19,7 @@ class AsyncObservabilitySink(
     private val failOnDrop: Boolean = false,
     private val closeTimeoutMillis: Long = 5000L,
     private val shutdownPolicy: ShutdownPolicy = ShutdownPolicy.DRAIN,
-    private val onError: (Throwable) -> Unit = { t -> System.err.println("Async sink worker error: ${t.message}") },
-    private val onDrop: (EncodedEvent, DropReason) -> Unit = { event, reason ->
-        System.err.println("Async sink dropped event=${event.metadata["event"] ?: "-"} reason=$reason")
-    },
+    private val diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP,
 ) : ObservabilitySink {
     init {
         require(capacity > 0) { "capacity must be greater than 0." }
@@ -51,13 +49,13 @@ class AsyncObservabilitySink(
     override fun handle(event: EncodedEvent) {
         val snapshot = event.copy(metadata = event.metadata.toMutableMap())
         if (!accepting.get()) {
-            onDrop(snapshot, DropReason.CLOSED)
+            diagnostics.onAsyncDrop(snapshot, DropReason.CLOSED.name)
             throw IllegalStateException("AsyncObservabilitySink is closed.")
         }
 
         val accepted = queue.offer(snapshot, offerTimeoutMillis, TimeUnit.MILLISECONDS)
         if (!accepted) {
-            onDrop(snapshot, DropReason.QUEUE_FULL)
+            diagnostics.onAsyncDrop(snapshot, DropReason.QUEUE_FULL.name)
             if (failOnDrop) {
                 error("Async sink queue is full (capacity=$capacity).")
             }
@@ -69,7 +67,9 @@ class AsyncObservabilitySink(
         if (shutdownPolicy == ShutdownPolicy.DROP_PENDING) {
             val dropped = mutableListOf<EncodedEvent>()
             queue.drainTo(dropped)
-            dropped.forEach { onDrop(it, DropReason.DROP_PENDING_ON_CLOSE) }
+            dropped.forEach {
+                diagnostics.onAsyncDrop(it, DropReason.DROP_PENDING_ON_CLOSE.name)
+            }
             worker.interrupt()
         }
 
@@ -113,7 +113,7 @@ class AsyncObservabilitySink(
             try {
                 delegate.handle(event)
             } catch (t: Exception) {
-                onError(t)
+                diagnostics.onAsyncWorkerError(t)
             }
         }
     }

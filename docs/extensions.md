@@ -24,6 +24,7 @@ The formal compatibility policy lives in `docs/spi-contract.md`.
 - Prefer internal retries/backoff for transient transport failures.
 - If your sink buffers asynchronously, make drop/backpressure behavior explicit.
 - Fatal JVM `Error` types are never swallowed by the pipeline.
+- Use `ObservabilityDiagnostics` to capture handle/close errors, async drops, and batch flush outcomes.
 
 ## Optional Reliability Decorators
 

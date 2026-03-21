@@ -5,11 +5,13 @@ import io.github.aeshen.observability.codec.EncodedEvent
 import io.github.aeshen.observability.codec.ObservabilityCodec
 import io.github.aeshen.observability.config.sink.OpenTelemetry
 import io.github.aeshen.observability.config.sink.SinkConfig
+import io.github.aeshen.observability.key.StringKey
 import io.github.aeshen.observability.sink.ObservabilitySink
 import io.github.aeshen.observability.sink.registry.SinkRegistry
 import java.net.InetSocketAddress
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -128,12 +130,11 @@ class ObservabilityFactoryTest {
             ObservabilityFactory.create(
                 CapturingSink(seen),
                 codec =
-                    object : ObservabilityCodec {
-                        override fun encode(event: ObservabilityEvent): EncodedEvent =
-                            EncodedEvent(
-                                original = event,
-                                encoded = "custom".toByteArray(Charsets.UTF_8),
-                            )
+                    ObservabilityCodec { event ->
+                        EncodedEvent(
+                            original = event,
+                            encoded = "custom".toByteArray(Charsets.UTF_8),
+                        )
                     },
             )
 
@@ -201,6 +202,185 @@ class ObservabilityFactoryTest {
 
         assertEquals(1, seen.size)
         assertEquals("INFO", seen.single().metadata["level"])
+    }
+
+    @Test
+    fun `factory applies configured context providers`() {
+        val seen = mutableListOf<EncodedEvent>()
+        val observability =
+            ObservabilityFactory.create(
+                ObservabilityFactory.Config(
+                    sinks = listOf(ThirdPartySinkConfig("partner-c")),
+                    sinkRegistry =
+                        SinkRegistry
+                            .builder()
+                            .register<ThirdPartySinkConfig> { CapturingSink(seen) }
+                            .build(),
+                    contextProviders =
+                        listOf(
+                            ContextProvider {
+                                ObservabilityContext
+                                    .builder()
+                                    .put(StringKey.USER_AGENT, "provider-agent")
+                                    .build()
+                            },
+                        ),
+                ),
+            )
+
+        observability.use {
+            it.info(
+                name = TestEvent.TEST,
+                message = "provider context",
+            )
+        }
+
+        val original = seen.single().original
+        assertEquals("provider-agent", original.context.get(StringKey.USER_AGENT))
+    }
+
+    @Test
+    fun `audit durable profile enforces strict sink failures`() {
+        val failing =
+            object : ObservabilitySink {
+                override fun handle(event: EncodedEvent): Unit = throw IllegalStateException("always fails")
+            }
+
+        val observability =
+            ObservabilityFactory.create(
+                failing,
+                failOnSinkError = false,
+                profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+            )
+
+        assertFailsWith<IllegalStateException> {
+            observability.use {
+                it.info(
+                    name = TestEvent.TEST,
+                    message = "must fail",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `audit durable profile retries transient failures`() {
+        val attempts = AtomicInteger(0)
+        val flaky =
+            object : ObservabilitySink {
+                override fun handle(event: EncodedEvent) {
+                    if (attempts.incrementAndGet() < 3) {
+                        throw IllegalStateException("transient")
+                    }
+                }
+            }
+
+        val observability =
+            ObservabilityFactory.create(
+                flaky,
+                profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+            )
+
+        observability.use {
+            it.info(
+                name = TestEvent.TEST,
+                message = "eventually succeeds",
+            )
+        }
+
+        assertEquals(3, attempts.get())
+    }
+
+    @Test
+    fun `diagnostics are wired through factory config`() {
+        val diagnosticEvents = mutableListOf<String>()
+        val diagnostics =
+            object : io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics {
+                override fun onBatchFlush(
+                    batchSize: Int,
+                    elapsedMillis: Long,
+                    success: Boolean,
+                    error: Exception?,
+                ) {
+                    diagnosticEvents += "flush:$batchSize:$success"
+                }
+
+                override fun onRetryExhaustion(
+                    event: EncodedEvent,
+                    attempts: Int,
+                    lastError: Exception,
+                ) {
+                    diagnosticEvents += "retry_fail:$attempts"
+                }
+            }
+
+        val observability =
+            ObservabilityFactory.create(
+                ObservabilityFactory.Config(
+                    sinks = listOf(ThirdPartySinkConfig("test")),
+                    sinkRegistry =
+                        SinkRegistry
+                            .builder()
+                            .register<ThirdPartySinkConfig> {
+                                CapturingSink(mutableListOf())
+                            }.build(),
+                    profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+                    diagnostics = diagnostics,
+                ),
+            )
+
+        observability.use {
+            it.info(
+                name = TestEvent.TEST,
+                message = "with diagnostics",
+            )
+        }
+
+        assertTrue(
+            diagnosticEvents.any { it.startsWith("flush") },
+            "Batch flush should be reported by diagnostics",
+        )
+    }
+
+    @Test
+    fun `audit profile with diagnostics tracks retry exhaustion`() {
+        val diagnosticEvents = mutableListOf<String>()
+        val diagnostics =
+            object : io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics {
+                override fun onRetryExhaustion(
+                    event: EncodedEvent,
+                    attempts: Int,
+                    lastError: Exception,
+                ) {
+                    diagnosticEvents += "exhausted:$attempts"
+                }
+            }
+
+        val failing =
+            object : ObservabilitySink {
+                override fun handle(event: EncodedEvent): Unit = throw IllegalStateException("always fail")
+            }
+
+        val observability =
+            ObservabilityFactory.create(
+                failing,
+                profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+                diagnostics = diagnostics,
+            )
+
+        assertFailsWith<IllegalStateException> {
+            observability.use {
+                it.info(
+                    name = TestEvent.TEST,
+                    message = "will exhaust retries",
+                )
+            }
+        }
+
+        assertTrue(
+            diagnosticEvents.any { it.contains("exhausted") },
+            "Retry exhaustion should be reported",
+        )
     }
 
     private class CapturedRequest(

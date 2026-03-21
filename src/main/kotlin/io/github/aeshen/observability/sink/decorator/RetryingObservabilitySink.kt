@@ -1,6 +1,7 @@
 package io.github.aeshen.observability.sink.decorator
 
 import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics
 import io.github.aeshen.observability.sink.ObservabilitySink
 
 class RetryingObservabilitySink(
@@ -8,6 +9,7 @@ class RetryingObservabilitySink(
     private val maxAttempts: Int = 3,
     private val backoff: BackoffStrategy = BackoffStrategy.exponential(),
     private val sleep: (Long) -> Unit = { millis -> Thread.sleep(millis) },
+    private val diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP,
 ) : ObservabilitySink {
     init {
         require(maxAttempts > 0) { "maxAttempts must be greater than 0." }
@@ -22,6 +24,7 @@ class RetryingObservabilitySink(
             } catch (t: Exception) {
                 lastError = t
                 if (attempt == maxAttempts) {
+                    diagnostics.onRetryExhaustion(event, attempt, t)
                     throw t
                 }
                 sleep(backoff.nextDelayMillis(attempt))

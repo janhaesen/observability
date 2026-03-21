@@ -2,6 +2,8 @@ package io.github.aeshen.observability
 
 import io.github.aeshen.observability.codec.EncodedEvent
 import io.github.aeshen.observability.codec.ObservabilityCodec
+import io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics
+import io.github.aeshen.observability.key.StringKey
 import io.github.aeshen.observability.processor.ObservabilityProcessor
 import io.github.aeshen.observability.sink.EventLevel
 import io.github.aeshen.observability.sink.ObservabilitySink
@@ -211,5 +213,95 @@ class ObservabilityPipelineTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun `pipeline applies context providers to emitted event context`() {
+        val sink = RecordingSink()
+        val pipeline =
+            ObservabilityPipeline(
+                codec = StaticCodec("raw".toByteArray()),
+                contextProviders =
+                    listOf(
+                        ContextProvider {
+                            ObservabilityContext
+                                .builder()
+                                .put(StringKey.USER_AGENT, "provider-agent")
+                                .put(StringKey.REQUEST_ID, "provider-id")
+                                .build()
+                        },
+                    ),
+                processors = emptyList(),
+                sinks = listOf(sink),
+            )
+
+        val context =
+            ObservabilityContext
+                .builder()
+                .put(StringKey.REQUEST_ID, "event-id")
+                .build()
+
+        pipeline.emit(
+            ObservabilityEvent(
+                name = TestEvent.TEST,
+                level = EventLevel.INFO,
+                context = context,
+            ),
+        )
+
+        val original = sink.events.single().original
+        assertEquals("provider-agent", original.context.get(StringKey.USER_AGENT))
+        assertEquals("event-id", original.context.get(StringKey.REQUEST_ID))
+    }
+
+    @Test
+    fun `pipeline reports sink diagnostics for handle and close errors`() {
+        val handleErrors = mutableListOf<String>()
+        val closeErrors = mutableListOf<String>()
+        val diagnostics =
+            object : ObservabilityDiagnostics {
+                override fun onSinkHandleError(
+                    sink: ObservabilitySink,
+                    event: EncodedEvent,
+                    error: Exception,
+                ) {
+                    handleErrors += error.message.orEmpty()
+                }
+
+                override fun onSinkCloseError(
+                    sink: ObservabilitySink,
+                    error: Exception,
+                ) {
+                    closeErrors += error.message.orEmpty()
+                }
+            }
+
+        val failing =
+            object : ObservabilitySink {
+                override fun handle(event: EncodedEvent): Unit = throw IllegalStateException("handle-failed")
+
+                override fun close(): Unit = throw IllegalStateException("close-failed")
+            }
+
+        val pipeline =
+            ObservabilityPipeline(
+                codec = StaticCodec("raw".toByteArray()),
+                processors = emptyList(),
+                sinks = listOf(failing),
+                failOnSinkError = false,
+                diagnostics = diagnostics,
+            )
+
+        pipeline.emit(
+            ObservabilityEvent(
+                name = TestEvent.TEST,
+                level = EventLevel.INFO,
+                context = ObservabilityContext.empty(),
+            ),
+        )
+        pipeline.close()
+
+        assertEquals(listOf("handle-failed"), handleErrors)
+        assertEquals(listOf("close-failed"), closeErrors)
     }
 }

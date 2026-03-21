@@ -10,7 +10,9 @@ The following APIs are considered stable SPI in the current major version:
 - `io.github.aeshen.observability.sink.ObservabilitySink`
 - `io.github.aeshen.observability.sink.registry.SinkProvider`
 - `io.github.aeshen.observability.sink.registry.SinkRegistry`
+- `io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics`
 - `io.github.aeshen.observability.sink.testing.ObservabilitySinkConformanceSuite`
+- `io.github.aeshen.observability.query.AuditQueryService` (query-spi module)
 
 Behavior changes to the above are treated as breaking changes.
 
@@ -27,16 +29,59 @@ Behavior changes to the above are treated as breaking changes.
 - `failOnSinkError = true`: sink exceptions are propagated to the caller.
 - `failOnSinkError = false`: sink exceptions are logged and processing continues.
 
+## Audit-Hardening Profile
+
+The `AUDIT_DURABLE` profile enforces strict reliability semantics:
+
+- Automatically wraps sinks with `RetryingObservabilitySink` (5 attempts, exponential backoff)
+- Applies `BatchingObservabilitySink` for efficient delivery (100-event batches, 250ms flush)
+- Enables `failOnSinkError = true` to surface failures
+- All outcomes are reported via `ObservabilityDiagnostics`
+
+Use when strict audit compliance is required:
+
+```kotlin
+ObservabilityFactory.create(
+    config.copy(
+        profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+        diagnostics = myDiagnostics
+    )
+)
+```
+
+## Diagnostics Hooks
+
+`ObservabilityDiagnostics` provides insight into pipeline reliability:
+
+- `onSinkHandleError`: sink errors during emit
+- `onSinkCloseError`: resource cleanup failures
+- `onAsyncDrop`: events dropped by async queue (capacity exhausted or closed)
+- `onAsyncWorkerError`: async worker thread exceptions
+- `onBatchFlush`: batch delivery outcomes (size, elapsed, success/error)
+- `onRetryExhaustion`: retry limit exceeded with last error
+
+Implement for monitoring, alerting, or metrics collection without side effects.
+
 ## Optional Integrations
 
 - `OpenTelemetry` and `Slf4j` sinks rely on optional runtime dependencies in the host application.
 - If missing, sink creation fails fast with guidance to add integration dependencies.
 
+## Query Service Integration (query-spi)
+
+The optional `query-spi` module enables backend-agnostic audit record retrieval:
+
+- Implement `AuditQueryService` in backend-specific modules (OpenSearch, ClickHouse, PostgreSQL, etc.)
+- Query using time range, limit/offset, field filters, and free-text search
+- Surfaces `AuditRecord` with timestamp, event, level, message, and context
+
 ## Recommended Extension Patterns
 
 - Config-driven sink creation: custom `SinkConfig` + `SinkRegistry.builder().register<...> { ... }.build()`.
+- Operator diagnostics: implement `ObservabilityDiagnostics` and pass through `ObservabilityFactory.Config`.
 - Runtime instance injection: `ObservabilityFactory.create(mySink)`.
 - Reliability wrappers: `RetryingObservabilitySink`, `AsyncObservabilitySink`, `BatchingObservabilitySink`.
+- Audit queries: implement `AuditQueryService` for backend integration.
 
 ## Compatibility Process
 

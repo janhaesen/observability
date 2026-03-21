@@ -1,6 +1,7 @@
 package io.github.aeshen.observability.sink.decorator
 
 import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics
 import io.github.aeshen.observability.sink.BatchCapableObservabilitySink
 import io.github.aeshen.observability.sink.ObservabilitySink
 import java.util.Collections
@@ -15,6 +16,7 @@ class BatchingObservabilitySink(
     private val delegate: ObservabilitySink,
     private val maxBatchSize: Int = 50,
     flushIntervalMillis: Long = 1000,
+    private val diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP,
 ) : ObservabilitySink {
     private val lock = Any()
     private val flushLock = Any()
@@ -86,13 +88,30 @@ class BatchingObservabilitySink(
     private fun flush(batch: List<EncodedEvent>) {
         if (batch.isEmpty()) return
 
+        val startedAt = System.nanoTime()
         synchronized(flushLock) {
-            if (delegate is BatchCapableObservabilitySink) {
-                delegate.handleBatch(batch)
-                return
-            }
+            try {
+                if (delegate is BatchCapableObservabilitySink) {
+                    delegate.handleBatch(batch)
+                } else {
+                    batch.forEach { delegate.handle(it) }
+                }
 
-            batch.forEach { delegate.handle(it) }
+                diagnostics.onBatchFlush(
+                    batchSize = batch.size,
+                    elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000,
+                    success = true,
+                    error = null,
+                )
+            } catch (e: Exception) {
+                diagnostics.onBatchFlush(
+                    batchSize = batch.size,
+                    elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000,
+                    success = false,
+                    error = e,
+                )
+                throw e
+            }
         }
     }
 }

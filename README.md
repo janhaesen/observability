@@ -233,11 +233,67 @@ val context =
 		.build()
 ```
 
+## Add Global Context With ContextProvider
+
+```kotlin
+import io.github.aeshen.observability.ContextProvider
+import io.github.aeshen.observability.ObservabilityContext
+import io.github.aeshen.observability.ObservabilityFactory
+import io.github.aeshen.observability.config.sink.Console
+import io.github.aeshen.observability.key.StringKey
+
+val actorProvider =
+	ContextProvider {
+		ObservabilityContext
+			.builder()
+			.put(StringKey.USER_AGENT, "admin-user")
+			.build()
+	}
+
+val observability =
+	ObservabilityFactory.create(
+		ObservabilityFactory.Config(
+			sinks = listOf(Console),
+			contextProviders = listOf(actorProvider),
+		),
+	)
+```
+
+## Audit Hardened Profile
+
+```kotlin
+val observability =
+	ObservabilityFactory.create(
+		ObservabilityFactory.Config(
+			sinks = listOf(Console),
+			profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+		),
+	)
+```
+
+`AUDIT_DURABLE` enables strict sink errors and applies retry + batching wrappers for durable delivery defaults.
+
+## Runtime Diagnostics Hooks
+
+```kotlin
+import io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics
+
+val diagnostics =
+	object : ObservabilityDiagnostics {
+		override fun onAsyncDrop(event: io.github.aeshen.observability.codec.EncodedEvent, reason: String) {
+			println("drop reason=$reason")
+		}
+	}
+```
+
+Pass diagnostics via `ObservabilityFactory.Config(diagnostics = diagnostics)`.
+
 ## Notes
 
 - `Observability` is `Closeable`; call `close()` or use `use { ... }`.
 - Sink failures from `Exception` are swallowed by default; set `failOnSinkError = true` for strict behavior.
 - The default codec writes one JSON object per line including `name`, `level`, `timestamp`, `message`, `error`, `context`, and `payloadBase64`.
+- Optional search/query SPI lives in `query-spi` for backend-specific query modules.
 - Sink SPI compatibility policy: `docs/spi-contract.md`.
 - Third-party sink sample module: `examples/third-party-sink-example`.
 - Backpressure/load harness: `benchmarks`.
