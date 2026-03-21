@@ -59,6 +59,36 @@ class SinkImplementationsTest {
     }
 
     @Test
+    fun `zip sink preserves existing entries across reopen`() {
+        val dir = Files.createTempDirectory("obs-zip-sink-reopen")
+        val zipPath = dir.resolve("events.zip")
+
+        ZipFileObservabilitySink(zipPath).use { sink ->
+            sink.handle(encoded("first", mutableMapOf("event" to "evt.one")))
+        }
+
+        ZipFileObservabilitySink(zipPath).use { sink ->
+            sink.handle(encoded("second", mutableMapOf("event" to "evt.two")))
+        }
+
+        val names = mutableListOf<String>()
+        val payloads = mutableListOf<String>()
+        ZipInputStream(Files.newInputStream(zipPath)).use { zis ->
+            var entry = zis.nextEntry
+            while (entry != null) {
+                names += entry.name
+                payloads += zis.readBytes().toString(Charsets.UTF_8)
+                entry = zis.nextEntry
+            }
+        }
+
+        assertEquals(2, names.size)
+        assertEquals(listOf("first", "second"), payloads)
+        assertTrue(names[0].startsWith("log-000000000001"))
+        assertTrue(names[1].startsWith("log-000000000002"))
+    }
+
+    @Test
     fun `otel sink maps event fields to otel log record`() {
         val exporter = InMemoryLogRecordExporter.create()
         val loggerProvider =

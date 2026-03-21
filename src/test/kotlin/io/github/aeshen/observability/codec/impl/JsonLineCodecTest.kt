@@ -4,6 +4,9 @@ import io.github.aeshen.observability.EventName
 import io.github.aeshen.observability.ObservabilityContext
 import io.github.aeshen.observability.ObservabilityEvent
 import io.github.aeshen.observability.event
+import io.github.aeshen.observability.key.BooleanKey
+import io.github.aeshen.observability.key.DoubleKey
+import io.github.aeshen.observability.key.LongKey
 import io.github.aeshen.observability.key.StringKey
 import io.github.aeshen.observability.sink.EventLevel
 import kotlin.test.Test
@@ -66,5 +69,33 @@ class JsonLineCodecTest {
         assertTrue(encoded.contains("\"level\":\"WARN\""))
         assertTrue(encoded.contains("\"timestamp\":"))
         assertTrue(encoded.contains("\"message\":\"request failed\""))
+    }
+
+    @Test
+    fun `codec keeps numeric and boolean context values as json primitives`() {
+        val context =
+            ObservabilityContext
+                .builder()
+                .put(LongKey.STATUS_CODE, 200L)
+                .put(DoubleKey.BYTES, 12.5)
+                .put(BooleanKey.SUCCESS, true)
+                .put(StringKey.REQUEST_ID, "req-1")
+                .build()
+
+        val encoded =
+            JsonLineCodec()
+                .encode(
+                    ObservabilityEvent(
+                        name = TestEvent.TEST,
+                        level = EventLevel.INFO,
+                        context = context,
+                    ),
+                ).encoded
+                .toString(Charsets.UTF_8)
+
+        assertTrue(encoded.contains("\"status_code\":200"))
+        assertTrue(encoded.contains("\"bytes\":12.5"))
+        assertTrue(encoded.contains("\"success\":true"))
+        assertTrue(encoded.contains("\"id\":\"req-1\""))
     }
 }

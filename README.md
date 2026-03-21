@@ -393,7 +393,7 @@ val config =
 | `Console`        | Writes JSONL to `stdout`                                  | None                                              |
 | `Slf4j`          | Bridges to any SLF4J-compatible logger                    | `org.slf4j:slf4j-api`                             |
 | `File`           | Appends JSONL to a file; creates parent dirs if needed    | None                                              |
-| `ZipFile`        | Appends JSONL entries to a ZIP archive                    | None                                              |
+| `ZipFile`        | Appends JSONL entries to a ZIP archive and preserves existing entries on reopen | None                                              |
 | `OpenTelemetry`  | Exports via OTLP HTTP to any OTel-compatible backend      | `opentelemetry-api`, `-sdk`, `-exporter-otlp`     |
 
 All sinks receive fan-out delivery; a failure in one does not block others (unless `failOnSinkError = true`).
@@ -450,6 +450,8 @@ val asyncSink =
         diagnostics = myDiagnostics,
     )
 ```
+
+If the async worker encounters a delegate failure, the sink reports it via diagnostics and fails subsequent `handle` calls and `close()` deterministically.
 
 **Drop reasons** reported via `ObservabilityDiagnostics.onAsyncDrop`:
 

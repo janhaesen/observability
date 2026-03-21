@@ -187,13 +187,43 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
 
         sink.handle(sample("one"))
         Thread.sleep(80)
-        sink.close()
+        assertFailsWith<IllegalStateException> {
+            sink.close()
+        }
         assertFailsWith<IllegalStateException> {
             sink.handle(sample("after-close"))
         }
 
         assertTrue(workerErrors.contains("worker-failed"))
         assertTrue(drops.contains(AsyncObservabilitySink.DropReason.CLOSED.name))
+    }
+
+    @Test
+    fun `failOnWorkerError surfaces worker failure on subsequent writes and close`() {
+        val attempts = AtomicInteger(0)
+        val sink =
+            AsyncObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            if (attempts.incrementAndGet() == 1) {
+                                error("worker boom")
+                            }
+                        }
+                    },
+                offerTimeoutMillis = 10,
+            )
+
+        sink.handle(sample("first"))
+        Thread.sleep(80)
+
+        assertFailsWith<IllegalStateException> {
+            sink.handle(sample("second"))
+        }
+
+        assertFailsWith<IllegalStateException> {
+            sink.close()
+        }
     }
 }
 

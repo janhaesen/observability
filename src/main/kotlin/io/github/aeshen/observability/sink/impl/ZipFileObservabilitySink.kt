@@ -6,6 +6,7 @@ import java.io.BufferedOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 private const val PAD_START = 12
@@ -24,22 +25,18 @@ internal class ZipFileObservabilitySink(
 
     init {
         zipPath.parent?.let { Files.createDirectories(it) }
+        val existingEntries = loadExistingEntries(zipPath)
         zos = ZipOutputStream(BufferedOutputStream(Files.newOutputStream(zipPath)))
+        existingEntries.forEach { (name, bytes) ->
+            counter = maxOf(counter, parseCounter(name))
+            writeEntry(name, bytes)
+        }
     }
 
     @Synchronized
     override fun handle(event: EncodedEvent) {
         val entryName = buildEntryName(event.metadata)
-        val entry =
-            ZipEntry(entryName).apply {
-                method = ZipEntry.DEFLATED
-                size = event.encoded.size.toLong()
-            }
-
-        zos.putNextEntry(entry)
-        zos.write(event.encoded)
-        zos.closeEntry()
-        zos.flush()
+        writeEntry(entryName, event.encoded)
     }
 
     private fun buildEntryName(meta: MutableMap<String, Any?>): String {
@@ -54,6 +51,48 @@ internal class ZipFileObservabilitySink(
                 ?: ""
 
         return "$entryPrefix$idx$suffix$entrySuffix"
+    }
+
+    private fun loadExistingEntries(zipPath: Path): List<Pair<String, ByteArray>> {
+        if (!Files.exists(zipPath) || Files.size(zipPath) == 0L) {
+            return emptyList()
+        }
+
+        val entries = mutableListOf<Pair<String, ByteArray>>()
+        ZipInputStream(Files.newInputStream(zipPath)).use { zis ->
+            var entry = zis.nextEntry
+            while (entry != null) {
+                entries += entry.name to zis.readBytes()
+                entry = zis.nextEntry
+            }
+        }
+        return entries
+    }
+
+    private fun writeEntry(
+        entryName: String,
+        bytes: ByteArray,
+    ) {
+        val entry =
+            ZipEntry(entryName).apply {
+                method = ZipEntry.DEFLATED
+                size = bytes.size.toLong()
+            }
+
+        zos.putNextEntry(entry)
+        zos.write(bytes)
+        zos.closeEntry()
+        zos.flush()
+    }
+
+    private fun parseCounter(entryName: String): Long {
+        if (!entryName.startsWith(entryPrefix) || !entryName.endsWith(entrySuffix)) {
+            return 0L
+        }
+
+        val core = entryName.removePrefix(entryPrefix).removeSuffix(entrySuffix)
+        val numericPrefix = core.takeWhile { it.isDigit() }
+        return numericPrefix.toLongOrNull() ?: 0L
     }
 
     override fun close() {

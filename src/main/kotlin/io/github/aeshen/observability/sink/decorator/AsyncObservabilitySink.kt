@@ -6,6 +6,7 @@ import io.github.aeshen.observability.sink.ObservabilitySink
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 private const val POLL_TIMEOUT_MILLIS = 100L
 
@@ -20,6 +21,8 @@ class AsyncObservabilitySink(
     private val closeTimeoutMillis: Long = 5000L,
     private val shutdownPolicy: ShutdownPolicy = ShutdownPolicy.DRAIN,
     private val diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP,
+    private val onWorkerFailure: (Exception) -> Unit = {},
+    private val joinWorker: (Thread, Long) -> Unit = { thread, timeout -> thread.join(timeout) },
 ) : ObservabilitySink {
     init {
         require(capacity > 0) { "capacity must be greater than 0." }
@@ -40,6 +43,7 @@ class AsyncObservabilitySink(
 
     private val queue = ArrayBlockingQueue<EncodedEvent>(capacity)
     private val accepting = AtomicBoolean(true)
+    private val workerFailure = AtomicReference<Exception?>(null)
     private val worker =
         Thread({ runLoop() }, "observability-async-sink").apply {
             isDaemon = true
@@ -51,6 +55,10 @@ class AsyncObservabilitySink(
         if (!accepting.get()) {
             diagnostics.onAsyncDrop(snapshot, DropReason.CLOSED.name)
             throw IllegalStateException("AsyncObservabilitySink is closed.")
+        }
+
+        workerFailure.get()?.let { failure ->
+            throw IllegalStateException("Async sink worker has failed.", failure)
         }
 
         val accepted = queue.offer(snapshot, offerTimeoutMillis, TimeUnit.MILLISECONDS)
@@ -73,7 +81,7 @@ class AsyncObservabilitySink(
             worker.interrupt()
         }
 
-        worker.join(closeTimeoutMillis)
+        joinWorker(worker, closeTimeoutMillis)
 
         var closeFailure: Exception? = null
         if (worker.isAlive) {
@@ -92,6 +100,14 @@ class AsyncObservabilitySink(
                 closeFailure = e
             } else {
                 closeFailure.addSuppressed(e)
+            }
+        }
+
+        workerFailure.get()?.let { failure ->
+            if (closeFailure == null) {
+                closeFailure = IllegalStateException("Async sink worker failed before close.", failure)
+            } else {
+                closeFailure.addSuppressed(failure)
             }
         }
 
@@ -114,6 +130,13 @@ class AsyncObservabilitySink(
                 delegate.handle(event)
             } catch (t: Exception) {
                 diagnostics.onAsyncWorkerError(t)
+                onWorkerFailure(t)
+                if (!accepting.get()) {
+                    break
+                }
+                workerFailure.compareAndSet(null, t)
+                accepting.set(false)
+                break
             }
         }
     }

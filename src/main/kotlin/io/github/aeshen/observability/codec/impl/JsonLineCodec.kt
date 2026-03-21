@@ -18,8 +18,8 @@ class JsonLineCodec : ObservabilityCodec {
                 postfix = "}",
             ) {
                 val k = it.key.keyName
-                val v = it.value.toString()
-                "\"${escape(k)}\":\"${escape(v)}\""
+                val v = jsonValue(it.value)
+                "\"${escape(k)}\":$v"
             }
 
         val messageJson = event.message?.let { "\"${escape(it)}\"" } ?: "null"
@@ -55,4 +55,27 @@ class JsonLineCodec : ObservabilityCodec {
             .replace("\n", "\\n")
             .replace("\r", "\\r")
             .replace("\t", "\\t")
+
+    private fun jsonValue(value: Any?): String =
+        when (value) {
+            null -> "null"
+            is Boolean -> value.toString()
+            is Byte,
+            is Short,
+            is Int,
+            is Long,
+            is Float,
+            is Double,
+            -> numberJson(value)
+            else -> "\"${escape(value.toString())}\""
+        }
+
+    private fun numberJson(number: Any): String {
+        val asDouble = (number as Number).toDouble()
+        return if (asDouble.isFinite()) {
+            number.toString()
+        } else {
+            "\"${escape(number.toString())}\""
+        }
+    }
 }
