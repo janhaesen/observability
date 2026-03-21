@@ -13,6 +13,8 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.logs.SdkLoggerProvider
 import io.opentelemetry.sdk.logs.export.SimpleLogRecordProcessor
 import io.opentelemetry.sdk.testing.exporter.InMemoryLogRecordExporter
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 import java.nio.file.Files
 import java.util.zip.ZipInputStream
 import kotlin.test.Test
@@ -25,6 +27,22 @@ class SinkImplementationsTest {
         override val eventName: String? = null,
     ) : EventName {
         TEST("http/request done"),
+    }
+
+    @Test
+    fun `console sink writes encoded payload as line output`() {
+        val sink = ConsoleObservabilitySink()
+        val captured = ByteArrayOutputStream()
+        val previous = System.out
+
+        try {
+            System.setOut(PrintStream(captured, true, Charsets.UTF_8))
+            sink.handle(encoded("{\"name\":\"test\"}\n"))
+        } finally {
+            System.setOut(previous)
+        }
+
+        assertEquals("{\"name\":\"test\"}\n", captured.toString(Charsets.UTF_8))
     }
 
     @Test
@@ -109,11 +127,11 @@ class SinkImplementationsTest {
                 level = EventLevel.WARN,
                 message = "Request completed",
                 context =
-                    ObservabilityContext
-                        .builder()
-                        .put(StringKey.REQUEST_ID, "req-123")
-                        .put(LongKey.STATUS_CODE, 200L)
-                        .build(),
+                ObservabilityContext
+                    .builder()
+                    .put(StringKey.REQUEST_ID, "req-123")
+                    .put(LongKey.STATUS_CODE, 200L)
+                    .build(),
                 error = boom,
             )
 
@@ -122,10 +140,10 @@ class SinkImplementationsTest {
                 original = event,
                 encoded = "payload".toByteArray(),
                 metadata =
-                    mutableMapOf(
-                        "event" to TestEvent.TEST.resolvedName(),
-                        "size" to 7,
-                    ),
+                mutableMapOf(
+                    "event" to TestEvent.TEST.resolvedName(),
+                    "size" to 7,
+                ),
             ),
         )
 

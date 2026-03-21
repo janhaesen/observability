@@ -15,17 +15,29 @@ internal class Slf4JObservabilitySink(
     private val slf4jLogger = LoggerFactory.getLogger(clazz.java)
 
     override fun handle(event: EncodedEvent) {
-        val msg =
-            event.original.name
-                .resolvedName()
-                .trimEnd('\n')
+        val payload = event.encoded.toString(Charsets.UTF_8).trimEnd('\n')
+        val throwable = event.original.error
 
         when (event.original.level) {
-            EventLevel.TRACE -> slf4jLogger.trace(msg)
-            EventLevel.DEBUG -> slf4jLogger.debug(msg)
-            EventLevel.INFO -> slf4jLogger.info(msg)
-            EventLevel.WARN -> slf4jLogger.warn(msg)
-            EventLevel.ERROR -> slf4jLogger.error(msg)
+            EventLevel.TRACE -> {
+                if (throwable != null) slf4jLogger.trace(payload, throwable) else slf4jLogger.trace(payload)
+            }
+
+            EventLevel.DEBUG -> {
+                if (throwable != null) slf4jLogger.debug(payload, throwable) else slf4jLogger.debug(payload)
+            }
+
+            EventLevel.INFO -> {
+                if (throwable != null) slf4jLogger.info(payload, throwable) else slf4jLogger.info(payload)
+            }
+
+            EventLevel.WARN -> {
+                if (throwable != null) slf4jLogger.warn(payload, throwable) else slf4jLogger.warn(payload)
+            }
+
+            EventLevel.ERROR -> {
+                if (throwable != null) slf4jLogger.error(payload, throwable) else slf4jLogger.error(payload)
+            }
         }
     }
 }

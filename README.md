@@ -95,11 +95,11 @@ Coordinates:
 |------------|----------------------|
 | `group`    | `io.github.aeshen`   |
 | `artifact` | `observability`      |
-| `version`  | `1.0.0-SNAPSHOT`     |
+| `version`  | `1.0.0`              |
 
 ```kotlin
 dependencies {
-    implementation("io.github.aeshen:observability:1.0.0-SNAPSHOT")
+    implementation("io.github.aeshen:observability:1.0.0")
 
     // Required only when using the OpenTelemetry sink
     implementation("io.opentelemetry:opentelemetry-api:1.49.0")
@@ -390,8 +390,8 @@ val config =
 
 | Sink config      | Description                                               | Optional runtime dependency                       |
 |------------------|-----------------------------------------------------------|---------------------------------------------------|
-| `Console`        | Writes JSONL to `stdout`                                  | None                                              |
-| `Slf4j`          | Bridges to any SLF4J-compatible logger                    | `org.slf4j:slf4j-api`                             |
+| `Console`        | Writes encoded event payload directly to `stdout`         | None                                              |
+| `Slf4j`          | Logs encoded payload through SLF4J at mapped levels       | `org.slf4j:slf4j-api`                             |
 | `File`           | Appends JSONL to a file; creates parent dirs if needed    | None                                              |
 | `ZipFile`        | Appends JSONL entries to a ZIP archive and preserves existing entries on reopen | None                                              |
 | `OpenTelemetry`  | Exports via OTLP HTTP to any OTel-compatible backend      | `opentelemetry-api`, `-sdk`, `-exporter-otlp`     |
@@ -749,7 +749,7 @@ val observability =
 The optional `query-spi` module defines a backend-agnostic interface for querying stored audit records. It has no runtime dependencies and is intended for backend-specific implementations (OpenSearch, ClickHouse, PostgreSQL, etc.).
 
 ```kotlin
-// query-spi artifact: io.github.aeshen:query-spi:1.0.0-SNAPSHOT
+// query-spi artifact: io.github.aeshen:query-spi:1.0.0
 
 import io.github.aeshen.observability.query.AuditQuery
 import io.github.aeshen.observability.query.AuditQueryService
@@ -843,7 +843,7 @@ Test fixtures provide a reusable contract test suite for custom sink implementat
 Add the test-fixtures dependency to your sink module:
 
 ```kotlin
-testImplementation(testFixtures("io.github.aeshen:observability:1.0.0-SNAPSHOT"))
+testImplementation(testFixtures("io.github.aeshen:observability:1.0.0"))
 ```
 
 Extend `ObservabilitySinkConformanceSuite` and implement the two abstract methods:
@@ -924,3 +924,5 @@ The test suite covers:
 - `opentelemetry-*` and `slf4j-api` are `compileOnly`; they must be on the runtime classpath of your application when those sinks are used.
 - Binary compatibility of the public SPI is tracked with `binary-compatibility-validator`. See `api/observability.api` for the current stable surface.
 - Patch and minor releases preserve binary compatibility for all stable SPI symbols. See `docs/spi-contract.md`.
+- Release workflow and tagging process are documented in `docs/release.md`; user-facing release history is tracked in `CHANGELOG.md`.
+- Shared builds resolve from `mavenCentral()` by default for reproducibility. Use `mavenLocal()` only in local ad-hoc testing.
