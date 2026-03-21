@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.3.20"
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
     `java-library`
     `java-test-fixtures`
     `maven-publish`
@@ -16,14 +17,18 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
-    implementation("io.opentelemetry:opentelemetry-api:$openTelemetryVersion")
-    implementation("io.opentelemetry:opentelemetry-sdk:$openTelemetryVersion")
-    implementation("io.opentelemetry:opentelemetry-exporter-otlp:$openTelemetryVersion")
-    implementation("org.slf4j:slf4j-api:2.0.17")
+    compileOnly("io.opentelemetry:opentelemetry-api:$openTelemetryVersion")
+    compileOnly("io.opentelemetry:opentelemetry-sdk:$openTelemetryVersion")
+    compileOnly("io.opentelemetry:opentelemetry-exporter-otlp:$openTelemetryVersion")
+    compileOnly("org.slf4j:slf4j-api:2.0.17")
 
     testImplementation(kotlin("test"))
     testImplementation(testFixtures(project(":")))
+    testImplementation("io.opentelemetry:opentelemetry-api:$openTelemetryVersion")
+    testImplementation("io.opentelemetry:opentelemetry-sdk:$openTelemetryVersion")
+    testImplementation("io.opentelemetry:opentelemetry-exporter-otlp:$openTelemetryVersion")
     testImplementation("io.opentelemetry:opentelemetry-sdk-testing:$openTelemetryVersion")
+    testImplementation("org.slf4j:slf4j-api:2.0.17")
 
     testFixturesApi(kotlin("test"))
 }

@@ -144,6 +144,32 @@ class ObservabilityPipelineTest {
     }
 
     @Test
+    fun `pipeline does not swallow fatal errors`() {
+        val fatal =
+            object : ObservabilitySink {
+                override fun handle(event: EncodedEvent): Unit = throw OutOfMemoryError("fatal")
+            }
+
+        val pipeline =
+            ObservabilityPipeline(
+                codec = StaticCodec("raw".toByteArray()),
+                processors = emptyList(),
+                sinks = listOf(fatal),
+                failOnSinkError = false,
+            )
+
+        assertFailsWith<OutOfMemoryError> {
+            pipeline.emit(
+                ObservabilityEvent(
+                    name = TestEvent.TEST,
+                    level = EventLevel.INFO,
+                    context = ObservabilityContext.empty(),
+                ),
+            )
+        }
+    }
+
+    @Test
     fun `close in strict mode closes all sinks and rethrows first error`() {
         val sink1 =
             object : ObservabilitySink {
@@ -163,5 +189,27 @@ class ObservabilityPipelineTest {
         val ex = assertFailsWith<IllegalStateException> { pipeline.close() }
         assertEquals("close1", ex.message)
         assertEquals(true, sink2.closed)
+    }
+
+    @Test
+    fun `emit after close fails deterministically`() {
+        val pipeline =
+            ObservabilityPipeline(
+                codec = StaticCodec("raw".toByteArray()),
+                processors = emptyList(),
+                sinks = listOf(RecordingSink()),
+            )
+
+        pipeline.close()
+
+        assertFailsWith<IllegalStateException> {
+            pipeline.emit(
+                ObservabilityEvent(
+                    name = TestEvent.TEST,
+                    level = EventLevel.INFO,
+                    context = ObservabilityContext.empty(),
+                ),
+            )
+        }
     }
 }

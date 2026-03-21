@@ -2,10 +2,10 @@ package io.github.aeshen.observability
 
 import com.sun.net.httpserver.HttpServer
 import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.codec.ObservabilityCodec
 import io.github.aeshen.observability.config.sink.OpenTelemetry
 import io.github.aeshen.observability.config.sink.SinkConfig
 import io.github.aeshen.observability.sink.ObservabilitySink
-import io.github.aeshen.observability.sink.registry.SinkProvider
 import io.github.aeshen.observability.sink.registry.SinkRegistry
 import java.net.InetSocketAddress
 import java.util.concurrent.LinkedBlockingQueue
@@ -102,13 +102,12 @@ class ObservabilityFactoryTest {
         }
     }
 
-
     @Test
     fun `factory supports direct sink instance list`() {
         val seen = mutableListOf<EncodedEvent>()
         val observability =
             ObservabilityFactory.create(
-                sinks = listOf(CapturingSink(seen)),
+                CapturingSink(seen),
             )
 
         observability.use {
@@ -123,11 +122,37 @@ class ObservabilityFactoryTest {
     }
 
     @Test
+    fun `factory accepts custom codec`() {
+        val seen = mutableListOf<EncodedEvent>()
+        val observability =
+            ObservabilityFactory.create(
+                CapturingSink(seen),
+                codec =
+                    object : ObservabilityCodec {
+                        override fun encode(event: ObservabilityEvent): EncodedEvent =
+                            EncodedEvent(
+                                original = event,
+                                encoded = "custom".toByteArray(Charsets.UTF_8),
+                            )
+                    },
+            )
+
+        observability.use {
+            it.info(
+                name = TestEvent.TEST,
+                message = "codec override",
+            )
+        }
+
+        assertEquals("custom", seen.single().encoded.toString(Charsets.UTF_8))
+    }
+
+    @Test
     fun `factory resolves externally registered provider`() {
         val seen = mutableListOf<EncodedEvent>()
         val customRegistry =
             SinkRegistry.default().withProvider(
-                SinkProvider { config ->
+                { config ->
                     if (config is ThirdPartySinkConfig) {
                         CapturingSink(seen)
                     } else {

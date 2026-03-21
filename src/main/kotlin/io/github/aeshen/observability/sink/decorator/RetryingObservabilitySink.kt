@@ -14,12 +14,12 @@ class RetryingObservabilitySink(
     }
 
     override fun handle(event: EncodedEvent) {
-        var lastError: Throwable? = null
+        var lastError: Exception? = null
         for (attempt in 1..maxAttempts) {
             try {
                 delegate.handle(event)
                 return
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 lastError = t
                 if (attempt == maxAttempts) {
                     throw t
@@ -35,4 +35,3 @@ class RetryingObservabilitySink(
         delegate.close()
     }
 }
-

@@ -18,7 +18,7 @@ class AdvancedConformanceTest {
     fun `pipeline failOnSinkError true propagates sink handle failures`() {
         val obs =
             ObservabilityFactory.create(
-                sinks = listOf(FailingSink()),
+                FailingSink(),
                 failOnSinkError = true,
             )
 
@@ -36,7 +36,7 @@ class AdvancedConformanceTest {
     fun `pipeline failOnSinkError false swallows sink handle failures`() {
         val obs =
             ObservabilityFactory.create(
-                sinks = listOf(FailingSink()),
+                FailingSink(),
                 failOnSinkError = false,
             )
 

@@ -25,6 +25,12 @@ If you consume it from another Gradle project, add your repository and dependenc
 ```kotlin
 dependencies {
 	implementation("io.github.aeshen:observability:1.0.0-SNAPSHOT")
+	// Required only when using the OpenTelemetry sink
+	implementation("io.opentelemetry:opentelemetry-api:1.49.0")
+	implementation("io.opentelemetry:opentelemetry-sdk:1.49.0")
+	implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.49.0")
+	// Required only when using the Slf4j sink
+	implementation("org.slf4j:slf4j-api:2.0.17")
 }
 ```
 
@@ -157,7 +163,31 @@ class MySink : ObservabilitySink {
 }
 
 val obs =
-	ObservabilityFactory.create(sinks = listOf(MySink()))
+	ObservabilityFactory.create(MySink())
+```
+
+## Use a Custom Codec
+
+```kotlin
+import io.github.aeshen.observability.ObservabilityFactory
+import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.codec.ObservabilityCodec
+
+val customCodec =
+	ObservabilityCodec { event ->
+		EncodedEvent(
+			original = event,
+			encoded = "custom-format".toByteArray(Charsets.UTF_8),
+		)
+	}
+
+val observability =
+	ObservabilityFactory.create(
+		ObservabilityFactory.Config(
+			sinks = listOf(io.github.aeshen.observability.config.sink.Console),
+			codec = customCodec,
+		),
+	)
 ```
 
 
@@ -196,8 +226,8 @@ val context =
 ## Notes
 
 - `Observability` is `Closeable`; call `close()` or use `use { ... }`.
-- Sink failures are swallowed by default; set `failOnSinkError = true` for strict behavior.
-- Current codec output is JSON text with context and base64 payload fields.
+- Sink failures from `Exception` are swallowed by default; set `failOnSinkError = true` for strict behavior.
+- The default codec writes one JSON object per line including `name`, `level`, `timestamp`, `message`, `error`, `context`, and `payloadBase64`.
 - Sink SPI compatibility policy: `docs/spi-contract.md`.
 - Third-party sink sample module: `examples/third-party-sink-example`.
 - Backpressure/load harness: `benchmarks`.
@@ -228,6 +258,10 @@ val obs =
 					OpenTelemetry(
 						endpoint = "http://localhost:4318/v1/logs",
 						serviceName = "my-service",
+						scheduleDelayMillis = 200,
+						exporterTimeoutMillis = 30_000,
+						maxQueueSize = 2_048,
+						maxExportBatchSize = 512,
 					),
 				),
 		),

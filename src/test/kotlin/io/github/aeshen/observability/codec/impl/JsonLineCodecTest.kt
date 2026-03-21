@@ -3,6 +3,7 @@ package io.github.aeshen.observability.codec.impl
 import io.github.aeshen.observability.EventName
 import io.github.aeshen.observability.ObservabilityContext
 import io.github.aeshen.observability.ObservabilityEvent
+import io.github.aeshen.observability.event
 import io.github.aeshen.observability.key.StringKey
 import io.github.aeshen.observability.sink.EventLevel
 import kotlin.test.Test
@@ -26,7 +27,8 @@ class JsonLineCodecTest {
             )
 
         val encoded = JsonLineCodec().encode(event).encoded.toString(Charsets.UTF_8)
-        assertTrue(encoded.contains("\"payloadBase64\": \"\""))
+        assertTrue(encoded.contains("\"payloadBase64\":\"\""))
+        assertTrue(encoded.endsWith("\n"))
     }
 
     @Test
@@ -46,5 +48,23 @@ class JsonLineCodecTest {
         val encoded = JsonLineCodec().encode(event).encoded.toString(Charsets.UTF_8)
         assertTrue(encoded.contains("path"))
         assertTrue(encoded.contains("line1\\n\\\"line2\\\""))
+    }
+
+    @Test
+    fun `codec includes core event fields`() {
+        val encoded =
+            JsonLineCodec()
+                .encode(
+                    event(TestEvent.TEST) {
+                        level(EventLevel.WARN)
+                        message("request failed")
+                    },
+                ).encoded
+                .toString(Charsets.UTF_8)
+
+        assertTrue(encoded.contains("\"name\":\"test.event\""))
+        assertTrue(encoded.contains("\"level\":\"WARN\""))
+        assertTrue(encoded.contains("\"timestamp\":"))
+        assertTrue(encoded.contains("\"message\":\"request failed\""))
     }
 }

@@ -9,7 +9,7 @@ The formal compatibility policy lives in `docs/spi-contract.md`.
 - `SinkConfig` is an open interface. Third-party modules can define their own config type.
 - `SinkProvider` maps a `SinkConfig` into an `ObservabilitySink`.
 - `SinkRegistry` resolves configured sinks through registered providers.
-- `ObservabilityFactory.create(sinks = listOf(...))` supports direct sink instances.
+- `ObservabilityFactory.create(...)` supports direct sink instances.
 
 ## Threading And Lifecycle Guarantees
 
@@ -20,13 +20,14 @@ The formal compatibility policy lives in `docs/spi-contract.md`.
 
 ## Error Handling Expectations
 
-- Throw from `handle` only for unrecoverable errors.
+- Throw from `handle` only for unrecoverable exceptions.
 - Prefer internal retries/backoff for transient transport failures.
 - If your sink buffers asynchronously, make drop/backpressure behavior explicit.
+- Fatal JVM `Error` types are never swallowed by the pipeline.
 
 ## Optional Reliability Decorators
 
-- `AsyncObservabilitySink` offloads writes to a worker queue.
+- `AsyncObservabilitySink` offloads writes to a worker queue and supports deterministic close timeout/policy.
 - `BatchingObservabilitySink` buffers events and flushes by size/interval.
 - `BatchCapableObservabilitySink` allows optimized batch delivery.
 - `RetryingObservabilitySink` retries transient failures using `BackoffStrategy`.

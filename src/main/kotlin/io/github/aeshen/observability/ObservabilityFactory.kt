@@ -1,5 +1,6 @@
 package io.github.aeshen.observability
 
+import io.github.aeshen.observability.codec.ObservabilityCodec
 import io.github.aeshen.observability.codec.impl.JsonLineCodec
 import io.github.aeshen.observability.config.encryption.AesGcm
 import io.github.aeshen.observability.config.encryption.EncryptionConfig
@@ -22,6 +23,7 @@ object ObservabilityFactory {
         val encryption: EncryptionConfig? = null,
         val failOnSinkError: Boolean = false,
         val sinkRegistry: SinkRegistry = SinkRegistry.default(),
+        val codec: ObservabilityCodec = JsonLineCodec(),
     ) {
         companion object {
             fun aesGcmFromRawKeyBytes(rawKey: ByteArray) =
@@ -45,46 +47,45 @@ object ObservabilityFactory {
         val processors: List<ObservabilityProcessor> = buildProcessors(config.encryption)
 
         return pipeline(
+            codec = config.codec,
             sinks = sinks,
             processors = processors,
             failOnSinkError = config.failOnSinkError,
         )
     }
 
+    /**
+     * Advanced convenience for runtime-provided sink instances.
+     * Prefer [create] with [Config] for configuration-driven wiring.
+     */
     fun create(
-        sinks: List<ObservabilitySink>,
+        vararg sinks: ObservabilitySink,
         encryption: EncryptionConfig? = null,
         failOnSinkError: Boolean = false,
+        codec: ObservabilityCodec = JsonLineCodec(),
     ): Observability {
-        require(sinks.isNotEmpty()) { "At least one sink must be configured." }
+        val sinkList = sinks.toList()
+
+        require(sinkList.isNotEmpty()) { "At least one sink must be configured." }
 
         val processors: List<ObservabilityProcessor> = buildProcessors(encryption)
 
         return pipeline(
-            sinks = sinks,
+            codec = codec,
+            sinks = sinkList,
             processors = processors,
             failOnSinkError = failOnSinkError,
         )
     }
 
-    fun create(
-        vararg sinks: ObservabilitySink,
-        encryption: EncryptionConfig? = null,
-        failOnSinkError: Boolean = false,
-    ): Observability =
-        create(
-            sinks = sinks.toList(),
-            encryption = encryption,
-            failOnSinkError = failOnSinkError,
-        )
-
     private fun pipeline(
+        codec: ObservabilityCodec,
         sinks: List<ObservabilitySink>,
         processors: List<ObservabilityProcessor>,
         failOnSinkError: Boolean,
     ): Observability =
         ObservabilityPipeline(
-            codec = JsonLineCodec(),
+            codec = codec,
             processors = processors,
             sinks = sinks,
             failOnSinkError = failOnSinkError,

@@ -12,8 +12,9 @@ import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.exporter.otlp.http.logs.OtlpHttpLogRecordExporter
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.logs.SdkLoggerProvider
-import io.opentelemetry.sdk.logs.export.SimpleLogRecordProcessor
+import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor
 import io.opentelemetry.sdk.resources.Resource
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 private const val DEFAULT_INSTRUMENTATION_SCOPE = "io.github.aeshen.observability"
@@ -74,7 +75,15 @@ internal class OpenTelemetryObservabilitySink internal constructor(
                 SdkLoggerProvider
                     .builder()
                     .setResource(Resource.getDefault().merge(resourceBuilder.build()))
-                    .addLogRecordProcessor(SimpleLogRecordProcessor.create(exporterBuilder.build()))
+                    .addLogRecordProcessor(
+                        BatchLogRecordProcessor
+                            .builder(exporterBuilder.build())
+                            .setScheduleDelay(Duration.ofMillis(config.scheduleDelayMillis))
+                            .setExporterTimeout(Duration.ofMillis(config.exporterTimeoutMillis))
+                            .setMaxQueueSize(config.maxQueueSize)
+                            .setMaxExportBatchSize(config.maxExportBatchSize)
+                            .build(),
+                    )
                     .build()
 
             val openTelemetry =

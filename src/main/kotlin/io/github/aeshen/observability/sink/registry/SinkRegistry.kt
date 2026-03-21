@@ -21,13 +21,13 @@ class SinkRegistry private constructor(
             provider.create(config)
         } ?: error("No SinkProvider registered for sink config type: ${config::class.qualifiedName}")
 
-    fun resolveAll(configs: List<SinkConfig>): List<ObservabilitySink> =
-        configs.map { resolve(it) }
+    fun resolveAll(configs: List<SinkConfig>): List<ObservabilitySink> = configs.map { resolve(it) }
 
-    fun withProvider(provider: SinkProvider): SinkRegistry =
-        SinkRegistry(providers + provider)
+    fun withProvider(provider: SinkProvider): SinkRegistry = SinkRegistry(providers + provider)
 
     companion object {
+        fun empty(): SinkRegistry = SinkRegistry(providers = emptyList())
+
         fun default(): SinkRegistry =
             SinkRegistry(
                 providers =
@@ -35,8 +35,6 @@ class SinkRegistry private constructor(
                         BuiltInSinkProvider,
                     ),
             )
-
-        fun of(vararg providers: SinkProvider): SinkRegistry = SinkRegistry(providers.toList())
     }
 }
 
@@ -44,11 +42,24 @@ private object BuiltInSinkProvider : SinkProvider {
     override fun create(config: SinkConfig): ObservabilitySink? =
         when (config) {
             is Console -> ConsoleObservabilitySink()
-            is Slf4j -> Slf4JObservabilitySink(config.logger)
+            is Slf4j -> createOptionalSink("SLF4J") { Slf4JObservabilitySink(config.logger) }
             is File -> FileObservabilitySink(config.path)
             is ZipFile -> ZipFileObservabilitySink(config.path)
-            is OpenTelemetry -> OpenTelemetryObservabilitySink.fromConfig(config)
+            is OpenTelemetry -> createOptionalSink("OpenTelemetry OTLP") { OpenTelemetryObservabilitySink.fromConfig(config) }
             else -> null
         }
-}
 
+    private fun createOptionalSink(
+        integrationName: String,
+        create: () -> ObservabilitySink,
+    ): ObservabilitySink =
+        try {
+            create()
+        } catch (e: NoClassDefFoundError) {
+            throw IllegalStateException(
+                "$integrationName sink requires optional runtime dependencies. " +
+                    "Add the integration dependencies to your application classpath.",
+                e,
+            )
+        }
+}

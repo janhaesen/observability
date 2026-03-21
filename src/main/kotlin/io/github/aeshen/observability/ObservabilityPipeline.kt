@@ -5,6 +5,7 @@ import io.github.aeshen.observability.processor.ObservabilityProcessor
 import io.github.aeshen.observability.sink.ObservabilitySink
 import io.github.aeshen.observability.transport.MetadataEnricher
 import java.io.Closeable
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Small facade used by applications.
@@ -12,7 +13,6 @@ import java.io.Closeable
  * Framework note: [ObservabilityPipeline] is [Closeable] so sink resources can be released deterministically.
  * By default sink errors are best-effort (swallowed). Enable strict mode via failOnSinkError.
  */
-@Suppress("TooGenericExceptionCaught")
 internal class ObservabilityPipeline internal constructor(
     private val codec: ObservabilityCodec,
     private val metadataEnrichers: List<MetadataEnricher> = emptyList(),
@@ -20,7 +20,11 @@ internal class ObservabilityPipeline internal constructor(
     private val sinks: List<ObservabilitySink>,
     private val failOnSinkError: Boolean = false,
 ) : Observability {
+    private val open = AtomicBoolean(true)
+
     override fun emit(event: ObservabilityEvent) {
+        check(open.get()) { "Observability is closed." }
+
         // Encode
         var encoded = codec.encode(event)
         encoded.metadata["event"] = event.name.resolvedName()
@@ -37,7 +41,7 @@ internal class ObservabilityPipeline internal constructor(
         for (sink in sinks) {
             try {
                 sink.handle(encoded)
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 if (failOnSinkError) {
                     throw t
                 } else {
@@ -48,12 +52,16 @@ internal class ObservabilityPipeline internal constructor(
     }
 
     override fun close() {
+        if (!open.compareAndSet(true, false)) {
+            return
+        }
+
         if (failOnSinkError) {
-            var first: Throwable? = null
+            var first: Exception? = null
             sinks.forEach {
                 try {
                     it.close()
-                } catch (t: Throwable) {
+                } catch (t: Exception) {
                     if (first == null) {
                         first = t
                     }
@@ -67,7 +75,7 @@ internal class ObservabilityPipeline internal constructor(
                 try {
                     it.close()
                 } catch (
-                    t: Throwable,
+                    t: Exception,
                 ) {
                     System.err.println("Logging sink close error: ${t.message}")
                 }

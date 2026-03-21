@@ -19,17 +19,23 @@ Behavior changes to the above are treated as breaking changes.
 - `handle(event)` may be called concurrently.
 - Implementations should be thread-safe or explicitly wrapped (for example with `AsyncObservabilitySink`).
 - `close()` must release resources and be safe to call repeatedly.
-- If `handle` throws, pipeline behavior is controlled by `failOnSinkError`.
+- If `handle` throws an `Exception`, pipeline behavior is controlled by `failOnSinkError`.
+- Fatal JVM `Error` types are never swallowed.
 
 ## Error Propagation Modes
 
 - `failOnSinkError = true`: sink exceptions are propagated to the caller.
 - `failOnSinkError = false`: sink exceptions are logged and processing continues.
 
+## Optional Integrations
+
+- `OpenTelemetry` and `Slf4j` sinks rely on optional runtime dependencies in the host application.
+- If missing, sink creation fails fast with guidance to add integration dependencies.
+
 ## Recommended Extension Patterns
 
 - Config-driven sink creation: custom `SinkConfig` + `SinkProvider` + `SinkRegistry.withProvider(...)`.
-- Runtime instance injection: `ObservabilityFactory.create(sinks = listOf(mySink))`.
+- Runtime instance injection: `ObservabilityFactory.create(mySink)`.
 - Reliability wrappers: `RetryingObservabilitySink`, `AsyncObservabilitySink`, `BatchingObservabilitySink`.
 
 ## Compatibility Process

@@ -8,10 +8,13 @@ import io.github.aeshen.observability.sink.BatchCapableObservabilitySink
 import io.github.aeshen.observability.sink.EventLevel
 import io.github.aeshen.observability.sink.ObservabilitySink
 import io.github.aeshen.observability.sink.testing.ObservabilitySinkConformanceSuite
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite() {
     private val observed = mutableListOf<EncodedEvent>()
@@ -46,6 +49,92 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
     @Test
     fun `error mode contract helper behaves deterministically`() {
         assertHandleErrorModeContract()
+    }
+
+    @Test
+    fun `close times out when delegate blocks and drain policy is used`() {
+        val started = CountDownLatch(1)
+        val unblock = CountDownLatch(1)
+        val sink =
+            AsyncObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            started.countDown()
+                            unblock.await(5, TimeUnit.SECONDS)
+                        }
+                    },
+                closeTimeoutMillis = 50,
+                shutdownPolicy = AsyncObservabilitySink.ShutdownPolicy.DRAIN,
+            )
+
+        sink.handle(sample("blocked"))
+        assertTrue(started.await(1, TimeUnit.SECONDS))
+
+        assertFailsWith<IllegalStateException> {
+            sink.close()
+        }
+
+        unblock.countDown()
+    }
+
+    @Test
+    fun `signals drops when queue is full in best effort mode`() {
+        val drops = mutableListOf<AsyncObservabilitySink.DropReason>()
+        val release = CountDownLatch(1)
+        val sink =
+            AsyncObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            release.await(5, TimeUnit.SECONDS)
+                        }
+                    },
+                capacity = 1,
+                offerTimeoutMillis = 1,
+                failOnDrop = false,
+                onDrop = { _, reason -> drops += reason },
+            )
+
+        sink.handle(sample("first"))
+        sink.handle(sample("second"))
+        sink.handle(sample("third"))
+
+        release.countDown()
+        sink.close()
+
+        assertTrue(drops.contains(AsyncObservabilitySink.DropReason.QUEUE_FULL))
+    }
+
+    @Test
+    fun `signals pending drops on drop pending close policy`() {
+        val reasons = mutableListOf<AsyncObservabilitySink.DropReason>()
+        val started = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val sink =
+            AsyncObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            started.countDown()
+                            release.await(5, TimeUnit.SECONDS)
+                        }
+                    },
+                capacity = 8,
+                shutdownPolicy = AsyncObservabilitySink.ShutdownPolicy.DROP_PENDING,
+                closeTimeoutMillis = 200,
+                onDrop = { _, reason -> reasons += reason },
+            )
+
+        sink.handle(sample("in-flight"))
+        assertTrue(started.await(1, TimeUnit.SECONDS))
+        sink.handle(sample("queued-a"))
+        sink.handle(sample("queued-b"))
+
+        sink.close()
+        release.countDown()
+
+        assertTrue(reasons.contains(AsyncObservabilitySink.DropReason.DROP_PENDING_ON_CLOSE))
     }
 }
 
@@ -83,6 +172,23 @@ class BatchingObservabilitySinkTest {
 
         sink.close()
         assertEquals(1, handled.size)
+    }
+
+    @Test
+    fun `batching sink flushes by timer without additional writes`() {
+        val handled = mutableListOf<EncodedEvent>()
+        val sink =
+            BatchingObservabilitySink(
+                delegate = CapturingSink(handled),
+                maxBatchSize = 10,
+                flushIntervalMillis = 30,
+            )
+
+        sink.handle(sample("timer"))
+        Thread.sleep(120)
+
+        assertEquals(1, handled.size)
+        sink.close()
     }
 
     private class RecordingBatchSink(

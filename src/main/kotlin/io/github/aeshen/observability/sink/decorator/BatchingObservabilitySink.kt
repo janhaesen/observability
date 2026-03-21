@@ -4,6 +4,9 @@ import io.github.aeshen.observability.codec.EncodedEvent
 import io.github.aeshen.observability.sink.BatchCapableObservabilitySink
 import io.github.aeshen.observability.sink.ObservabilitySink
 import java.util.Collections
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Decorator that buffers records and flushes on size or interval.
@@ -11,25 +14,37 @@ import java.util.Collections
 class BatchingObservabilitySink(
     private val delegate: ObservabilitySink,
     private val maxBatchSize: Int = 50,
-    private val flushIntervalMillis: Long = 1000,
+    flushIntervalMillis: Long = 1000,
 ) : ObservabilitySink {
     private val lock = Any()
+    private val flushLock = Any()
+    private val accepting = AtomicBoolean(true)
     private val buffer = mutableListOf<EncodedEvent>()
-    private var lastFlushMillis = System.currentTimeMillis()
+    private val scheduler =
+        Executors.newSingleThreadScheduledExecutor { runnable ->
+            Thread(runnable, "observability-batching-flusher").apply { isDaemon = true }
+        }
 
     init {
         require(maxBatchSize > 0) { "maxBatchSize must be greater than 0." }
+        require(flushIntervalMillis > 0) { "flushIntervalMillis must be greater than 0." }
+
+        scheduler.scheduleAtFixedRate(
+            { flushFromTimer() },
+            flushIntervalMillis,
+            flushIntervalMillis,
+            TimeUnit.MILLISECONDS,
+        )
     }
 
     override fun handle(event: EncodedEvent) {
+        check(accepting.get()) { "BatchingObservabilitySink is closed." }
+
         var readyToFlush: List<EncodedEvent>? = null
         synchronized(lock) {
             buffer += event.copy(metadata = event.metadata.toMutableMap())
-            val now = System.currentTimeMillis()
-            val flushBySize = buffer.size >= maxBatchSize
-            val flushByTime = now - lastFlushMillis >= flushIntervalMillis
-            if (flushBySize || flushByTime) {
-                readyToFlush = drainLocked(now)
+            if (buffer.size >= maxBatchSize) {
+                readyToFlush = drainLocked()
             }
         }
 
@@ -37,34 +52,47 @@ class BatchingObservabilitySink(
     }
 
     override fun close() {
-        val remaining = synchronized(lock) { drainLocked(System.currentTimeMillis()) }
+        accepting.set(false)
+        scheduler.shutdownNow()
+
+        val remaining = synchronized(lock) { drainLocked() }
         if (remaining.isNotEmpty()) {
             flush(remaining)
         }
         delegate.close()
     }
 
-    private fun drainLocked(nowMillis: Long): List<EncodedEvent> {
+    private fun drainLocked(): List<EncodedEvent> {
         if (buffer.isEmpty()) {
-            lastFlushMillis = nowMillis
             return emptyList()
         }
 
         val snapshot = Collections.unmodifiableList(buffer.toList())
         buffer.clear()
-        lastFlushMillis = nowMillis
         return snapshot
+    }
+
+    private fun flushFromTimer() {
+        if (!accepting.get()) {
+            return
+        }
+
+        val batch = synchronized(lock) { drainLocked() }
+        if (batch.isNotEmpty()) {
+            flush(batch)
+        }
     }
 
     private fun flush(batch: List<EncodedEvent>) {
         if (batch.isEmpty()) return
 
-        if (delegate is BatchCapableObservabilitySink) {
-            delegate.handleBatch(batch)
-            return
-        }
+        synchronized(flushLock) {
+            if (delegate is BatchCapableObservabilitySink) {
+                delegate.handleBatch(batch)
+                return
+            }
 
-        batch.forEach { delegate.handle(it) }
+            batch.forEach { delegate.handle(it) }
+        }
     }
 }
-

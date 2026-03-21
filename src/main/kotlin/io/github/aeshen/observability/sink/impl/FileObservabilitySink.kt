@@ -17,9 +17,16 @@ internal class FileObservabilitySink(
     }
 
     override fun handle(event: EncodedEvent) {
+        val bytes =
+            if (event.encoded.lastOrNull() == '\n'.code.toByte()) {
+                event.encoded
+            } else {
+                event.encoded + "\n".toByteArray(Charsets.UTF_8)
+            }
+
         Files.write(
             path,
-            event.encoded,
+            bytes,
             StandardOpenOption.CREATE,
             StandardOpenOption.WRITE,
             StandardOpenOption.APPEND,

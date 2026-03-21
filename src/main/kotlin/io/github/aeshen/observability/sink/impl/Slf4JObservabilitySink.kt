@@ -7,8 +7,7 @@ import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
 /**
- * Optional bridge into SLF4J without forcing a runtime dependency.
- * Uses reflection so core can run without slf4j-api on the classpath.
+ * Optional bridge into SLF4J.
  */
 internal class Slf4JObservabilitySink(
     clazz: KClass<*>,

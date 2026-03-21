@@ -6,4 +6,8 @@ data class OpenTelemetry(
     val serviceVersion: String? = null,
     val instrumentationScopeName: String = "io.github.aeshen.observability",
     val headers: Map<String, String> = emptyMap(),
+    val scheduleDelayMillis: Long = 200,
+    val exporterTimeoutMillis: Long = 30000,
+    val maxQueueSize: Int = 2048,
+    val maxExportBatchSize: Int = 512,
 ) : SinkConfig
