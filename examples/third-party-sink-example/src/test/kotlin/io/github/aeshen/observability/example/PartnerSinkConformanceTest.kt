@@ -37,7 +37,7 @@ class PartnerSinkConformanceTest : ObservabilitySinkConformanceSuite() {
 
     @Test
     fun `provider resolves custom config through sink registry`() {
-        val registry = SinkRegistry.default().withProvider(PartnerSinkProvider)
+        val registry = SinkRegistry.defaultBuilder().registerProvider(PartnerSinkProvider).build()
         val obs =
             ObservabilityFactory.create(
                 ObservabilityFactory.Config(

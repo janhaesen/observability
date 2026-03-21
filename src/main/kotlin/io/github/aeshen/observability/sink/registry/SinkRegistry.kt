@@ -23,18 +23,35 @@ class SinkRegistry private constructor(
 
     fun resolveAll(configs: List<SinkConfig>): List<ObservabilitySink> = configs.map { resolve(it) }
 
-    fun withProvider(provider: SinkProvider): SinkRegistry = SinkRegistry(providers + provider)
+    fun toBuilder(): Builder = Builder(providers.toMutableList())
+
+    class Builder internal constructor(
+        private val providers: MutableList<SinkProvider> = mutableListOf(),
+    ) {
+        fun registerProvider(provider: SinkProvider): Builder = apply { providers += provider }
+
+        inline fun <reified T : SinkConfig> register(noinline create: (T) -> ObservabilitySink): Builder =
+            apply {
+                registerProvider { config ->
+                    if (config is T) {
+                        create(config)
+                    } else {
+                        null
+                    }
+                }
+            }
+
+        fun build(): SinkRegistry = SinkRegistry(providers = providers.toList())
+    }
 
     companion object {
-        fun empty(): SinkRegistry = SinkRegistry(providers = emptyList())
+        fun builder(): Builder = Builder()
 
-        fun default(): SinkRegistry =
-            SinkRegistry(
-                providers =
-                    listOf(
-                        BuiltInSinkProvider,
-                    ),
-            )
+        fun defaultBuilder(): Builder = Builder(mutableListOf(BuiltInSinkProvider))
+
+        fun empty(): SinkRegistry = builder().build()
+
+        fun default(): SinkRegistry = defaultBuilder().build()
     }
 }
 

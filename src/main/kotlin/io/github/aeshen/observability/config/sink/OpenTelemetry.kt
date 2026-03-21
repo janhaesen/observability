@@ -10,4 +10,14 @@ data class OpenTelemetry(
     val exporterTimeoutMillis: Long = 30000,
     val maxQueueSize: Int = 2048,
     val maxExportBatchSize: Int = 512,
-) : SinkConfig
+) : SinkConfig {
+    init {
+        require(scheduleDelayMillis > 0) { "scheduleDelayMillis must be greater than 0." }
+        require(exporterTimeoutMillis > 0) { "exporterTimeoutMillis must be greater than 0." }
+        require(maxQueueSize > 0) { "maxQueueSize must be greater than 0." }
+        require(maxExportBatchSize > 0) { "maxExportBatchSize must be greater than 0." }
+        require(maxExportBatchSize <= maxQueueSize) {
+            "maxExportBatchSize must be less than or equal to maxQueueSize."
+        }
+    }
+}

@@ -34,7 +34,7 @@ Behavior changes to the above are treated as breaking changes.
 
 ## Recommended Extension Patterns
 
-- Config-driven sink creation: custom `SinkConfig` + `SinkProvider` + `SinkRegistry.withProvider(...)`.
+- Config-driven sink creation: custom `SinkConfig` + `SinkRegistry.builder().register<...> { ... }.build()`.
 - Runtime instance injection: `ObservabilityFactory.create(mySink)`.
 - Reliability wrappers: `RetryingObservabilitySink`, `AsyncObservabilitySink`, `BatchingObservabilitySink`.
 

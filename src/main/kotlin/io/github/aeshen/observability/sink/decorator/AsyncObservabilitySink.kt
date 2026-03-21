@@ -23,6 +23,12 @@ class AsyncObservabilitySink(
         System.err.println("Async sink dropped event=${event.metadata["event"] ?: "-"} reason=$reason")
     },
 ) : ObservabilitySink {
+    init {
+        require(capacity > 0) { "capacity must be greater than 0." }
+        require(offerTimeoutMillis >= 0) { "offerTimeoutMillis must be greater than or equal to 0." }
+        require(closeTimeoutMillis > 0) { "closeTimeoutMillis must be greater than 0." }
+    }
+
     enum class ShutdownPolicy {
         DRAIN,
         DROP_PENDING,

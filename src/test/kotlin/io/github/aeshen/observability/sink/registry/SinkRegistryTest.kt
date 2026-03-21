@@ -18,17 +18,12 @@ class SinkRegistryTest {
     }
 
     @Test
-    fun `empty registry can be filled with custom provider`() {
+    fun `builder register creates typed custom mapping`() {
         val registry =
             SinkRegistry
-                .empty()
-                .withProvider { config ->
-                    if (config is CustomSinkConfig) {
-                        CustomSink()
-                    } else {
-                        null
-                    }
-                }
+                .builder()
+                .register<CustomSinkConfig> { CustomSink() }
+                .build()
 
         val resolved = registry.resolve(CustomSinkConfig("https://partner.example/logs"))
         assertNotNull(resolved)
@@ -47,5 +42,18 @@ class SinkRegistryTest {
     fun `default registry still resolves built in sinks`() {
         val resolved = SinkRegistry.default().resolve(Console)
         assertNotNull(resolved)
+    }
+
+    @Test
+    fun `toBuilder allows incremental extension`() {
+        val registry =
+            SinkRegistry
+                .default()
+                .toBuilder()
+                .register<CustomSinkConfig> { CustomSink() }
+                .build()
+
+        assertNotNull(registry.resolve(Console))
+        assertNotNull(registry.resolve(CustomSinkConfig("https://partner.example/logs")))
     }
 }

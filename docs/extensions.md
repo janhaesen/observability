@@ -47,7 +47,6 @@ val reliable =
 import io.github.aeshen.observability.ObservabilityFactory
 import io.github.aeshen.observability.config.sink.SinkConfig
 import io.github.aeshen.observability.sink.ObservabilitySink
-import io.github.aeshen.observability.sink.registry.SinkProvider
 import io.github.aeshen.observability.sink.registry.SinkRegistry
 
 data class PartnerSinkConfig(
@@ -61,11 +60,10 @@ class PartnerSink : ObservabilitySink {
 }
 
 val registry =
-    SinkRegistry.default().withProvider(
-        SinkProvider { cfg ->
-            if (cfg is PartnerSinkConfig) PartnerSink() else null
-        },
-    )
+    SinkRegistry
+        .defaultBuilder()
+        .register<PartnerSinkConfig> { PartnerSink() }
+        .build()
 
 val observability =
     ObservabilityFactory.create(

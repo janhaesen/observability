@@ -151,15 +151,10 @@ class ObservabilityFactoryTest {
     fun `factory resolves externally registered provider`() {
         val seen = mutableListOf<EncodedEvent>()
         val customRegistry =
-            SinkRegistry.default().withProvider(
-                { config ->
-                    if (config is ThirdPartySinkConfig) {
-                        CapturingSink(seen)
-                    } else {
-                        null
-                    }
-                },
-            )
+            SinkRegistry
+                .defaultBuilder()
+                .register<ThirdPartySinkConfig> { CapturingSink(seen) }
+                .build()
 
         val observability =
             ObservabilityFactory.create(
@@ -173,6 +168,34 @@ class ObservabilityFactoryTest {
             it.info(
                 name = TestEvent.TEST,
                 message = "provider sink",
+            )
+        }
+
+        assertEquals(1, seen.size)
+        assertEquals("INFO", seen.single().metadata["level"])
+    }
+
+    @Test
+    fun `factory resolves provider registered via builder api`() {
+        val seen = mutableListOf<EncodedEvent>()
+        val customRegistry =
+            SinkRegistry
+                .builder()
+                .register<ThirdPartySinkConfig> { CapturingSink(seen) }
+                .build()
+
+        val observability =
+            ObservabilityFactory.create(
+                ObservabilityFactory.Config(
+                    sinks = listOf(ThirdPartySinkConfig("partner-b")),
+                    sinkRegistry = customRegistry,
+                ),
+            )
+
+        observability.use {
+            it.info(
+                name = TestEvent.TEST,
+                message = "builder sink",
             )
         }
 

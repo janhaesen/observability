@@ -154,7 +154,9 @@ For details see `docs/extensions.md`.
 
 ```kotlin
 import io.github.aeshen.observability.ObservabilityFactory
+import io.github.aeshen.observability.config.sink.SinkConfig
 import io.github.aeshen.observability.sink.ObservabilitySink
+import io.github.aeshen.observability.sink.registry.SinkRegistry
 
 class MySink : ObservabilitySink {
 	override fun handle(event: io.github.aeshen.observability.codec.EncodedEvent) {
@@ -164,6 +166,14 @@ class MySink : ObservabilitySink {
 
 val obs =
 	ObservabilityFactory.create(MySink())
+
+data class PartnerSinkConfig(val endpoint: String) : SinkConfig
+
+val registry =
+	SinkRegistry
+		.builder()
+		.register<PartnerSinkConfig> { MySink() }
+		.build()
 ```
 
 ## Use a Custom Codec

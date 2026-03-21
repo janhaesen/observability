@@ -1,0 +1,24 @@
+public final class io/github/aeshen/observability/example/PartnerHttpSink : io/github/aeshen/observability/sink/ObservabilitySink {
+	public fun <init> (Ljava/lang/String;)V
+	public fun close ()V
+	public final fun endpoint ()Ljava/lang/String;
+	public fun handle (Lio/github/aeshen/observability/codec/EncodedEvent;)V
+	public final fun receivedEvents ()Ljava/util/List;
+}
+
+public final class io/github/aeshen/observability/example/PartnerSinkConfig : io/github/aeshen/observability/config/sink/SinkConfig {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/aeshen/observability/example/PartnerSinkConfig;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/example/PartnerSinkConfig;Ljava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/example/PartnerSinkConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEndpoint ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/example/PartnerSinkProvider : io/github/aeshen/observability/sink/registry/SinkProvider {
+	public static final field INSTANCE Lio/github/aeshen/observability/example/PartnerSinkProvider;
+	public fun create (Lio/github/aeshen/observability/config/sink/SinkConfig;)Lio/github/aeshen/observability/sink/ObservabilitySink;
+}
+

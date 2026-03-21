@@ -1,0 +1,446 @@
+public abstract interface class io/github/aeshen/observability/EventName {
+	public abstract fun getEventName ()Ljava/lang/String;
+	public abstract fun getName ()Ljava/lang/String;
+	public fun resolvedName ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/EventName$DefaultImpls {
+	public static fun resolvedName (Lio/github/aeshen/observability/EventName;)Ljava/lang/String;
+}
+
+public abstract interface class io/github/aeshen/observability/Observability : java/io/Closeable {
+	public fun debug (Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public static synthetic fun debug$default (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;ILjava/lang/Object;)V
+	public abstract fun emit (Lio/github/aeshen/observability/ObservabilityEvent;)V
+	public fun error (Lio/github/aeshen/observability/EventName;Ljava/lang/String;Ljava/lang/Throwable;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public static synthetic fun error$default (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Ljava/lang/Throwable;Lio/github/aeshen/observability/ObservabilityContext;ILjava/lang/Object;)V
+	public fun info (Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public static synthetic fun info$default (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;ILjava/lang/Object;)V
+	public fun trace (Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public static synthetic fun trace$default (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;ILjava/lang/Object;)V
+	public fun warn (Lio/github/aeshen/observability/EventName;Ljava/lang/String;Ljava/lang/Throwable;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public static synthetic fun warn$default (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Ljava/lang/Throwable;Lio/github/aeshen/observability/ObservabilityContext;ILjava/lang/Object;)V
+}
+
+public final class io/github/aeshen/observability/Observability$DefaultImpls {
+	public static fun debug (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public static synthetic fun debug$default (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;ILjava/lang/Object;)V
+	public static fun error (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Ljava/lang/Throwable;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public static synthetic fun error$default (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Ljava/lang/Throwable;Lio/github/aeshen/observability/ObservabilityContext;ILjava/lang/Object;)V
+	public static fun info (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public static synthetic fun info$default (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;ILjava/lang/Object;)V
+	public static fun trace (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public static synthetic fun trace$default (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Lio/github/aeshen/observability/ObservabilityContext;ILjava/lang/Object;)V
+	public static fun warn (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Ljava/lang/Throwable;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public static synthetic fun warn$default (Lio/github/aeshen/observability/Observability;Lio/github/aeshen/observability/EventName;Ljava/lang/String;Ljava/lang/Throwable;Lio/github/aeshen/observability/ObservabilityContext;ILjava/lang/Object;)V
+}
+
+public final class io/github/aeshen/observability/ObservabilityContext {
+	public static final field Companion Lio/github/aeshen/observability/ObservabilityContext$Companion;
+	public synthetic fun <init> (Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun asMap ()Ljava/util/Map;
+	public final fun get (Lio/github/aeshen/observability/key/TypedKey;)Ljava/lang/Object;
+}
+
+public final class io/github/aeshen/observability/ObservabilityContext$Builder {
+	public final fun build ()Lio/github/aeshen/observability/ObservabilityContext;
+	public final fun put (Lio/github/aeshen/observability/key/TypedKey;Ljava/lang/Object;)Lio/github/aeshen/observability/ObservabilityContext$Builder;
+	public final fun putAll (Lio/github/aeshen/observability/ObservabilityContext;)Lio/github/aeshen/observability/ObservabilityContext$Builder;
+	public final fun putIfNotNull (Lio/github/aeshen/observability/key/TypedKey;Ljava/lang/Object;)Lio/github/aeshen/observability/ObservabilityContext$Builder;
+}
+
+public final class io/github/aeshen/observability/ObservabilityContext$Companion {
+	public final fun builder ()Lio/github/aeshen/observability/ObservabilityContext$Builder;
+	public final fun empty ()Lio/github/aeshen/observability/ObservabilityContext;
+}
+
+public final class io/github/aeshen/observability/ObservabilityEvent {
+	public final fun getContext ()Lio/github/aeshen/observability/ObservabilityContext;
+	public final fun getError ()Ljava/lang/Throwable;
+	public final fun getLevel ()Lio/github/aeshen/observability/sink/EventLevel;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getName ()Lio/github/aeshen/observability/EventName;
+	public final fun getPayload ()[B
+	public final fun getTimestamp ()Lkotlin/time/Instant;
+}
+
+public final class io/github/aeshen/observability/ObservabilityEvent$EventBuilder {
+	public fun <init> (Lio/github/aeshen/observability/EventName;)V
+	public final fun build ()Lio/github/aeshen/observability/ObservabilityEvent;
+	public final fun context (Lio/github/aeshen/observability/ObservabilityContext;)Lio/github/aeshen/observability/ObservabilityEvent$EventBuilder;
+	public final fun context (Lio/github/aeshen/observability/key/TypedKey;Ljava/lang/Object;)Lio/github/aeshen/observability/ObservabilityEvent$EventBuilder;
+	public final fun error (Ljava/lang/Throwable;)Lio/github/aeshen/observability/ObservabilityEvent$EventBuilder;
+	public final fun level (Lio/github/aeshen/observability/sink/EventLevel;)Lio/github/aeshen/observability/ObservabilityEvent$EventBuilder;
+	public final fun message (Ljava/lang/String;)Lio/github/aeshen/observability/ObservabilityEvent$EventBuilder;
+	public final fun payload ([B)Lio/github/aeshen/observability/ObservabilityEvent$EventBuilder;
+}
+
+public final class io/github/aeshen/observability/ObservabilityEventKt {
+	public static final fun event (Lio/github/aeshen/observability/EventName;Lkotlin/jvm/functions/Function1;)Lio/github/aeshen/observability/ObservabilityEvent;
+}
+
+public final class io/github/aeshen/observability/ObservabilityFactory {
+	public static final field INSTANCE Lio/github/aeshen/observability/ObservabilityFactory;
+	public final fun create (Lio/github/aeshen/observability/ObservabilityFactory$Config;)Lio/github/aeshen/observability/Observability;
+	public final fun create ([Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/codec/ObservabilityCodec;)Lio/github/aeshen/observability/Observability;
+	public static synthetic fun create$default (Lio/github/aeshen/observability/ObservabilityFactory;[Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/codec/ObservabilityCodec;ILjava/lang/Object;)Lio/github/aeshen/observability/Observability;
+}
+
+public final class io/github/aeshen/observability/ObservabilityFactory$Config {
+	public static final field Companion Lio/github/aeshen/observability/ObservabilityFactory$Config$Companion;
+	public fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;)V
+	public synthetic fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lio/github/aeshen/observability/config/encryption/EncryptionConfig;
+	public final fun component3 ()Z
+	public final fun component4 ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
+	public final fun component5 ()Lio/github/aeshen/observability/codec/ObservabilityCodec;
+	public final fun copy (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/ObservabilityFactory$Config;Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;ILjava/lang/Object;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCodec ()Lio/github/aeshen/observability/codec/ObservabilityCodec;
+	public final fun getEncryption ()Lio/github/aeshen/observability/config/encryption/EncryptionConfig;
+	public final fun getFailOnSinkError ()Z
+	public final fun getSinkRegistry ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
+	public final fun getSinks ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/ObservabilityFactory$Config$Companion {
+	public final fun aesGcmFromRawKeyBytes ([B)Lio/github/aeshen/observability/config/encryption/AesGcm;
+}
+
+public final class io/github/aeshen/observability/codec/EncodedEvent {
+	public fun <init> (Lio/github/aeshen/observability/ObservabilityEvent;[BLjava/util/Map;)V
+	public synthetic fun <init> (Lio/github/aeshen/observability/ObservabilityEvent;[BLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/aeshen/observability/ObservabilityEvent;
+	public final fun component2 ()[B
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (Lio/github/aeshen/observability/ObservabilityEvent;[BLjava/util/Map;)Lio/github/aeshen/observability/codec/EncodedEvent;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/codec/EncodedEvent;Lio/github/aeshen/observability/ObservabilityEvent;[BLjava/util/Map;ILjava/lang/Object;)Lio/github/aeshen/observability/codec/EncodedEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEncoded ()[B
+	public final fun getMetadata ()Ljava/util/Map;
+	public final fun getOriginal ()Lio/github/aeshen/observability/ObservabilityEvent;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/aeshen/observability/codec/ObservabilityCodec {
+	public abstract fun encode (Lio/github/aeshen/observability/ObservabilityEvent;)Lio/github/aeshen/observability/codec/EncodedEvent;
+}
+
+public final class io/github/aeshen/observability/codec/impl/JsonLineCodec : io/github/aeshen/observability/codec/ObservabilityCodec {
+	public fun <init> ()V
+	public fun encode (Lio/github/aeshen/observability/ObservabilityEvent;)Lio/github/aeshen/observability/codec/EncodedEvent;
+}
+
+public final class io/github/aeshen/observability/config/encryption/AesGcm : io/github/aeshen/observability/config/encryption/EncryptionConfig {
+	public fun <init> (Ljavax/crypto/SecretKey;)V
+	public final fun component1 ()Ljavax/crypto/SecretKey;
+	public final fun copy (Ljavax/crypto/SecretKey;)Lio/github/aeshen/observability/config/encryption/AesGcm;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/encryption/AesGcm;Ljavax/crypto/SecretKey;ILjava/lang/Object;)Lio/github/aeshen/observability/config/encryption/AesGcm;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAesKey ()Ljavax/crypto/SecretKey;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/aeshen/observability/config/encryption/EncryptionConfig {
+}
+
+public final class io/github/aeshen/observability/config/encryption/RsaKeyWrapped : io/github/aeshen/observability/config/encryption/EncryptionConfig {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/aeshen/observability/config/encryption/RsaKeyWrapped;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/encryption/RsaKeyWrapped;Ljava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/config/encryption/RsaKeyWrapped;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRecipientPublicKeyPem ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/config/sink/Console : io/github/aeshen/observability/config/sink/SinkConfig {
+	public static final field INSTANCE Lio/github/aeshen/observability/config/sink/Console;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/config/sink/File : io/github/aeshen/observability/config/sink/SinkConfig {
+	public fun <init> (Ljava/nio/file/Path;)V
+	public final fun component1 ()Ljava/nio/file/Path;
+	public final fun copy (Ljava/nio/file/Path;)Lio/github/aeshen/observability/config/sink/File;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/sink/File;Ljava/nio/file/Path;ILjava/lang/Object;)Lio/github/aeshen/observability/config/sink/File;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Ljava/nio/file/Path;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/config/sink/OpenTelemetry : io/github/aeshen/observability/config/sink/SinkConfig {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;JJII)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;JJIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/Map;
+	public final fun component6 ()J
+	public final fun component7 ()J
+	public final fun component8 ()I
+	public final fun component9 ()I
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;JJII)Lio/github/aeshen/observability/config/sink/OpenTelemetry;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/sink/OpenTelemetry;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;JJIIILjava/lang/Object;)Lio/github/aeshen/observability/config/sink/OpenTelemetry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEndpoint ()Ljava/lang/String;
+	public final fun getExporterTimeoutMillis ()J
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getInstrumentationScopeName ()Ljava/lang/String;
+	public final fun getMaxExportBatchSize ()I
+	public final fun getMaxQueueSize ()I
+	public final fun getScheduleDelayMillis ()J
+	public final fun getServiceName ()Ljava/lang/String;
+	public final fun getServiceVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/aeshen/observability/config/sink/SinkConfig {
+}
+
+public final class io/github/aeshen/observability/config/sink/Slf4j : io/github/aeshen/observability/config/sink/SinkConfig {
+	public fun <init> (Lkotlin/reflect/KClass;)V
+	public final fun component1 ()Lkotlin/reflect/KClass;
+	public final fun copy (Lkotlin/reflect/KClass;)Lio/github/aeshen/observability/config/sink/Slf4j;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/sink/Slf4j;Lkotlin/reflect/KClass;ILjava/lang/Object;)Lio/github/aeshen/observability/config/sink/Slf4j;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLogger ()Lkotlin/reflect/KClass;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/config/sink/ZipFile : io/github/aeshen/observability/config/sink/SinkConfig {
+	public fun <init> (Ljava/nio/file/Path;)V
+	public final fun component1 ()Ljava/nio/file/Path;
+	public final fun copy (Ljava/nio/file/Path;)Lio/github/aeshen/observability/config/sink/ZipFile;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/sink/ZipFile;Ljava/nio/file/Path;ILjava/lang/Object;)Lio/github/aeshen/observability/config/sink/ZipFile;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Ljava/nio/file/Path;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/key/BooleanKey : java/lang/Enum, io/github/aeshen/observability/key/TypedKey {
+	public static final field SUCCESS Lio/github/aeshen/observability/key/BooleanKey;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getKeyName ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/key/BooleanKey;
+	public static fun values ()[Lio/github/aeshen/observability/key/BooleanKey;
+}
+
+public final class io/github/aeshen/observability/key/DoubleKey : java/lang/Enum, io/github/aeshen/observability/key/TypedKey {
+	public static final field BYTES Lio/github/aeshen/observability/key/DoubleKey;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getKeyName ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/key/DoubleKey;
+	public static fun values ()[Lio/github/aeshen/observability/key/DoubleKey;
+}
+
+public abstract interface class io/github/aeshen/observability/key/KeyGroup {
+	public abstract fun apply (Lio/github/aeshen/observability/ObservabilityContext$Builder;)V
+}
+
+public final class io/github/aeshen/observability/key/KeyGroupKt {
+	public static final fun put (Lio/github/aeshen/observability/ObservabilityContext$Builder;Lio/github/aeshen/observability/key/KeyGroup;)Lio/github/aeshen/observability/ObservabilityContext$Builder;
+	public static final fun toContext (Lio/github/aeshen/observability/key/KeyGroup;)Lio/github/aeshen/observability/ObservabilityContext;
+}
+
+public final class io/github/aeshen/observability/key/LongKey : java/lang/Enum, io/github/aeshen/observability/key/TypedKey {
+	public static final field MS Lio/github/aeshen/observability/key/LongKey;
+	public static final field STATUS_CODE Lio/github/aeshen/observability/key/LongKey;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getKeyName ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/key/LongKey;
+	public static fun values ()[Lio/github/aeshen/observability/key/LongKey;
+}
+
+public final class io/github/aeshen/observability/key/NamespacedKey : io/github/aeshen/observability/key/TypedKey {
+	public fun <init> (Ljava/lang/String;Lio/github/aeshen/observability/key/TypedKey;)V
+	public fun getKeyName ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/key/NamespacedKeyKt {
+	public static final fun putNamespaced (Lio/github/aeshen/observability/ObservabilityContext$Builder;Ljava/lang/String;Lio/github/aeshen/observability/key/TypedKey;Ljava/lang/Object;)Lio/github/aeshen/observability/ObservabilityContext$Builder;
+}
+
+public final class io/github/aeshen/observability/key/StringKey : java/lang/Enum, io/github/aeshen/observability/key/TypedKey {
+	public static final field METHOD Lio/github/aeshen/observability/key/StringKey;
+	public static final field NAME Lio/github/aeshen/observability/key/StringKey;
+	public static final field PATH Lio/github/aeshen/observability/key/StringKey;
+	public static final field REQUEST_ID Lio/github/aeshen/observability/key/StringKey;
+	public static final field USER_AGENT Lio/github/aeshen/observability/key/StringKey;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getKeyName ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/key/StringKey;
+	public static fun values ()[Lio/github/aeshen/observability/key/StringKey;
+}
+
+public abstract interface class io/github/aeshen/observability/key/TypedKey {
+	public abstract fun getKeyName ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/aeshen/observability/processor/ObservabilityProcessor {
+	public abstract fun process (Lio/github/aeshen/observability/codec/EncodedEvent;)Lio/github/aeshen/observability/codec/EncodedEvent;
+}
+
+public abstract interface class io/github/aeshen/observability/sink/BatchCapableObservabilitySink : io/github/aeshen/observability/sink/ObservabilitySink {
+	public fun handleBatch (Ljava/util/List;)V
+}
+
+public final class io/github/aeshen/observability/sink/BatchCapableObservabilitySink$DefaultImpls {
+	public static fun close (Lio/github/aeshen/observability/sink/BatchCapableObservabilitySink;)V
+	public static fun handleBatch (Lio/github/aeshen/observability/sink/BatchCapableObservabilitySink;Ljava/util/List;)V
+}
+
+public final class io/github/aeshen/observability/sink/EventLevel : java/lang/Enum {
+	public static final field DEBUG Lio/github/aeshen/observability/sink/EventLevel;
+	public static final field ERROR Lio/github/aeshen/observability/sink/EventLevel;
+	public static final field INFO Lio/github/aeshen/observability/sink/EventLevel;
+	public static final field TRACE Lio/github/aeshen/observability/sink/EventLevel;
+	public static final field WARN Lio/github/aeshen/observability/sink/EventLevel;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/sink/EventLevel;
+	public static fun values ()[Lio/github/aeshen/observability/sink/EventLevel;
+}
+
+public abstract interface class io/github/aeshen/observability/sink/ObservabilitySink : java/io/Closeable {
+	public fun close ()V
+	public abstract fun handle (Lio/github/aeshen/observability/codec/EncodedEvent;)V
+}
+
+public final class io/github/aeshen/observability/sink/ObservabilitySink$DefaultImpls {
+	public static fun close (Lio/github/aeshen/observability/sink/ObservabilitySink;)V
+}
+
+public final class io/github/aeshen/observability/sink/decorator/AsyncObservabilitySink : io/github/aeshen/observability/sink/ObservabilitySink {
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;IJZJLio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$ShutdownPolicy;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;IJZJLio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$ShutdownPolicy;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun handle (Lio/github/aeshen/observability/codec/EncodedEvent;)V
+}
+
+public final class io/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$DropReason : java/lang/Enum {
+	public static final field CLOSED Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$DropReason;
+	public static final field DROP_PENDING_ON_CLOSE Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$DropReason;
+	public static final field QUEUE_FULL Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$DropReason;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$DropReason;
+	public static fun values ()[Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$DropReason;
+}
+
+public final class io/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$ShutdownPolicy : java/lang/Enum {
+	public static final field DRAIN Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$ShutdownPolicy;
+	public static final field DROP_PENDING Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$ShutdownPolicy;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$ShutdownPolicy;
+	public static fun values ()[Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$ShutdownPolicy;
+}
+
+public abstract interface class io/github/aeshen/observability/sink/decorator/BackoffStrategy {
+	public static final field Companion Lio/github/aeshen/observability/sink/decorator/BackoffStrategy$Companion;
+	public abstract fun nextDelayMillis (I)J
+}
+
+public final class io/github/aeshen/observability/sink/decorator/BackoffStrategy$Companion {
+	public final fun exponential (JDJ)Lio/github/aeshen/observability/sink/decorator/BackoffStrategy;
+	public static synthetic fun exponential$default (Lio/github/aeshen/observability/sink/decorator/BackoffStrategy$Companion;JDJILjava/lang/Object;)Lio/github/aeshen/observability/sink/decorator/BackoffStrategy;
+	public final fun fixed (J)Lio/github/aeshen/observability/sink/decorator/BackoffStrategy;
+}
+
+public final class io/github/aeshen/observability/sink/decorator/BatchingObservabilitySink : io/github/aeshen/observability/sink/ObservabilitySink {
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;IJ)V
+	public synthetic fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;IJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun handle (Lio/github/aeshen/observability/codec/EncodedEvent;)V
+}
+
+public final class io/github/aeshen/observability/sink/decorator/RetryingObservabilitySink : io/github/aeshen/observability/sink/ObservabilitySink {
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;ILio/github/aeshen/observability/sink/decorator/BackoffStrategy;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;ILio/github/aeshen/observability/sink/decorator/BackoffStrategy;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun handle (Lio/github/aeshen/observability/codec/EncodedEvent;)V
+}
+
+public abstract interface class io/github/aeshen/observability/sink/registry/SinkProvider {
+	public abstract fun create (Lio/github/aeshen/observability/config/sink/SinkConfig;)Lio/github/aeshen/observability/sink/ObservabilitySink;
+}
+
+public final class io/github/aeshen/observability/sink/registry/SinkRegistry {
+	public static final field Companion Lio/github/aeshen/observability/sink/registry/SinkRegistry$Companion;
+	public synthetic fun <init> (Ljava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun resolve (Lio/github/aeshen/observability/config/sink/SinkConfig;)Lio/github/aeshen/observability/sink/ObservabilitySink;
+	public final fun resolveAll (Ljava/util/List;)Ljava/util/List;
+	public final fun toBuilder ()Lio/github/aeshen/observability/sink/registry/SinkRegistry$Builder;
+}
+
+public final class io/github/aeshen/observability/sink/registry/SinkRegistry$Builder {
+	public fun <init> ()V
+	public final fun build ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
+	public final fun registerProvider (Lio/github/aeshen/observability/sink/registry/SinkProvider;)Lio/github/aeshen/observability/sink/registry/SinkRegistry$Builder;
+}
+
+public final class io/github/aeshen/observability/sink/registry/SinkRegistry$Companion {
+	public final fun builder ()Lio/github/aeshen/observability/sink/registry/SinkRegistry$Builder;
+	public final fun default ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
+	public final fun defaultBuilder ()Lio/github/aeshen/observability/sink/registry/SinkRegistry$Builder;
+	public final fun empty ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
+}
+
+public abstract interface class io/github/aeshen/observability/transport/MetadataEnricher {
+	public abstract fun enrich (Lio/github/aeshen/observability/codec/EncodedEvent;)V
+}
+
+public abstract interface class io/github/aeshen/observability/transport/TransportEnvelope {
+}
+
+public final class io/github/aeshen/observability/transport/TransportEnvelope$Binary : io/github/aeshen/observability/transport/TransportEnvelope {
+	public fun <init> ([BLjava/util/Map;)V
+	public final fun component1 ()[B
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy ([BLjava/util/Map;)Lio/github/aeshen/observability/transport/TransportEnvelope$Binary;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/transport/TransportEnvelope$Binary;[BLjava/util/Map;ILjava/lang/Object;)Lio/github/aeshen/observability/transport/TransportEnvelope$Binary;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMetadata ()Ljava/util/Map;
+	public final fun getPayload ()[B
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/transport/TransportEnvelope$Json : io/github/aeshen/observability/transport/TransportEnvelope {
+	public fun <init> ([BLjava/util/Map;)V
+	public final fun component1 ()[B
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy ([BLjava/util/Map;)Lio/github/aeshen/observability/transport/TransportEnvelope$Json;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/transport/TransportEnvelope$Json;[BLjava/util/Map;ILjava/lang/Object;)Lio/github/aeshen/observability/transport/TransportEnvelope$Json;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMetadata ()Ljava/util/Map;
+	public final fun getPayload ()[B
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/transport/impl/TimestampMetadataEnricher : io/github/aeshen/observability/transport/MetadataEnricher {
+	public fun <init> ()V
+	public fun enrich (Lio/github/aeshen/observability/codec/EncodedEvent;)V
+}
+
+public final class io/github/aeshen/observability/util/CryptoUtils {
+	public static final field INSTANCE Lio/github/aeshen/observability/util/CryptoUtils;
+	public final fun loadPrivateKeyFromPem (Ljava/lang/String;)Ljava/security/PrivateKey;
+	public final fun loadPublicKeyFromPem (Ljava/lang/String;)Ljava/security/PublicKey;
+	public final fun randomBytes (I)[B
+}
+
