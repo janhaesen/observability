@@ -8,8 +8,10 @@ import io.github.aeshen.observability.sink.BatchCapableObservabilitySink
 import io.github.aeshen.observability.sink.EventLevel
 import io.github.aeshen.observability.sink.ObservabilitySink
 import io.github.aeshen.observability.sink.testing.ObservabilitySinkConformanceSuite
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite() {
     private val observed = mutableListOf<EncodedEvent>()
@@ -29,6 +31,21 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
     @Test
     fun `close can be called repeatedly`() {
         assertCloseCanBeCalledRepeatedly()
+    }
+
+    @Test
+    fun `concurrent handle calls are safe`() {
+        assertConcurrentHandleSafety()
+    }
+
+    @Test
+    fun `close rejects writes deterministically`() {
+        assertCloseRejectsFurtherWritesDeterministically()
+    }
+
+    @Test
+    fun `error mode contract helper behaves deterministically`() {
+        assertHandleErrorModeContract()
     }
 }
 
@@ -77,6 +94,48 @@ class BatchingObservabilitySinkTest {
 
         override fun handleBatch(events: List<EncodedEvent>) {
             batches += events.map { it.copy(metadata = it.metadata.toMutableMap()) }
+        }
+    }
+}
+
+class RetryingObservabilitySinkTest {
+    @Test
+    fun `retrying sink eventually succeeds before max attempts`() {
+        val attempts = AtomicInteger(0)
+        val sink =
+            RetryingObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            if (attempts.incrementAndGet() < 3) {
+                                error("transient")
+                            }
+                        }
+                    },
+                maxAttempts = 5,
+                backoff = BackoffStrategy.fixed(0),
+            )
+
+        sink.handle(sample("retry"))
+        assertEquals(3, attempts.get())
+    }
+
+    @Test
+    fun `retrying sink throws after exhausting attempts`() {
+        val sink =
+            RetryingObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            error("always failing")
+                        }
+                    },
+                maxAttempts = 2,
+                backoff = BackoffStrategy.fixed(0),
+            )
+
+        assertFailsWith<IllegalStateException> {
+            sink.handle(sample("retry-fail"))
         }
     }
 }

@@ -198,6 +198,9 @@ val context =
 - `Observability` is `Closeable`; call `close()` or use `use { ... }`.
 - Sink failures are swallowed by default; set `failOnSinkError = true` for strict behavior.
 - Current codec output is JSON text with context and base64 payload fields.
+- Sink SPI compatibility policy: `docs/spi-contract.md`.
+- Third-party sink sample module: `examples/third-party-sink-example`.
+- Backpressure/load harness: `benchmarks`.
 
 ## Run the Test Suite
 

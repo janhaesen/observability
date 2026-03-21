@@ -82,14 +82,13 @@ object ObservabilityFactory {
         sinks: List<ObservabilitySink>,
         processors: List<ObservabilityProcessor>,
         failOnSinkError: Boolean,
-    ): Observability {
-        return ObservabilityPipeline(
+    ): Observability =
+        ObservabilityPipeline(
             codec = JsonLineCodec(),
             processors = processors,
             sinks = sinks,
             failOnSinkError = failOnSinkError,
         )
-    }
 
     private fun buildSinks(config: Config): List<ObservabilitySink> = config.sinkRegistry.resolveAll(config.sinks)
 

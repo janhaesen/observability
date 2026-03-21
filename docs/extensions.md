@@ -2,6 +2,8 @@
 
 This guide defines the extension contract for organizations that add custom sinks.
 
+The formal compatibility policy lives in `docs/spi-contract.md`.
+
 ## Stable Extension Seams
 
 - `SinkConfig` is an open interface. Third-party modules can define their own config type.
@@ -27,6 +29,16 @@ This guide defines the extension contract for organizations that add custom sink
 - `AsyncObservabilitySink` offloads writes to a worker queue.
 - `BatchingObservabilitySink` buffers events and flushes by size/interval.
 - `BatchCapableObservabilitySink` allows optimized batch delivery.
+- `RetryingObservabilitySink` retries transient failures using `BackoffStrategy`.
+
+```kotlin
+val reliable =
+    io.github.aeshen.observability.sink.decorator.RetryingObservabilitySink(
+        delegate = mySink,
+        maxAttempts = 5,
+        backoff = io.github.aeshen.observability.sink.decorator.BackoffStrategy.exponential(),
+    )
+```
 
 ## Register A Provider
 
