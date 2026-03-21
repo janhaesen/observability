@@ -5,4 +5,3 @@ import io.github.aeshen.observability.config.sink.SinkConfig
 data class PartnerSinkConfig(
     val endpoint: String,
 ) : SinkConfig
-

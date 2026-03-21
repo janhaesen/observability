@@ -17,4 +17,3 @@ class PartnerHttpSink(
 
     fun receivedEvents(): List<EncodedEvent> = received.toList()
 }
-

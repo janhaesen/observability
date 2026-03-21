@@ -6,7 +6,6 @@ include(":examples:third-party-sink-example")
 dependencyResolutionManagement {
     repositories {
         gradlePluginPortal()
-        mavenLocal()
         mavenCentral()
     }
 }

@@ -1,5 +1,9 @@
+import io.gitlab.arturbosch.detekt.Detekt
+import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+
 plugins {
     kotlin("jvm") version "2.3.20"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
     `java-library`
     `java-test-fixtures`
@@ -7,12 +11,49 @@ plugins {
 }
 
 val openTelemetryVersion = "1.49.0"
+val detektVersion = "1.23.8"
 
 group = "io.github.aeshen" // A company name, for example, `org.jetbrains`
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
+}
+
+detekt {
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    buildUponDefaultConfig = true
+    allRules = false
+    autoCorrect = true
+    parallel = true
+}
+
+dependencies {
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$detektVersion")
+}
+
+tasks.withType<Detekt>().configureEach {
+    jvmTarget = "21"
+}
+
+subprojects {
+    apply(plugin = "io.gitlab.arturbosch.detekt")
+
+    extensions.configure<DetektExtension> {
+        config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+        buildUponDefaultConfig = true
+        allRules = false
+        autoCorrect = true
+        parallel = true
+    }
+
+    tasks.withType<Detekt>().configureEach {
+        jvmTarget = "21"
+    }
+
+    dependencies {
+        add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:$detektVersion")
+    }
 }
 
 dependencies {

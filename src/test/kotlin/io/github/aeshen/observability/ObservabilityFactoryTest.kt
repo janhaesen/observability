@@ -77,12 +77,12 @@ class ObservabilityFactoryTest {
                 ObservabilityFactory.create(
                     ObservabilityFactory.Config(
                         sinks =
-                            listOf(
-                                OpenTelemetry(
-                                    endpoint = endpoint,
-                                    serviceName = "observability-test",
-                                ),
+                        listOf(
+                            OpenTelemetry(
+                                endpoint = endpoint,
+                                serviceName = "observability-test",
                             ),
+                        ),
                     ),
                 )
 
@@ -130,12 +130,12 @@ class ObservabilityFactoryTest {
             ObservabilityFactory.create(
                 CapturingSink(seen),
                 codec =
-                    ObservabilityCodec { event ->
-                        EncodedEvent(
-                            original = event,
-                            encoded = "custom".toByteArray(Charsets.UTF_8),
-                        )
-                    },
+                ObservabilityCodec { event ->
+                    EncodedEvent(
+                        original = event,
+                        encoded = "custom".toByteArray(Charsets.UTF_8),
+                    )
+                },
             )
 
         observability.use {
@@ -212,19 +212,19 @@ class ObservabilityFactoryTest {
                 ObservabilityFactory.Config(
                     sinks = listOf(ThirdPartySinkConfig("partner-c")),
                     sinkRegistry =
-                        SinkRegistry
-                            .builder()
-                            .register<ThirdPartySinkConfig> { CapturingSink(seen) }
-                            .build(),
+                    SinkRegistry
+                        .builder()
+                        .register<ThirdPartySinkConfig> { CapturingSink(seen) }
+                        .build(),
                     contextProviders =
-                        listOf(
-                            ContextProvider {
-                                ObservabilityContext
-                                    .builder()
-                                    .put(StringKey.USER_AGENT, "provider-agent")
-                                    .build()
-                            },
-                        ),
+                    listOf(
+                        ContextProvider {
+                            ObservabilityContext
+                                .builder()
+                                .put(StringKey.USER_AGENT, "provider-agent")
+                                .build()
+                        },
+                    ),
                 ),
             )
 
@@ -243,7 +243,7 @@ class ObservabilityFactoryTest {
     fun `audit durable profile enforces strict sink failures`() {
         val failing =
             object : ObservabilitySink {
-                override fun handle(event: EncodedEvent): Unit = throw IllegalStateException("always fails")
+                override fun handle(event: EncodedEvent): Unit = error("always fails")
             }
 
         val observability =
@@ -270,7 +270,7 @@ class ObservabilityFactoryTest {
             object : ObservabilitySink {
                 override fun handle(event: EncodedEvent) {
                     if (attempts.incrementAndGet() < 3) {
-                        throw IllegalStateException("transient")
+                        error("transient")
                     }
                 }
             }
@@ -319,11 +319,11 @@ class ObservabilityFactoryTest {
                 ObservabilityFactory.Config(
                     sinks = listOf(ThirdPartySinkConfig("test")),
                     sinkRegistry =
-                        SinkRegistry
-                            .builder()
-                            .register<ThirdPartySinkConfig> {
-                                CapturingSink(mutableListOf())
-                            }.build(),
+                    SinkRegistry
+                        .builder()
+                        .register<ThirdPartySinkConfig> {
+                            CapturingSink(mutableListOf())
+                        }.build(),
                     profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
                     diagnostics = diagnostics,
                 ),
@@ -358,7 +358,7 @@ class ObservabilityFactoryTest {
 
         val failing =
             object : ObservabilitySink {
-                override fun handle(event: EncodedEvent): Unit = throw IllegalStateException("always fail")
+                override fun handle(event: EncodedEvent): Unit = error("always fail")
             }
 
         val observability =

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.aeshen"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -17,4 +17,3 @@ dependencies {
 application {
     mainClass.set("io.github.aeshen.observability.benchmarks.SinkBackpressureBenchmarkKt")
 }
-

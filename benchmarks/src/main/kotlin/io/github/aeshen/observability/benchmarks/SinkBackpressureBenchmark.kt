@@ -10,6 +10,7 @@ import io.github.aeshen.observability.sink.decorator.AsyncObservabilitySink
 import kotlin.system.measureTimeMillis
 
 private const val EVENT_COUNT = 100_000
+private const val MILLIS_PER_SECOND = 1000.0
 
 fun main() {
     val scenarios =
@@ -30,7 +31,7 @@ fun main() {
                 }
             }
 
-        val throughput = EVENT_COUNT.toDouble() / elapsedMs.toDouble().coerceAtLeast(1.0) * 1000.0
+        val throughput = EVENT_COUNT.toDouble() / elapsedMs.toDouble().coerceAtLeast(1.0) * MILLIS_PER_SECOND
         println("$name: elapsed=${elapsedMs}ms throughput=${"%.2f".format(throughput)} events/s")
     }
 }
@@ -44,10 +45,10 @@ private class NoopSink : ObservabilitySink {
 private fun sampleEvent(payload: String): EncodedEvent =
     EncodedEvent(
         original =
-            event(BenchmarkEvent.BENCH) {
-                level(EventLevel.INFO)
-                context(ObservabilityContext.empty())
-            },
+        event(BenchmarkEvent.BENCH) {
+            level(EventLevel.INFO)
+            context(ObservabilityContext.empty())
+        },
         encoded = payload.toByteArray(Charsets.UTF_8),
     )
 

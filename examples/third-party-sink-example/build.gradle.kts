@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "io.github.aeshen.examples"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -15,4 +15,3 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(testFixtures(project(":")))
 }
-

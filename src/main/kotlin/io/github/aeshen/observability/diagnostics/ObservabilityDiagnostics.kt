@@ -42,4 +42,3 @@ interface ObservabilityDiagnostics {
         val NOOP: ObservabilityDiagnostics = object : ObservabilityDiagnostics {}
     }
 }
-

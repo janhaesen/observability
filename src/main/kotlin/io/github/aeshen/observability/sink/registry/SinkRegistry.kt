@@ -62,7 +62,10 @@ private object BuiltInSinkProvider : SinkProvider {
             is Slf4j -> createOptionalSink("SLF4J") { Slf4JObservabilitySink(config.logger) }
             is File -> FileObservabilitySink(config.path)
             is ZipFile -> ZipFileObservabilitySink(config.path)
-            is OpenTelemetry -> createOptionalSink("OpenTelemetry OTLP") { OpenTelemetryObservabilitySink.fromConfig(config) }
+            is OpenTelemetry ->
+                createOptionalSink("OpenTelemetry OTLP") {
+                    OpenTelemetryObservabilitySink.fromConfig(config)
+                }
             else -> null
         }
 

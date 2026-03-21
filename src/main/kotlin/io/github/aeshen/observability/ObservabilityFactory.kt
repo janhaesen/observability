@@ -161,11 +161,11 @@ object ObservabilityFactory {
                 sinks.map { sink ->
                     BatchingObservabilitySink(
                         delegate =
-                            RetryingObservabilitySink(
-                                delegate = sink,
-                                maxAttempts = AUDIT_MAX_ATTEMPTS,
-                                diagnostics = diagnostics,
-                            ),
+                        RetryingObservabilitySink(
+                            delegate = sink,
+                            maxAttempts = AUDIT_MAX_ATTEMPTS,
+                            diagnostics = diagnostics,
+                        ),
                         maxBatchSize = AUDIT_MAX_BATCH_SIZE,
                         flushIntervalMillis = AUDIT_FLUSH_INTERVAL_MILLIS,
                         diagnostics = diagnostics,

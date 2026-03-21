@@ -6,8 +6,8 @@ import io.github.aeshen.observability.processor.ObservabilityProcessor
 import io.github.aeshen.observability.sink.ObservabilitySink
 import io.github.aeshen.observability.transport.MetadataEnricher
 import java.io.Closeable
-import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 

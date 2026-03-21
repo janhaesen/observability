@@ -21,7 +21,7 @@ class ObservabilityApiTest {
             emitted += event
         }
 
-        override fun close() {}
+        override fun close() = Unit
     }
 
     @Test

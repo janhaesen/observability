@@ -58,7 +58,9 @@ internal class OpenTelemetryObservabilitySink internal constructor(
     }
 
     companion object {
-        fun fromConfig(config: io.github.aeshen.observability.config.sink.OpenTelemetry): OpenTelemetryObservabilitySink {
+        fun fromConfig(
+            config: io.github.aeshen.observability.config.sink.OpenTelemetry,
+        ): OpenTelemetryObservabilitySink {
             val exporterBuilder = OtlpHttpLogRecordExporter.builder().setEndpoint(config.endpoint)
             config.headers.forEach { (key, value) -> exporterBuilder.addHeader(key, value) }
 

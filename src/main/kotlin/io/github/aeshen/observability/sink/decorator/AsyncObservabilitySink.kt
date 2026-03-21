@@ -54,7 +54,7 @@ class AsyncObservabilitySink(
         val snapshot = event.copy(metadata = event.metadata.toMutableMap())
         if (!accepting.get()) {
             diagnostics.onAsyncDrop(snapshot, DropReason.CLOSED.name)
-            throw IllegalStateException("AsyncObservabilitySink is closed.")
+            check(false) { "AsyncObservabilitySink is closed." }
         }
 
         workerFailure.get()?.let { failure ->
@@ -114,6 +114,7 @@ class AsyncObservabilitySink(
         closeFailure?.let { throw it }
     }
 
+    @Suppress("LoopWithTooManyJumpStatements")
     private fun runLoop() {
         while (accepting.get() || queue.isNotEmpty()) {
             val event =
