@@ -10,8 +10,92 @@ The formal compatibility policy lives in `docs/spi-contract.md`.
 - `SinkProvider` maps a `SinkConfig` into an `ObservabilitySink`.
 - `SinkRegistry` resolves configured sinks through registered providers.
 - `ObservabilityFactory.create(...)` supports direct sink instances.
+- `MetadataEnricher` is a stable extension point for enriching encoded events with runtime metadata.
 
-## Threading And Lifecycle Guarantees
+## Metadata Enrichers
+
+Metadata enrichers allow you to attach runtime metadata to events after encoding but before sink delivery. This enables flexible injection of deployment-specific, environment-specific, or correlation metadata without modifying event context or codecs.
+
+### Pipeline Position
+
+Metadata enrichers are applied in the following pipeline position:
+
+```
+ObservabilityEvent (emitted)
+      │
+      ▼
+ContextProviders   (merge ambient context into event)
+      │
+      ▼
+Codec              (encode event → EncodedEvent with bytes)
+      │
+      ▼
+MetadataEnrichers  ← You are here (enrich metadata map)
+      │
+      ▼
+Processors         (e.g., encryption)
+      │
+      ▼
+Sinks (fan-out)    (deliver EncodedEvent)
+```
+
+### Built-in Enrichers
+
+The library ships with several ready-made enrichers:
+
+- `IngestedAtEnricher`: Adds the `ingestedAt` timestamp (milliseconds since epoch)
+- `VersionEnricher`: Adds `version` and `buildSha` fields (e.g., for deployment tracking)
+- `EnvironmentEnricher`: Adds `environment` and `region` fields (e.g., "prod", "us-west-2")
+- `HostEnricher`: Adds `hostname` and optional `nodeId` (e.g., pod name, instance ID)
+- `CorrelationIdEnricher`: Adds `traceId` and `requestId` from supplier functions (e.g., from MDC)
+
+### Custom Enricher Example
+
+```kotlin
+import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.enricher.MetadataEnricher
+
+class CustomEnricher : MetadataEnricher {
+    override fun enrich(encoded: EncodedEvent) {
+        // Add arbitrary metadata to the encoded event
+        encoded.metadata["customKey"] = "customValue"
+        encoded.metadata["processorId"] = ProcessManager.getCurrentProcessId()
+    }
+}
+```
+
+### Configuration
+
+Pass enrichers to `ObservabilityFactory.create()`:
+
+```kotlin
+import io.github.aeshen.observability.ObservabilityFactory
+import io.github.aeshen.observability.enricher.builtin.EnvironmentEnricher
+import io.github.aeshen.observability.enricher.builtin.IngestedAtEnricher
+import io.github.aeshen.observability.enricher.builtin.VersionEnricher
+
+val observability =
+    ObservabilityFactory.create(
+        ObservabilityFactory.Config(
+            sinks = listOf(/* ... */),
+            metadataEnrichers = listOf(
+                IngestedAtEnricher,
+                VersionEnricher("1.0.0", "abc123def"),
+                EnvironmentEnricher("prod", "us-west-2"),
+            ),
+        ),
+    )
+```
+
+Enrichers are applied in the order provided. Choose ordering carefully if enrichers depend on each other's output.
+
+### Thread Safety
+
+`MetadataEnricher.enrich()` is always called under a read lock within the emit cycle and should be fast and thread-safe. If your enricher holds state, ensure it is thread-safe (e.g., using `AtomicReference` or synchronized access).
+
+## Sinks
+
+### Threading And Lifecycle Guarantees
 
 - `ObservabilitySink.handle` may be called frequently and should be fast and thread-safe.
 - `ObservabilitySink.close` is called when `Observability` is closed; implementations should flush and release resources.
@@ -26,7 +110,7 @@ The formal compatibility policy lives in `docs/spi-contract.md`.
 - Fatal JVM `Error` types are never swallowed by the pipeline.
 - Use `ObservabilityDiagnostics` to capture handle/close errors, async drops, and batch flush outcomes.
 
-## Optional Reliability Decorators
+### Optional Reliability Decorators
 
 - `AsyncObservabilitySink` offloads writes to a worker queue and supports deterministic close timeout/policy.
 - `BatchingObservabilitySink` buffers events and flushes by size/interval.
@@ -42,7 +126,7 @@ val reliable =
     )
 ```
 
-## Register A Provider
+### Register A Provider
 
 ```kotlin
 import io.github.aeshen.observability.ObservabilityFactory
@@ -75,7 +159,7 @@ val observability =
     )
 ```
 
-## Conformance Testing
+### Conformance Testing
 
 Use `ObservabilitySinkConformanceSuite` from test fixtures in your sink module and implement:
 

@@ -7,6 +7,7 @@ import io.github.aeshen.observability.config.encryption.EncryptionConfig
 import io.github.aeshen.observability.config.encryption.RsaKeyWrapped
 import io.github.aeshen.observability.config.sink.SinkConfig
 import io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics
+import io.github.aeshen.observability.enricher.MetadataEnricher
 import io.github.aeshen.observability.processor.ObservabilityProcessor
 import io.github.aeshen.observability.processor.encryption.EncryptingObservabilityProcessor
 import io.github.aeshen.observability.sink.ObservabilitySink
@@ -36,6 +37,7 @@ object ObservabilityFactory {
         val sinkRegistry: SinkRegistry = SinkRegistry.default(),
         val codec: ObservabilityCodec = JsonLineCodec(),
         val contextProviders: List<ContextProvider> = emptyList(),
+        val metadataEnrichers: List<MetadataEnricher> = emptyList(),
         val diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP,
         val profile: Profile = Profile.STANDARD,
     ) {
@@ -63,6 +65,7 @@ object ObservabilityFactory {
         return pipeline(
             codec = config.codec,
             contextProviders = config.contextProviders,
+            metadataEnrichers = config.metadataEnrichers,
             sinks = sinks,
             processors = processors,
             failOnSinkError = resolveFailOnSinkError(config.failOnSinkError, config.profile),
@@ -80,6 +83,7 @@ object ObservabilityFactory {
         failOnSinkError: Boolean = false,
         codec: ObservabilityCodec = JsonLineCodec(),
         contextProviders: List<ContextProvider> = emptyList(),
+        metadataEnrichers: List<MetadataEnricher> = emptyList(),
         diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP,
         profile: Profile = Profile.STANDARD,
     ): Observability {
@@ -93,6 +97,7 @@ object ObservabilityFactory {
         return pipeline(
             codec = codec,
             contextProviders = contextProviders,
+            metadataEnrichers = metadataEnrichers,
             sinks = profiledSinks,
             processors = processors,
             failOnSinkError = resolveFailOnSinkError(failOnSinkError, profile),
@@ -103,6 +108,7 @@ object ObservabilityFactory {
     private fun pipeline(
         codec: ObservabilityCodec,
         contextProviders: List<ContextProvider>,
+        metadataEnrichers: List<MetadataEnricher>,
         sinks: List<ObservabilitySink>,
         processors: List<ObservabilityProcessor>,
         failOnSinkError: Boolean,
@@ -111,6 +117,7 @@ object ObservabilityFactory {
         ObservabilityPipeline(
             codec = codec,
             contextProviders = contextProviders,
+            metadataEnrichers = metadataEnrichers,
             processors = processors,
             sinks = sinks,
             failOnSinkError = failOnSinkError,
@@ -156,8 +163,11 @@ object ObservabilityFactory {
         diagnostics: ObservabilityDiagnostics,
     ): List<ObservabilitySink> =
         when (profile) {
-            Profile.STANDARD -> sinks
-            Profile.AUDIT_DURABLE ->
+            Profile.STANDARD -> {
+                sinks
+            }
+
+            Profile.AUDIT_DURABLE -> {
                 sinks.map { sink ->
                     BatchingObservabilitySink(
                         delegate =
@@ -171,5 +181,6 @@ object ObservabilityFactory {
                         diagnostics = diagnostics,
                     )
                 }
+            }
         }
 }

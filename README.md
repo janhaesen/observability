@@ -361,6 +361,68 @@ Multiple providers are applied in order; later providers can overwrite earlier k
 
 ---
 
+## Metadata Enrichers
+
+`MetadataEnricher` is a `fun interface` that enriches the encoded event's metadata map after encoding but before encryption and sink delivery. Use enrichers to inject runtime metadata such as ingestion timestamp, version, environment, or correlation identifiers without modifying event context or codecs.
+
+### Built-in Enrichers
+
+The library ships with several ready-made enrichers:
+
+```kotlin
+import io.github.aeshen.observability.enricher.builtin.CorrelationIdEnricher
+import io.github.aeshen.observability.enricher.builtin.EnvironmentEnricher
+import io.github.aeshen.observability.enricher.builtin.HostEnricher
+import io.github.aeshen.observability.enricher.builtin.IngestedAtEnricher
+import io.github.aeshen.observability.enricher.builtin.VersionEnricher
+
+val observability =
+    ObservabilityFactory.create(
+        ObservabilityFactory.Config(
+            sinks = listOf(Console),
+            metadataEnrichers = listOf(
+                IngestedAtEnricher,  // adds "ingestedAt" timestamp
+                VersionEnricher("1.0.0", "abc123"),  // adds "version" and "buildSha"
+                EnvironmentEnricher("prod", "us-west-2"),  // adds "environment" and "region"
+                HostEnricher("pod-123", "node-456"),  // adds "hostname" and "nodeId"
+                CorrelationIdEnricher(
+                    traceIdSupplier = { MDC.get("traceId") },
+                    requestIdSupplier = { MDC.get("requestId") },
+                ),  // adds "traceId" and "requestId" from suppliers
+            ),
+        ),
+    )
+```
+
+| Enricher                 | Metadata fields added | Use case |
+|--------------------------|------------------------|----------|
+| `IngestedAtEnricher`     | `ingestedAt` (ms)     | Track event ingestion time |
+| `VersionEnricher`        | `version`, `buildSha` | Deployment tracking |
+| `EnvironmentEnricher`    | `environment`, `region` | Environment/region filtering |
+| `HostEnricher`           | `hostname`, `nodeId` (optional) | Multi-instance debugging |
+| `CorrelationIdEnricher`  | `traceId`, `requestId` (conditional) | Distributed tracing correlation |
+
+### Custom Enricher
+
+Implement `MetadataEnricher` to add your own metadata:
+
+```kotlin
+import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.enricher.MetadataEnricher
+
+class RequestCounterEnricher : MetadataEnricher {
+    private val counter = AtomicLong(0)
+    
+    override fun enrich(encoded: EncodedEvent) {
+        encoded.metadata["requestNumber"] = counter.incrementAndGet()
+    }
+}
+```
+
+Enrichers are applied in order; choose ordering carefully if enrichers depend on each other's output.
+
+---
+
 ## Configure Sinks
 
 ```kotlin

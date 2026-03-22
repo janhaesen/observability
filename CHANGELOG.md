@@ -6,7 +6,17 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 
 ## [Unreleased]
 
+### Added
+- Exposed `MetadataEnricher` as a public, first-class configuration extension point via `metadataEnrichers` parameter in `ObservabilityFactory.Config` and overload.
+- Added built-in metadata enrichers:
+  - `IngestedAtEnricher`: adds `ingestedAt` timestamp (milliseconds since epoch)
+  - `VersionEnricher`: adds `version` and `buildSha` for deployment tracking
+  - `EnvironmentEnricher`: adds `environment` and `region` for environment-specific metadata
+  - `HostEnricher`: adds `hostname` and optional `nodeId` for multi-instance deployments
+  - `CorrelationIdEnricher`: adds `traceId` and `requestId` from supplier functions for distributed tracing
+
 ### Changed
+- Moved the `MetadataEnricher` contract to `io.github.aeshen.observability.enricher` and grouped library-provided enrichers under `io.github.aeshen.observability.enricher.builtin` for clearer SPI-versus-builtins separation.
 - Evolved the optional `query-spi` module toward a typed, future-proof contract with `AuditSearchQueryService` and `AuditSearchQuery`, while retaining `AuditQueryService` as a deprecated compatibility bridge.
 - Standardized the recommended `query-spi` naming convention for dynamic query fields as `context.<key>` and `metadata.<key>`, with additive `AuditField` helpers for those namespaces.
 

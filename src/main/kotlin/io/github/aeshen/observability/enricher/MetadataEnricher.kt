@@ -1,4 +1,4 @@
-package io.github.aeshen.observability.transport
+package io.github.aeshen.observability.enricher
 
 import io.github.aeshen.observability.codec.EncodedEvent
 

@@ -2,9 +2,9 @@ package io.github.aeshen.observability
 
 import io.github.aeshen.observability.codec.ObservabilityCodec
 import io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics
+import io.github.aeshen.observability.enricher.MetadataEnricher
 import io.github.aeshen.observability.processor.ObservabilityProcessor
 import io.github.aeshen.observability.sink.ObservabilitySink
-import io.github.aeshen.observability.transport.MetadataEnricher
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
