@@ -750,6 +750,15 @@ val observability =
 
 The optional `query-spi` module defines a backend-agnostic interface for querying stored audit records. It has no runtime dependencies and is intended for backend-specific implementations (OpenSearch, ClickHouse, PostgreSQL, etc.).
 
+Canonical query field names follow a simple portable convention:
+
+- built-in record fields stay flat: `id`, `timestampEpochMillis`, `level`, `event`, `message`
+- dynamic context entries use `context.<key>`
+- dynamic metadata entries use `metadata.<key>`
+
+Use `AuditField.context("...")` and `AuditField.metadata("...")` when targeting those dynamic maps.
+Reserve `AuditField.custom("...")` for vendor-specific fields outside the shared portable convention.
+
 ```kotlin
 // query-spi artifact: io.github.aeshen:query-spi:1.0.0
 
@@ -783,6 +792,14 @@ val result =
                         operator = AuditComparisonOperator.EQ,
                         value = AuditValue.Text("ERROR"),
                     ),
+                    AuditCriterion.Comparison(
+                        field = AuditField.context("request_id"),
+                        operator = AuditComparisonOperator.EQ,
+                        value = AuditValue.Text("req-123"),
+                    ),
+                    AuditCriterion.Exists(
+                        field = AuditField.metadata("ingestedAt"),
+                    ),
                 ),
             text = AuditTextQuery("payment"),
         ),
@@ -800,7 +817,7 @@ val legacy =
     AuditQuery(
         fromEpochMillis = System.currentTimeMillis() - 3_600_000,
         toEpochMillis = System.currentTimeMillis(),
-        filters = mapOf("level" to "ERROR"),
+        filters = mapOf("level" to "ERROR", "context.request_id" to "req-123"),
         freeText = "payment",
     )
 

@@ -75,12 +75,14 @@ public final class io/github/aeshen/observability/query/AuditField {
 }
 
 public final class io/github/aeshen/observability/query/AuditField$Companion {
+	public final fun context-5SsXj2I (Ljava/lang/String;)Ljava/lang/String;
 	public final fun custom-5SsXj2I (Ljava/lang/String;)Ljava/lang/String;
 	public final fun getEVENT-5xMsNKo ()Ljava/lang/String;
 	public final fun getID-5xMsNKo ()Ljava/lang/String;
 	public final fun getLEVEL-5xMsNKo ()Ljava/lang/String;
 	public final fun getMESSAGE-5xMsNKo ()Ljava/lang/String;
 	public final fun getTIMESTAMP_EPOCH_MILLIS-5xMsNKo ()Ljava/lang/String;
+	public final fun metadata-5SsXj2I (Ljava/lang/String;)Ljava/lang/String;
 }
 
 public final class io/github/aeshen/observability/query/AuditLogicalOperator : java/lang/Enum {

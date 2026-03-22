@@ -76,9 +76,10 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 - Prefer implementing `AuditSearchQueryService` in backend-specific modules (OpenSearch, ClickHouse, PostgreSQL, etc.)
 - Query using a typed contract: time range, paging, sorting, criteria groups, and portable text-search intent
 - Use `AuditField` for standard fields or custom vendor fields without coupling the SPI to one storage stack
+- Prefer canonical dynamic field prefixes for portable queries: `context.<key>` for `AuditRecord.context` and `metadata.<key>` for `AuditRecord.metadata`
 - Continue accepting `AuditQuery` during migration and convert via `AuditQuery.toSearchQuery()`
 - `AuditQueryService` remains available for compatibility but is deprecated in favor of `AuditSearchQueryService`
-- Surfaces `AuditRecord` with timestamp, event, level, message, and context
+- Surfaces `AuditRecord` with timestamp, event, level, message, context, and metadata
 
 ## Recommended Extension Patterns
 
