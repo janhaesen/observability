@@ -1,7 +1,9 @@
 package io.github.aeshen.observability.query
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 
 class QueryModelValidationTest {
     @Test
@@ -25,6 +27,99 @@ class QueryModelValidationTest {
                 filters = mapOf("" to "ERROR"),
             )
         }
+    }
+
+    @Test
+    fun `audit search query validates model constraints`() {
+        assertFailsWith<IllegalArgumentException> {
+            AuditSearchQuery(fromEpochMillis = -1, toEpochMillis = 10)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AuditSearchQuery(fromEpochMillis = 10, toEpochMillis = 1)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AuditPage(limit = 0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AuditPage(limit = 10, offset = -1)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AuditCriterion.Group(operator = AuditLogicalOperator.AND, criteria = emptyList())
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AuditTextQuery("   ")
+        }
+    }
+
+    @Test
+    fun `legacy audit query maps into typed audit search query`() {
+        val legacy =
+            AuditQuery(
+                fromEpochMillis = 10,
+                toEpochMillis = 20,
+                limit = 25,
+                offset = 5,
+                filters = mapOf("level" to "ERROR"),
+                freeText = " payment ",
+            )
+
+        val typed = legacy.toSearchQuery()
+
+        assertEquals(10, typed.fromEpochMillis)
+        assertEquals(20, typed.toEpochMillis)
+        assertEquals(AuditPage(limit = 25, offset = 5), typed.page)
+        assertEquals(
+            listOf(
+                AuditCriterion.Comparison(
+                    field = AuditField.custom("level"),
+                    operator = AuditComparisonOperator.EQ,
+                    value = AuditValue.Text("ERROR"),
+                ),
+            ),
+            typed.criteria,
+        )
+        assertEquals(AuditTextQuery("payment"), typed.text)
+    }
+
+    @Test
+    fun `legacy mapper drops blank free text`() {
+        val legacy =
+            AuditQuery(
+                fromEpochMillis = 10,
+                toEpochMillis = 20,
+                freeText = "   ",
+            )
+
+        val typed = legacy.toSearchQuery()
+
+        assertNull(typed.text)
+    }
+
+    @Test
+    fun `typed service adapter delegates using typed mapping`() {
+        val service =
+            object : AuditSearchQueryService {
+                override fun search(query: AuditSearchQuery): AuditQueryResult {
+                    assertEquals(AuditPage(limit = 7, offset = 3), query.page)
+                    assertEquals(AuditTextQuery("billing"), query.text)
+                    return AuditQueryResult(records = emptyList(), total = 1)
+                }
+            }
+
+        val result =
+            service
+                .asLegacyService()
+                .search(
+                    AuditQuery(
+                        fromEpochMillis = 1,
+                        toEpochMillis = 2,
+                        limit = 7,
+                        offset = 3,
+                        freeText = "billing",
+                    ),
+                )
+
+        assertEquals(1, result.total)
     }
 
     @Test

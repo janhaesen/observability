@@ -12,7 +12,9 @@ The following APIs are considered stable SPI in the current major version:
 - `io.github.aeshen.observability.sink.registry.SinkRegistry`
 - `io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics`
 - `io.github.aeshen.observability.sink.testing.ObservabilitySinkConformanceSuite`
-- `io.github.aeshen.observability.query.AuditQueryService` (query-spi module)
+- `io.github.aeshen.observability.query.AuditQueryService` (query-spi module, deprecated compatibility surface)
+- `io.github.aeshen.observability.query.AuditSearchQueryService` (query-spi module)
+- `io.github.aeshen.observability.query.AuditSearchQuery` and related typed query model
 
 Behavior changes to the above are treated as breaking changes.
 
@@ -71,8 +73,11 @@ Implement for monitoring, alerting, or metrics collection without side effects.
 
 The optional `query-spi` module enables backend-agnostic audit record retrieval:
 
-- Implement `AuditQueryService` in backend-specific modules (OpenSearch, ClickHouse, PostgreSQL, etc.)
-- Query using time range, limit/offset, field filters, and free-text search
+- Prefer implementing `AuditSearchQueryService` in backend-specific modules (OpenSearch, ClickHouse, PostgreSQL, etc.)
+- Query using a typed contract: time range, paging, sorting, criteria groups, and portable text-search intent
+- Use `AuditField` for standard fields or custom vendor fields without coupling the SPI to one storage stack
+- Continue accepting `AuditQuery` during migration and convert via `AuditQuery.toSearchQuery()`
+- `AuditQueryService` remains available for compatibility but is deprecated in favor of `AuditSearchQueryService`
 - Surfaces `AuditRecord` with timestamp, event, level, message, and context
 
 ## Recommended Extension Patterns
@@ -81,10 +86,11 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 - Operator diagnostics: implement `ObservabilityDiagnostics` and pass through `ObservabilityFactory.Config`.
 - Runtime instance injection: `ObservabilityFactory.create(mySink)`.
 - Reliability wrappers: `RetryingObservabilitySink`, `AsyncObservabilitySink`, `BatchingObservabilitySink`.
-- Audit queries: implement `AuditQueryService` for backend integration.
+- Audit queries: implement `AuditSearchQueryService`; expose `AuditQueryService` only as a compatibility adapter when needed.
 
 ## Compatibility Process
 
 - Patch/minor releases preserve binary compatibility for SPI symbols above.
+- Deprecated query fields (`AuditQuery.filters`, `AuditQuery.freeText`) remain additive compatibility shims until a future major release.
 - Major releases may remove deprecated SPI with migration notes.
 

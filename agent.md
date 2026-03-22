@@ -64,7 +64,8 @@ Do not casually break:
 - `SinkConfig`, `ObservabilitySink`, `SinkProvider`, `SinkRegistry`,
 - `ObservabilityDiagnostics`,
 - `ObservabilitySinkConformanceSuite`,
-- `AuditQueryService` (from `:query-spi`).
+- `AuditSearchQueryService` (from `:query-spi`),
+- `AuditQueryService` (deprecated compatibility surface from `:query-spi`).
 
 Patch/minor versions are expected to keep binary compatibility for stable SPI.
 

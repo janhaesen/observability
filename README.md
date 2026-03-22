@@ -753,24 +753,38 @@ The optional `query-spi` module defines a backend-agnostic interface for queryin
 ```kotlin
 // query-spi artifact: io.github.aeshen:query-spi:1.0.0
 
+import io.github.aeshen.observability.query.AuditComparisonOperator
+import io.github.aeshen.observability.query.AuditCriterion
+import io.github.aeshen.observability.query.AuditField
+import io.github.aeshen.observability.query.AuditPage
 import io.github.aeshen.observability.query.AuditQuery
-import io.github.aeshen.observability.query.AuditQueryService
+import io.github.aeshen.observability.query.AuditQueryResult
+import io.github.aeshen.observability.query.AuditSearchQuery
+import io.github.aeshen.observability.query.AuditSearchQueryService
+import io.github.aeshen.observability.query.AuditTextQuery
+import io.github.aeshen.observability.query.AuditValue
 
-class MyAuditQueryService : AuditQueryService {
-    override fun search(query: AuditQuery): AuditQueryResult {
+class MyTypedAuditQueryService : AuditSearchQueryService {
+    override fun search(query: AuditSearchQuery): AuditQueryResult {
         // implement backend-specific query
     }
 }
 
 val result =
-    myService.search(
-        AuditQuery(
+    MyTypedAuditQueryService().search(
+        AuditSearchQuery(
             fromEpochMillis = System.currentTimeMillis() - 3_600_000,
             toEpochMillis = System.currentTimeMillis(),
-            limit = 50,
-            offset = 0,
-            filters = mapOf("level" to "ERROR"),
-            freeText = "payment",
+            page = AuditPage(limit = 50, offset = 0),
+            criteria =
+                listOf(
+                    AuditCriterion.Comparison(
+                        field = AuditField.LEVEL,
+                        operator = AuditComparisonOperator.EQ,
+                        value = AuditValue.Text("ERROR"),
+                    ),
+                ),
+            text = AuditTextQuery("payment"),
         ),
     )
 
@@ -780,6 +794,20 @@ result.records.forEach { record ->
     println(record)
 }
 // result.total = total matching records before pagination
+
+// Legacy AuditQuery is still supported and can be mapped when needed.
+val legacy =
+    AuditQuery(
+        fromEpochMillis = System.currentTimeMillis() - 3_600_000,
+        toEpochMillis = System.currentTimeMillis(),
+        filters = mapOf("level" to "ERROR"),
+        freeText = "payment",
+    )
+
+val typed = legacy.toSearchQuery()
+
+// If you still need to serve legacy callers, use the deprecated compatibility bridge.
+// Prefer implementing AuditSearchQueryService directly for new integrations.
 ```
 
 ---
