@@ -103,7 +103,15 @@ class BatchingObservabilitySink(
                     success = true,
                     error = null,
                 )
-            } catch (e: Exception) {
+            } catch (e: IllegalArgumentException) {
+                diagnostics.onBatchFlush(
+                    batchSize = batch.size,
+                    elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000,
+                    success = false,
+                    error = e,
+                )
+                throw e
+            } catch (e: IllegalStateException) {
                 diagnostics.onBatchFlush(
                     batchSize = batch.size,
                     elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000,

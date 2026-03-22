@@ -20,24 +20,37 @@ internal class Slf4JObservabilitySink(
 
         when (event.original.level) {
             EventLevel.TRACE -> {
-                if (throwable != null) slf4jLogger.trace(payload, throwable) else slf4jLogger.trace(payload)
+                logWithOptionalThrowable(payload, throwable, slf4jLogger::trace, slf4jLogger::trace)
             }
 
             EventLevel.DEBUG -> {
-                if (throwable != null) slf4jLogger.debug(payload, throwable) else slf4jLogger.debug(payload)
+                logWithOptionalThrowable(payload, throwable, slf4jLogger::debug, slf4jLogger::debug)
             }
 
             EventLevel.INFO -> {
-                if (throwable != null) slf4jLogger.info(payload, throwable) else slf4jLogger.info(payload)
+                logWithOptionalThrowable(payload, throwable, slf4jLogger::info, slf4jLogger::info)
             }
 
             EventLevel.WARN -> {
-                if (throwable != null) slf4jLogger.warn(payload, throwable) else slf4jLogger.warn(payload)
+                logWithOptionalThrowable(payload, throwable, slf4jLogger::warn, slf4jLogger::warn)
             }
 
             EventLevel.ERROR -> {
-                if (throwable != null) slf4jLogger.error(payload, throwable) else slf4jLogger.error(payload)
+                logWithOptionalThrowable(payload, throwable, slf4jLogger::error, slf4jLogger::error)
             }
+        }
+    }
+
+    private fun logWithOptionalThrowable(
+        payload: String,
+        throwable: Throwable?,
+        logMessage: (String) -> Unit,
+        logThrowable: (String, Throwable) -> Unit,
+    ) {
+        if (throwable != null) {
+            logThrowable(payload, throwable)
+        } else {
+            logMessage(payload)
         }
     }
 }

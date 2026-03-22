@@ -6,6 +6,7 @@ import io.github.aeshen.observability.enricher.MetadataEnricher
 import io.github.aeshen.observability.processor.ObservabilityProcessor
 import io.github.aeshen.observability.sink.ObservabilitySink
 import java.io.Closeable
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -31,33 +32,64 @@ internal class ObservabilityPipeline internal constructor(
 
     override fun emit(event: ObservabilityEvent) {
         lifecycleLock.read {
-            check(open.get()) { "Observability is closed." }
+            emitWhenOpen(event)
+        }
+    }
 
-            val enrichedEvent = applyContextProviders(event)
+    private fun emitWhenOpen(event: ObservabilityEvent) {
+        ensureOpen()
+        deliverToSinks(prepareEvent(event))
+    }
 
-            // Encode
-            var encoded = codec.encode(enrichedEvent)
-            encoded.metadata["event"] = enrichedEvent.name.resolvedName()
-            encoded.metadata["level"] = enrichedEvent.level.name
-            encoded.metadata["size"] = encoded.encoded.size
+    private fun ensureOpen() {
+        check(open.get()) { "Observability is closed." }
+    }
 
-            metadataEnrichers.forEach { it.enrich(encoded) }
+    private fun prepareEvent(event: ObservabilityEvent) = encodeAndProcess(applyContextProviders(event))
 
-            // Apply processors, e.g. first encrypt
-            processors.forEach { processor -> encoded = processor.process(encoded) }
-            encoded.metadata["size"] = encoded.encoded.size
-
-            // Fan-out to sinks
-            for (sink in sinks) {
-                try {
-                    sink.handle(encoded)
-                } catch (t: Exception) {
-                    diagnostics.onSinkHandleError(sink = sink, event = encoded, error = t)
-                    if (failOnSinkError) {
-                        throw t
-                    }
-                }
+    private fun encodeAndProcess(event: ObservabilityEvent) =
+        codec
+            .encode(event)
+            .apply {
+                metadata["event"] = event.name.resolvedName()
+                metadata["level"] = event.level.name
+                metadata["size"] = encoded.size
+                metadataEnrichers.forEach { it.enrich(this) }
             }
+            .let { initial ->
+                processors.fold(initial) { encodedEvent, processor -> processor.process(encodedEvent) }
+            }
+            .apply {
+                metadata["size"] = encoded.size
+            }
+
+    private fun deliverToSinks(encoded: io.github.aeshen.observability.codec.EncodedEvent) {
+        for (sink in sinks) {
+            deliverToSink(sink, encoded)
+        }
+    }
+
+    private fun deliverToSink(
+        sink: ObservabilitySink,
+        encoded: io.github.aeshen.observability.codec.EncodedEvent,
+    ) {
+        try {
+            sink.handle(encoded)
+        } catch (e: IllegalArgumentException) {
+            handleSinkError(sink, encoded, e)
+        } catch (e: IllegalStateException) {
+            handleSinkError(sink, encoded, e)
+        }
+    }
+
+    private fun handleSinkError(
+        sink: ObservabilitySink,
+        encoded: io.github.aeshen.observability.codec.EncodedEvent,
+        error: Exception,
+    ) {
+        diagnostics.onSinkHandleError(sink = sink, event = encoded, error = error)
+        if (failOnSinkError) {
+            throw error
         }
     }
 
@@ -68,33 +100,45 @@ internal class ObservabilityPipeline internal constructor(
             }
 
             if (failOnSinkError) {
-                var first: Exception? = null
-                sinks.forEach {
-                    try {
-                        it.close()
-                    } catch (t: Exception) {
-                        diagnostics.onSinkCloseError(sink = it, error = t)
-                        if (first == null) {
-                            first = t
-                        }
-                    }
-                }
-                if (first != null) {
-                    throw first
-                }
+                closeStrictly()
             } else {
-                sinks.forEach {
-                    try {
-                        it.close()
-                    } catch (
-                        t: Exception,
-                    ) {
-                        diagnostics.onSinkCloseError(sink = it, error = t)
-                    }
-                }
+                closeBestEffort()
             }
         }
     }
+
+    private fun closeStrictly() {
+        var first: Exception? = null
+        sinks.forEach { sink ->
+            closeSink(sink)?.let { error ->
+                if (first == null) {
+                    first = error
+                }
+            }
+        }
+        first?.let { throw it }
+    }
+
+    private fun closeBestEffort() {
+        sinks.forEach { sink ->
+            closeSink(sink)
+        }
+    }
+
+    private fun closeSink(sink: ObservabilitySink): Exception? =
+        try {
+            sink.close()
+            null
+        } catch (e: IOException) {
+            diagnostics.onSinkCloseError(sink = sink, error = e)
+            e
+        } catch (e: IllegalArgumentException) {
+            diagnostics.onSinkCloseError(sink = sink, error = e)
+            e
+        } catch (e: IllegalStateException) {
+            diagnostics.onSinkCloseError(sink = sink, error = e)
+            e
+        }
 
     private fun applyContextProviders(event: ObservabilityEvent): ObservabilityEvent {
         if (contextProviders.isEmpty()) {

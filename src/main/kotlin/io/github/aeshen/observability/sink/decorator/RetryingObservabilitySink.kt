@@ -21,11 +21,18 @@ class RetryingObservabilitySink(
             try {
                 delegate.handle(event)
                 return
-            } catch (t: Exception) {
-                lastError = t
+            } catch (e: IllegalArgumentException) {
+                lastError = e
                 if (attempt == maxAttempts) {
-                    diagnostics.onRetryExhaustion(event, attempt, t)
-                    throw t
+                    diagnostics.onRetryExhaustion(event, attempt, e)
+                    throw e
+                }
+                sleep(backoff.nextDelayMillis(attempt))
+            } catch (e: IllegalStateException) {
+                lastError = e
+                if (attempt == maxAttempts) {
+                    diagnostics.onRetryExhaustion(event, attempt, e)
+                    throw e
                 }
                 sleep(backoff.nextDelayMillis(attempt))
             }

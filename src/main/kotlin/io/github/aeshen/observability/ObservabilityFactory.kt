@@ -62,12 +62,12 @@ object ObservabilityFactory {
 
         val processors: List<ObservabilityProcessor> = buildProcessors(config.encryption)
 
-        return pipeline(
+        return ObservabilityPipeline(
             codec = config.codec,
             contextProviders = config.contextProviders,
             metadataEnrichers = config.metadataEnrichers,
-            sinks = sinks,
             processors = processors,
+            sinks = sinks,
             failOnSinkError = resolveFailOnSinkError(config.failOnSinkError, config.profile),
             diagnostics = config.diagnostics,
         )
@@ -94,35 +94,16 @@ object ObservabilityFactory {
         val processors: List<ObservabilityProcessor> = buildProcessors(encryption)
         val profiledSinks = applyProfile(sinkList, profile, diagnostics)
 
-        return pipeline(
+        return ObservabilityPipeline(
             codec = codec,
             contextProviders = contextProviders,
             metadataEnrichers = metadataEnrichers,
-            sinks = profiledSinks,
             processors = processors,
+            sinks = profiledSinks,
             failOnSinkError = resolveFailOnSinkError(failOnSinkError, profile),
             diagnostics = diagnostics,
         )
     }
-
-    private fun pipeline(
-        codec: ObservabilityCodec,
-        contextProviders: List<ContextProvider>,
-        metadataEnrichers: List<MetadataEnricher>,
-        sinks: List<ObservabilitySink>,
-        processors: List<ObservabilityProcessor>,
-        failOnSinkError: Boolean,
-        diagnostics: ObservabilityDiagnostics,
-    ): Observability =
-        ObservabilityPipeline(
-            codec = codec,
-            contextProviders = contextProviders,
-            metadataEnrichers = metadataEnrichers,
-            processors = processors,
-            sinks = sinks,
-            failOnSinkError = failOnSinkError,
-            diagnostics = diagnostics,
-        )
 
     private fun buildSinks(config: Config): List<ObservabilitySink> = config.sinkRegistry.resolveAll(config.sinks)
 

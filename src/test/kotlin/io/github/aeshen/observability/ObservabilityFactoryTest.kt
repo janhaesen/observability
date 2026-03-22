@@ -243,7 +243,7 @@ class ObservabilityFactoryTest {
     fun `audit durable profile enforces strict sink failures`() {
         val failing =
             object : ObservabilitySink {
-                override fun handle(event: EncodedEvent): Unit = error("always fails")
+                override fun handle(event: EncodedEvent) = error("always fails")
             }
 
         val observability =
@@ -323,7 +323,8 @@ class ObservabilityFactoryTest {
                         .builder()
                         .register<ThirdPartySinkConfig> {
                             CapturingSink(mutableListOf())
-                        }.build(),
+                        }
+                        .build(),
                     profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
                     diagnostics = diagnostics,
                 ),
@@ -358,7 +359,7 @@ class ObservabilityFactoryTest {
 
         val failing =
             object : ObservabilitySink {
-                override fun handle(event: EncodedEvent): Unit = error("always fail")
+                override fun handle(event: EncodedEvent) = error("always fail")
             }
 
         val observability =

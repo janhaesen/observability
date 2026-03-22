@@ -46,7 +46,8 @@ class JsonLineCodecTest {
                         payload = byteArrayOf(),
                         context = ObservabilityContext.empty(),
                     ),
-                ).encoded
+                )
+                .encoded
                 .toString(Charsets.UTF_8)
 
         assertTrue(encoded.contains("\"payloadPresent\":true"))
@@ -81,7 +82,8 @@ class JsonLineCodecTest {
                         level(EventLevel.WARN)
                         message("request failed")
                     },
-                ).encoded
+                )
+                .encoded
                 .toString(Charsets.UTF_8)
 
         assertTrue(encoded.contains("\"name\":\"test.event\""))
@@ -109,7 +111,8 @@ class JsonLineCodecTest {
                         level = EventLevel.INFO,
                         context = context,
                     ),
-                ).encoded
+                )
+                .encoded
                 .toString(Charsets.UTF_8)
 
         assertTrue(encoded.contains("\"status_code\":200"))

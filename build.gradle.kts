@@ -24,7 +24,7 @@ detekt {
     config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
     buildUponDefaultConfig = true
     allRules = false
-    autoCorrect = true
+    autoCorrect = false
     parallel = true
 }
 
@@ -43,7 +43,7 @@ subprojects {
         config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
         buildUponDefaultConfig = true
         allRules = false
-        autoCorrect = true
+        autoCorrect = false
         parallel = true
     }
 

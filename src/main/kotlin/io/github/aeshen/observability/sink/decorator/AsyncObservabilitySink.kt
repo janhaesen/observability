@@ -3,6 +3,7 @@ package io.github.aeshen.observability.sink.decorator
 import io.github.aeshen.observability.codec.EncodedEvent
 import io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics
 import io.github.aeshen.observability.sink.ObservabilitySink
+import java.io.IOException
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -105,12 +106,12 @@ class AsyncObservabilitySink(
 
         try {
             delegate.close()
-        } catch (e: Exception) {
-            if (closeFailure == null) {
-                closeFailure = e
-            } else {
-                closeFailure.addSuppressed(e)
-            }
+        } catch (e: IOException) {
+            closeFailure = mergeCloseFailure(closeFailure, e)
+        } catch (e: IllegalArgumentException) {
+            closeFailure = mergeCloseFailure(closeFailure, e)
+        } catch (e: IllegalStateException) {
+            closeFailure = mergeCloseFailure(closeFailure, e)
         }
 
         workerFailure.get()?.let { failure ->
@@ -127,31 +128,57 @@ class AsyncObservabilitySink(
 
     @Suppress("LoopWithTooManyJumpStatements")
     private fun runLoop() {
-        while (accepting.get() || queue.isNotEmpty()) {
-            val event =
-                try {
-                    queue.poll(POLL_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
-                } catch (_: InterruptedException) {
-                    if (!accepting.get()) {
-                        break
-                    }
-                    continue
-                } ?: continue
-
-            try {
-                delegate.handle(event)
-                diagnostics.onAsyncQueueDepth(queueDepth = queue.size, capacity = capacity)
-            } catch (t: Exception) {
-                diagnostics.onAsyncWorkerError(t)
-                diagnostics.onAsyncWorkerState(healthy = false, message = t.message)
-                onWorkerFailure(t)
-                if (!accepting.get()) {
-                    break
-                }
-                workerFailure.compareAndSet(null, t)
-                accepting.set(false)
+        while (shouldKeepRunning()) {
+            if (processNextEvent()) {
                 break
             }
         }
     }
+
+    private fun shouldKeepRunning(): Boolean = accepting.get() || queue.isNotEmpty()
+
+    private fun processNextEvent(): Boolean {
+        val event = pollNextEvent() ?: return false
+        val failure = deliverEvent(event) ?: return false
+        handleWorkerFailure(failure)
+        return true
+    }
+
+    private fun pollNextEvent(): EncodedEvent? =
+        try {
+            queue.poll(POLL_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+        } catch (_: InterruptedException) {
+            if (!accepting.get()) {
+                return null
+            }
+            null
+        }
+
+    private fun deliverEvent(event: EncodedEvent): Exception? =
+        try {
+            delegate.handle(event)
+            diagnostics.onAsyncQueueDepth(queueDepth = queue.size, capacity = capacity)
+            null
+        } catch (e: IllegalArgumentException) {
+            e
+        } catch (e: IllegalStateException) {
+            e
+        }
+
+    private fun handleWorkerFailure(error: Exception) {
+        diagnostics.onAsyncWorkerError(error)
+        diagnostics.onAsyncWorkerState(healthy = false, message = error.message)
+        onWorkerFailure(error)
+        if (!accepting.get()) {
+            return
+        }
+        workerFailure.compareAndSet(null, error)
+        accepting.set(false)
+    }
+
+    private fun mergeCloseFailure(
+        currentFailure: Exception?,
+        newFailure: Exception,
+    ): Exception =
+        currentFailure?.apply { addSuppressed(newFailure) } ?: newFailure
 }

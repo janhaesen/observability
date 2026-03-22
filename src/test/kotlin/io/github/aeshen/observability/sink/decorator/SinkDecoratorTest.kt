@@ -178,7 +178,7 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
             AsyncObservabilitySink(
                 delegate =
                 object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent): Unit = error("worker-failed")
+                    override fun handle(event: EncodedEvent) = error("worker-failed")
                 },
                 capacity = 1,
                 offerTimeoutMillis = 1,
@@ -430,7 +430,7 @@ class RetryingObservabilitySinkTest {
             RetryingObservabilitySink(
                 delegate =
                 object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent): Unit = error("persistent failure")
+                    override fun handle(event: EncodedEvent) = error("persistent failure")
                 },
                 maxAttempts = 3,
                 backoff = BackoffStrategy.fixed(0),

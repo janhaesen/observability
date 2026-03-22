@@ -27,6 +27,39 @@ internal class EncryptingObservabilityProcessor private constructor(
     private val keyWrapper: ((SecretKey) -> ByteArray)?,
     private val secureRandomBytes: (Int) -> ByteArray,
 ) : ObservabilityProcessor {
+    override fun process(event: EncodedEvent): EncodedEvent {
+        val key = dataKeyProvider()
+        val iv = secureRandomBytes(RANDOM_BYTE_COUNT) // GCM recommended 96-bit IV
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(TAG_LENGTH, iv))
+
+        val ciphertext = cipher.doFinal(event.encoded)
+
+        val b64 = Base64.getEncoder()
+        val ivB64 = b64.encodeToString(iv)
+        val ctB64 = b64.encodeToString(ciphertext)
+
+        val wrappedKeyB64 =
+            keyWrapper
+                ?.invoke(key)
+                ?.let { b64.encodeToString(it) }
+
+        // Keep it simple: JSONL envelope, no external deps.
+        val encryptedEvent =
+            buildString {
+                append("{")
+                append("\"alg\":\"A256GCM\",")
+                append("\"iv\":\"").append(ivB64).append("\",")
+                if (wrappedKeyB64 != null) {
+                    append("\"wrappedKeyAlg\":\"RSA-OAEP-256\",")
+                    append("\"wrappedKey\":\"").append(wrappedKeyB64).append("\",")
+                }
+                append("\"ciphertext\":\"").append(ctB64).append("\"")
+                append("}\n")
+            }.toByteArray(Charsets.UTF_8)
+        return event.copy(encoded = encryptedEvent)
+    }
+
     companion object {
         fun aesGcm(
             key: SecretKey,
@@ -59,38 +92,5 @@ internal class EncryptingObservabilityProcessor private constructor(
             kg.init(KEY_SIZE)
             return kg.generateKey()
         }
-    }
-
-    override fun process(event: EncodedEvent): EncodedEvent {
-        val key = dataKeyProvider()
-        val iv = secureRandomBytes(RANDOM_BYTE_COUNT) // GCM recommended 96-bit IV
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(TAG_LENGTH, iv))
-
-        val ciphertext = cipher.doFinal(event.encoded)
-
-        val b64 = Base64.getEncoder()
-        val ivB64 = b64.encodeToString(iv)
-        val ctB64 = b64.encodeToString(ciphertext)
-
-        val wrappedKeyB64 =
-            keyWrapper
-                ?.invoke(key)
-                ?.let { b64.encodeToString(it) }
-
-        // Keep it simple: JSONL envelope, no external deps.
-        val encryptedEvent =
-            buildString {
-                append("{")
-                append("\"alg\":\"A256GCM\",")
-                append("\"iv\":\"").append(ivB64).append("\",")
-                if (wrappedKeyB64 != null) {
-                    append("\"wrappedKeyAlg\":\"RSA-OAEP-256\",")
-                    append("\"wrappedKey\":\"").append(wrappedKeyB64).append("\",")
-                }
-                append("\"ciphertext\":\"").append(ctB64).append("\"")
-                append("}\n")
-            }.toByteArray(Charsets.UTF_8)
-        return event.copy(encoded = encryptedEvent)
     }
 }

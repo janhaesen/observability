@@ -103,7 +103,7 @@ class ObservabilityPipelineTest {
         val healthy = RecordingSink()
         val failing =
             object : ObservabilitySink {
-                override fun handle(event: EncodedEvent): Unit = error("sink failed")
+                override fun handle(event: EncodedEvent) = error("sink failed")
             }
         val pipeline =
             ObservabilityPipeline(
@@ -128,7 +128,7 @@ class ObservabilityPipelineTest {
     fun `pipeline throws sink errors in strict mode`() {
         val failing =
             object : ObservabilitySink {
-                override fun handle(event: EncodedEvent): Unit = error("sink failed")
+                override fun handle(event: EncodedEvent) = error("sink failed")
             }
         val pipeline =
             ObservabilityPipeline(
@@ -153,7 +153,7 @@ class ObservabilityPipelineTest {
     fun `pipeline does not swallow fatal errors`() {
         val fatal =
             object : ObservabilitySink {
-                override fun handle(event: EncodedEvent): Unit = throw OutOfMemoryError("fatal")
+                override fun handle(event: EncodedEvent) = throw OutOfMemoryError("fatal")
             }
 
         val pipeline =
@@ -181,7 +181,7 @@ class ObservabilityPipelineTest {
             object : ObservabilitySink {
                 override fun handle(event: EncodedEvent) = Unit
 
-                override fun close(): Unit = error("close1")
+                override fun close() = error("close1")
             }
         val sink2 = RecordingSink()
         val pipeline =
@@ -282,9 +282,9 @@ class ObservabilityPipelineTest {
 
         val failing =
             object : ObservabilitySink {
-                override fun handle(event: EncodedEvent): Unit = error("handle-failed")
+                override fun handle(event: EncodedEvent) = error("handle-failed")
 
-                override fun close(): Unit = error("close-failed")
+                override fun close() = error("close-failed")
             }
 
         val pipeline =
