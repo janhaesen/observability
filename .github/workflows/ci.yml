@@ -30,13 +30,10 @@ jobs:
         run: ./gradlew publish --dry-run --no-daemon
 
   cve-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-
-      - name: Run OSV CVE scan
-        uses: google/osv-scanner-action@v1
-        with:
-          scan-args: |
-            -r .
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.3.3"
+    with:
+      scan-args: --recursive .
+      scanner-version: v2.3.3
