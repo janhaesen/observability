@@ -253,10 +253,36 @@ public final class io/github/aeshen/observability/config/sink/ZipFile : io/githu
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/aeshen/observability/diagnostics/HealthStatus : java/lang/Enum {
+	public static final field DEGRADED Lio/github/aeshen/observability/diagnostics/HealthStatus;
+	public static final field READY Lio/github/aeshen/observability/diagnostics/HealthStatus;
+	public static final field UNHEALTHY Lio/github/aeshen/observability/diagnostics/HealthStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/diagnostics/HealthStatus;
+	public static fun values ()[Lio/github/aeshen/observability/diagnostics/HealthStatus;
+}
+
+public final class io/github/aeshen/observability/diagnostics/InMemoryOperationalDiagnostics : io/github/aeshen/observability/diagnostics/ObservabilityDiagnostics {
+	public fun <init> ()V
+	public final fun healthSnapshot ()Lio/github/aeshen/observability/diagnostics/OperationalHealthSnapshot;
+	public final fun metricsSnapshot ()Lio/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot;
+	public fun onAsyncDrop (Lio/github/aeshen/observability/codec/EncodedEvent;Ljava/lang/String;)V
+	public fun onAsyncQueueDepth (II)V
+	public fun onAsyncWorkerError (Ljava/lang/Exception;)V
+	public fun onAsyncWorkerState (ZLjava/lang/String;)V
+	public fun onBatchFlush (IJZLjava/lang/Exception;)V
+	public fun onRetryExhaustion (Lio/github/aeshen/observability/codec/EncodedEvent;ILjava/lang/Exception;)V
+	public fun onSinkCloseError (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/lang/Exception;)V
+	public fun onSinkHandleError (Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/codec/EncodedEvent;Ljava/lang/Exception;)V
+}
+
 public abstract interface class io/github/aeshen/observability/diagnostics/ObservabilityDiagnostics {
 	public static final field Companion Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics$Companion;
 	public fun onAsyncDrop (Lio/github/aeshen/observability/codec/EncodedEvent;Ljava/lang/String;)V
+	public fun onAsyncQueueDepth (II)V
 	public fun onAsyncWorkerError (Ljava/lang/Exception;)V
+	public fun onAsyncWorkerState (ZLjava/lang/String;)V
+	public static synthetic fun onAsyncWorkerState$default (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;ZLjava/lang/String;ILjava/lang/Object;)V
 	public fun onBatchFlush (IJZLjava/lang/Exception;)V
 	public fun onRetryExhaustion (Lio/github/aeshen/observability/codec/EncodedEvent;ILjava/lang/Exception;)V
 	public fun onSinkCloseError (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/lang/Exception;)V
@@ -269,11 +295,67 @@ public final class io/github/aeshen/observability/diagnostics/ObservabilityDiagn
 
 public final class io/github/aeshen/observability/diagnostics/ObservabilityDiagnostics$DefaultImpls {
 	public static fun onAsyncDrop (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/codec/EncodedEvent;Ljava/lang/String;)V
+	public static fun onAsyncQueueDepth (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;II)V
 	public static fun onAsyncWorkerError (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Ljava/lang/Exception;)V
+	public static fun onAsyncWorkerState (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;ZLjava/lang/String;)V
+	public static synthetic fun onAsyncWorkerState$default (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;ZLjava/lang/String;ILjava/lang/Object;)V
 	public static fun onBatchFlush (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;IJZLjava/lang/Exception;)V
 	public static fun onRetryExhaustion (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/codec/EncodedEvent;ILjava/lang/Exception;)V
 	public static fun onSinkCloseError (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/lang/Exception;)V
 	public static fun onSinkHandleError (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/codec/EncodedEvent;Ljava/lang/Exception;)V
+}
+
+public final class io/github/aeshen/observability/diagnostics/OperationalHealthSnapshot {
+	public fun <init> (Lio/github/aeshen/observability/diagnostics/HealthStatus;ZZLjava/lang/String;)V
+	public final fun component1 ()Lio/github/aeshen/observability/diagnostics/HealthStatus;
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Lio/github/aeshen/observability/diagnostics/HealthStatus;ZZLjava/lang/String;)Lio/github/aeshen/observability/diagnostics/OperationalHealthSnapshot;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/diagnostics/OperationalHealthSnapshot;Lio/github/aeshen/observability/diagnostics/HealthStatus;ZZLjava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/diagnostics/OperationalHealthSnapshot;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAsyncWorkerHealthy ()Z
+	public final fun getAsyncWorkerMessage ()Ljava/lang/String;
+	public final fun getReady ()Z
+	public final fun getStatus ()Lio/github/aeshen/observability/diagnostics/HealthStatus;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot {
+	public fun <init> (JJJJJJJJJJIII)V
+	public final fun component1 ()J
+	public final fun component10 ()J
+	public final fun component11 ()I
+	public final fun component12 ()I
+	public final fun component13 ()I
+	public final fun component2 ()J
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun component5 ()J
+	public final fun component6 ()J
+	public final fun component7 ()J
+	public final fun component8 ()J
+	public final fun component9 ()J
+	public final fun copy (JJJJJJJJJJIII)Lio/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot;JJJJJJJJJJIIIILjava/lang/Object;)Lio/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAsyncDrops ()J
+	public final fun getAsyncQueueCapacity ()I
+	public final fun getAsyncQueueDepth ()I
+	public final fun getAsyncQueueDepthMax ()I
+	public final fun getAsyncWorkerErrors ()J
+	public final fun getAverageBatchFlushMillis ()D
+	public final fun getBatchFlushFailures ()J
+	public final fun getBatchFlushSuccesses ()J
+	public final fun getBatchFlushTotalCount ()J
+	public final fun getBatchFlushTotalElapsedMillis ()J
+	public final fun getBatchFlushedEvents ()J
+	public final fun getRetryExhaustions ()J
+	public final fun getSinkCloseErrors ()J
+	public final fun getSinkHandleErrors ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class io/github/aeshen/observability/enricher/MetadataEnricher {

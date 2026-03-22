@@ -50,6 +50,11 @@ class AsyncObservabilitySink(
             start()
         }
 
+    init {
+        diagnostics.onAsyncWorkerState(healthy = true, message = "running")
+        diagnostics.onAsyncQueueDepth(queueDepth = 0, capacity = capacity)
+    }
+
     override fun handle(event: EncodedEvent) {
         val snapshot = event.copy(metadata = event.metadata.toMutableMap())
         if (!accepting.get()) {
@@ -64,10 +69,14 @@ class AsyncObservabilitySink(
         val accepted = queue.offer(snapshot, offerTimeoutMillis, TimeUnit.MILLISECONDS)
         if (!accepted) {
             diagnostics.onAsyncDrop(snapshot, DropReason.QUEUE_FULL.name)
+            diagnostics.onAsyncQueueDepth(queueDepth = queue.size, capacity = capacity)
             if (failOnDrop) {
                 error("Async sink queue is full (capacity=$capacity).")
             }
+            return
         }
+
+        diagnostics.onAsyncQueueDepth(queueDepth = queue.size, capacity = capacity)
     }
 
     override fun close() {
@@ -78,6 +87,7 @@ class AsyncObservabilitySink(
             dropped.forEach {
                 diagnostics.onAsyncDrop(it, DropReason.DROP_PENDING_ON_CLOSE.name)
             }
+            diagnostics.onAsyncQueueDepth(queueDepth = queue.size, capacity = capacity)
             worker.interrupt()
         }
 
@@ -112,6 +122,7 @@ class AsyncObservabilitySink(
         }
 
         closeFailure?.let { throw it }
+        diagnostics.onAsyncWorkerState(healthy = true, message = "stopped")
     }
 
     @Suppress("LoopWithTooManyJumpStatements")
@@ -129,8 +140,10 @@ class AsyncObservabilitySink(
 
             try {
                 delegate.handle(event)
+                diagnostics.onAsyncQueueDepth(queueDepth = queue.size, capacity = capacity)
             } catch (t: Exception) {
                 diagnostics.onAsyncWorkerError(t)
+                diagnostics.onAsyncWorkerState(healthy = false, message = t.message)
                 onWorkerFailure(t)
                 if (!accepting.get()) {
                     break

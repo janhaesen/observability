@@ -32,6 +32,7 @@ Provides a single, type-safe entry point to emit structured events with typed co
 - [Custom Codec](#custom-codec)
 - [Extend with Custom Sinks](#extend-with-custom-sinks)
 - [Diagnostics Hooks](#diagnostics-hooks)
+- [Built-in Operational Diagnostics](#built-in-operational-diagnostics)
 - [Query SPI](#query-spi)
 - [OpenTelemetry Setup](#opentelemetry-setup)
 - [Conformance Testing](#conformance-testing)
@@ -81,7 +82,8 @@ Sinks (fan-out)      (write to Console, File, OpenTelemetry, …)
 - **Sink SPI** — register custom sinks via `SinkConfig` + `SinkRegistry`
 - **Global context injection** — `ContextProvider` merges ambient context into every event
 - **Binary payload support** — attach opaque bytes to any event
-- **Diagnostics hooks** — `ObservabilityDiagnostics` for drops, retries, batch flushes, and errors
+- **Diagnostics hooks** — `ObservabilityDiagnostics` for drops, retries, batch flushes, queue depth, worker health, and sink errors
+- **Built-in operational collector** — `InMemoryOperationalDiagnostics` provides lightweight counters and health snapshots
 - **Binary compatibility tracking** — enforced via `binary-compatibility-validator`
 - **Audit query SPI** — `query-spi` module for backend-agnostic retrieval of audit records
 
@@ -803,8 +805,40 @@ val observability =
 | `onSinkCloseError`    | A sink throws during `close()`                            |
 | `onAsyncDrop`         | An event is dropped by the async queue                    |
 | `onAsyncWorkerError`  | The async background worker throws an uncaught exception  |
+| `onAsyncQueueDepth`   | Async queue depth/capacity changes                        |
+| `onAsyncWorkerState`  | Async worker health state changes                         |
 | `onBatchFlush`        | A batch is flushed (success or failure)                   |
 | `onRetryExhaustion`   | Retry limit exceeded; last error is rethrown              |
+
+---
+
+## Built-in Operational Diagnostics
+
+Use `InMemoryOperationalDiagnostics` when you want first-party counters and health/readiness snapshots without adding heavy dependencies:
+
+```kotlin
+import io.github.aeshen.observability.ObservabilityFactory
+import io.github.aeshen.observability.config.sink.Console
+import io.github.aeshen.observability.diagnostics.InMemoryOperationalDiagnostics
+
+val operational = InMemoryOperationalDiagnostics()
+
+val observability =
+    ObservabilityFactory.create(
+        ObservabilityFactory.Config(
+            sinks = listOf(Console),
+            diagnostics = operational,
+        ),
+    )
+
+// Metrics snapshot (drops, retries, sink failures, batch outcomes, queue depth)
+val metrics = operational.metricsSnapshot()
+
+// Health snapshot (READY, DEGRADED, UNHEALTHY + async worker readiness)
+val health = operational.healthSnapshot()
+```
+
+The collector uses atomics only, keeps runtime overhead small, and works with existing sink implementations.
 
 ---
 

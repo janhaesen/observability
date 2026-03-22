@@ -8,12 +8,14 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 
 ### Added
 - Exposed `MetadataEnricher` as a public, first-class configuration extension point via `metadataEnrichers` parameter in `ObservabilityFactory.Config` and overload.
+- Added `InMemoryOperationalDiagnostics` as a first-party, lightweight collector for runtime reliability metrics and health snapshots.
 - Added built-in metadata enrichers:
   - `IngestedAtEnricher`: adds `ingestedAt` timestamp (milliseconds since epoch)
   - `VersionEnricher`: adds `version` and `buildSha` for deployment tracking
   - `EnvironmentEnricher`: adds `environment` and `region` for environment-specific metadata
   - `HostEnricher`: adds `hostname` and optional `nodeId` for multi-instance deployments
   - `CorrelationIdEnricher`: adds `traceId` and `requestId` from supplier functions for distributed tracing
+- Added async diagnostics hooks for queue depth and worker state (`onAsyncQueueDepth`, `onAsyncWorkerState`) to support health/readiness reporting.
 
 ### Changed
 - Moved the `MetadataEnricher` contract to `io.github.aeshen.observability.enricher` and grouped library-provided enrichers under `io.github.aeshen.observability.enricher.builtin` for clearer SPI-versus-builtins separation.
