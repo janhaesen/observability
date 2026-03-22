@@ -25,6 +25,16 @@ interface ObservabilityDiagnostics {
 
     fun onAsyncWorkerError(error: Exception) = Unit
 
+    fun onAsyncQueueDepth(
+        queueDepth: Int,
+        capacity: Int,
+    ) = Unit
+
+    fun onAsyncWorkerState(
+        healthy: Boolean,
+        message: String? = null,
+    ) = Unit
+
     fun onBatchFlush(
         batchSize: Int,
         elapsedMillis: Long,

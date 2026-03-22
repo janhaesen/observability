@@ -199,6 +199,52 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
     }
 
     @Test
+    fun `reports queue depth and worker state diagnostics`() {
+        val queueDepths = mutableListOf<Int>()
+        val workerStates = mutableListOf<Pair<Boolean, String?>>()
+        val release = CountDownLatch(1)
+
+        val sink =
+            AsyncObservabilitySink(
+                delegate =
+                object : ObservabilitySink {
+                    override fun handle(event: EncodedEvent) {
+                        release.await(2, TimeUnit.SECONDS)
+                    }
+                },
+                capacity = 2,
+                offerTimeoutMillis = 5,
+                diagnostics =
+                object : ObservabilityDiagnostics {
+                    override fun onAsyncQueueDepth(
+                        queueDepth: Int,
+                        capacity: Int,
+                    ) {
+                        queueDepths += queueDepth
+                    }
+
+                    override fun onAsyncWorkerState(
+                        healthy: Boolean,
+                        message: String?,
+                    ) {
+                        workerStates += healthy to message
+                    }
+                },
+            )
+
+        sink.handle(sample("one"))
+        sink.handle(sample("two"))
+        sink.handle(sample("three"))
+
+        release.countDown()
+        sink.close()
+
+        assertTrue(queueDepths.any { it > 0 })
+        assertEquals(true to "running", workerStates.first())
+        assertEquals(true to "stopped", workerStates.last())
+    }
+
+    @Test
     fun `failOnWorkerError surfaces worker failure on subsequent writes and close`() {
         val attempts = AtomicInteger(0)
         val sink =
