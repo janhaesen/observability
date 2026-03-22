@@ -70,6 +70,17 @@ enum class AuditLogicalOperator {
     OR,
 }
 
+/**
+ * Query field identifier used by [AuditSearchQuery] criteria and sort clauses.
+ *
+ * Canonical built-in fields remain flat keys such as `id`, `timestampEpochMillis`, `level`, `event`, and `message`.
+ *
+ * Dynamic event maps should use the following portable naming conventions:
+ * - event context fields: `context.<key>`
+ * - event metadata fields: `metadata.<key>`
+ *
+ * Backends may still expose additional vendor-specific fields through [custom].
+ */
 @JvmInline
 value class AuditField(
     val key: String,
@@ -86,6 +97,18 @@ value class AuditField(
         val MESSAGE = AuditField("message")
 
         fun custom(key: String): AuditField = AuditField(key)
+
+        fun context(key: String): AuditField = prefixed(prefix = "context.", key = key)
+
+        fun metadata(key: String): AuditField = prefixed(prefix = "metadata.", key = key)
+
+        private fun prefixed(
+            prefix: String,
+            key: String,
+        ): AuditField {
+            require(key.isNotBlank()) { "field key must not be blank." }
+            return AuditField(prefix + key)
+        }
     }
 }
 

@@ -49,6 +49,18 @@ class QueryModelValidationTest {
         assertFailsWith<IllegalArgumentException> {
             AuditTextQuery("   ")
         }
+        assertFailsWith<IllegalArgumentException> {
+            AuditField.context("   ")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AuditField.metadata("")
+        }
+    }
+
+    @Test
+    fun `audit field helpers create canonical context and metadata prefixes`() {
+        assertEquals(AuditField.custom("context.request_id"), AuditField.context("request_id"))
+        assertEquals(AuditField.custom("metadata.ingestedAt"), AuditField.metadata("ingestedAt"))
     }
 
     @Test
@@ -93,6 +105,37 @@ class QueryModelValidationTest {
         val typed = legacy.toSearchQuery()
 
         assertNull(typed.text)
+    }
+
+    @Test
+    fun `legacy mapper preserves canonical prefixed filter fields`() {
+        val legacy =
+            AuditQuery(
+                fromEpochMillis = 10,
+                toEpochMillis = 20,
+                filters = mapOf(
+                    "context.request_id" to "req-123",
+                    "metadata.ingestedAt" to "1710000000000",
+                ),
+            )
+
+        val typed = legacy.toSearchQuery()
+
+        assertEquals(
+            listOf(
+                AuditCriterion.Comparison(
+                    field = AuditField.context("request_id"),
+                    operator = AuditComparisonOperator.EQ,
+                    value = AuditValue.Text("req-123"),
+                ),
+                AuditCriterion.Comparison(
+                    field = AuditField.metadata("ingestedAt"),
+                    operator = AuditComparisonOperator.EQ,
+                    value = AuditValue.Text("1710000000000"),
+                ),
+            ),
+            typed.criteria,
+        )
     }
 
     @Test
