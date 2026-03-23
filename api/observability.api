@@ -92,9 +92,10 @@ public final class io/github/aeshen/observability/ObservabilityFactory {
 
 public final class io/github/aeshen/observability/ObservabilityFactory$Config {
 	public static final field Companion Lio/github/aeshen/observability/ObservabilityFactory$Config$Companion;
-	public fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;)V
-	public synthetic fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
+	public final fun component10 ()Ljava/util/List;
 	public final fun component2 ()Lio/github/aeshen/observability/config/encryption/EncryptionConfig;
 	public final fun component3 ()Z
 	public final fun component4 ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
@@ -103,8 +104,8 @@ public final class io/github/aeshen/observability/ObservabilityFactory$Config {
 	public final fun component7 ()Ljava/util/List;
 	public final fun component8 ()Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;
 	public final fun component9 ()Lio/github/aeshen/observability/ObservabilityFactory$Profile;
-	public final fun copy (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
-	public static synthetic fun copy$default (Lio/github/aeshen/observability/ObservabilityFactory$Config;Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;ILjava/lang/Object;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
+	public final fun copy (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/ObservabilityFactory$Config;Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;ILjava/lang/Object;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCodec ()Lio/github/aeshen/observability/codec/ObservabilityCodec;
 	public final fun getContextProviders ()Ljava/util/List;
@@ -112,6 +113,7 @@ public final class io/github/aeshen/observability/ObservabilityFactory$Config {
 	public final fun getEncryption ()Lio/github/aeshen/observability/config/encryption/EncryptionConfig;
 	public final fun getFailOnSinkError ()Z
 	public final fun getMetadataEnrichers ()Ljava/util/List;
+	public final fun getProcessors ()Ljava/util/List;
 	public final fun getProfile ()Lio/github/aeshen/observability/ObservabilityFactory$Profile;
 	public final fun getSinkRegistry ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
 	public final fun getSinks ()Ljava/util/List;
@@ -451,6 +453,52 @@ public abstract interface class io/github/aeshen/observability/key/TypedKey {
 
 public abstract interface class io/github/aeshen/observability/processor/ObservabilityProcessor {
 	public abstract fun process (Lio/github/aeshen/observability/codec/EncodedEvent;)Lio/github/aeshen/observability/codec/EncodedEvent;
+}
+
+public final class io/github/aeshen/observability/processor/builtin/SensitiveFieldAction : java/lang/Enum {
+	public static final field ALLOW Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;
+	public static final field MASK Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;
+	public static final field REMOVE Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;
+	public static fun values ()[Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;
+}
+
+public final class io/github/aeshen/observability/processor/builtin/SensitiveFieldPresets {
+	public static final field INSTANCE Lio/github/aeshen/observability/processor/builtin/SensitiveFieldPresets;
+	public final fun commonSecrets (Ljava/lang/String;)Ljava/util/List;
+	public static synthetic fun commonSecrets$default (Lio/github/aeshen/observability/processor/builtin/SensitiveFieldPresets;Ljava/lang/String;ILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class io/github/aeshen/observability/processor/builtin/SensitiveFieldProcessor : io/github/aeshen/observability/processor/ObservabilityProcessor {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Ljava/util/List;Lkotlinx/serialization/json/Json;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Lkotlinx/serialization/json/Json;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun process (Lio/github/aeshen/observability/codec/EncodedEvent;)Lio/github/aeshen/observability/codec/EncodedEvent;
+}
+
+public final class io/github/aeshen/observability/processor/builtin/SensitiveFieldRule {
+	public static final field Companion Lio/github/aeshen/observability/processor/builtin/SensitiveFieldRule$Companion;
+	public fun <init> (Ljava/lang/String;Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;Ljava/lang/String;)Lio/github/aeshen/observability/processor/builtin/SensitiveFieldRule;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/processor/builtin/SensitiveFieldRule;Ljava/lang/String;Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;Ljava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/processor/builtin/SensitiveFieldRule;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAction ()Lio/github/aeshen/observability/processor/builtin/SensitiveFieldAction;
+	public final fun getFieldPattern ()Ljava/lang/String;
+	public final fun getReplacement ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/processor/builtin/SensitiveFieldRule$Companion {
+	public final fun allow (Ljava/lang/String;)Lio/github/aeshen/observability/processor/builtin/SensitiveFieldRule;
+	public final fun mask (Ljava/lang/String;Ljava/lang/String;)Lio/github/aeshen/observability/processor/builtin/SensitiveFieldRule;
+	public static synthetic fun mask$default (Lio/github/aeshen/observability/processor/builtin/SensitiveFieldRule$Companion;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/processor/builtin/SensitiveFieldRule;
+	public final fun remove (Ljava/lang/String;)Lio/github/aeshen/observability/processor/builtin/SensitiveFieldRule;
 }
 
 public abstract interface class io/github/aeshen/observability/sink/BatchCapableObservabilitySink : io/github/aeshen/observability/sink/ObservabilitySink {

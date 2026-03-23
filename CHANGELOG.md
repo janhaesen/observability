@@ -9,6 +9,7 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 ### Added
 - Exposed `MetadataEnricher` as a public, first-class configuration extension point via `metadataEnrichers` parameter in `ObservabilityFactory.Config` and overload.
 - Added `InMemoryOperationalDiagnostics` as a first-party, lightweight collector for runtime reliability metrics and health snapshots.
+- Added first-party sensitive-field filtering via `SensitiveFieldProcessor`, ordered allow/mask/remove rules, and `SensitiveFieldPresets.commonSecrets()` for common secret/token/email-style field names.
 - Added built-in metadata enrichers:
   - `IngestedAtEnricher`: adds `ingestedAt` timestamp (milliseconds since epoch)
   - `VersionEnricher`: adds `version` and `buildSha` for deployment tracking
@@ -21,6 +22,8 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 - Moved the `MetadataEnricher` contract to `io.github.aeshen.observability.enricher` and grouped library-provided enrichers under `io.github.aeshen.observability.enricher.builtin` for clearer SPI-versus-builtins separation.
 - Evolved the optional `query-spi` module toward a typed, future-proof contract with `AuditSearchQueryService` and `AuditSearchQuery`, while retaining `AuditQueryService` as a deprecated compatibility bridge.
 - Standardized the recommended `query-spi` naming convention for dynamic query fields as `context.<key>` and `metadata.<key>`, with additive `AuditField` helpers for those namespaces.
+- Added first-class `processors` support to `ObservabilityFactory.Config` while ensuring custom processors run before encryption.
+- Standardized sink creation guidance around `ObservabilityFactory.Config.sinks` + `SinkRegistry`; kept direct sink injection as a deprecated compatibility bridge.
 
 ## [1.0.0] - 2026-03-21
 

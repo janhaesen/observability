@@ -6,6 +6,8 @@ import io.github.aeshen.observability.codec.ObservabilityCodec
 import io.github.aeshen.observability.config.sink.OpenTelemetry
 import io.github.aeshen.observability.config.sink.SinkConfig
 import io.github.aeshen.observability.key.StringKey
+import io.github.aeshen.observability.processor.builtin.SensitiveFieldProcessor
+import io.github.aeshen.observability.processor.builtin.SensitiveFieldRule
 import io.github.aeshen.observability.sink.ObservabilitySink
 import io.github.aeshen.observability.sink.registry.SinkRegistry
 import java.net.InetSocketAddress
@@ -105,11 +107,15 @@ class ObservabilityFactoryTest {
     }
 
     @Test
-    fun `factory supports direct sink instance list`() {
+    fun `factory supports runtime sink instance via registry adapter`() {
         val seen = mutableListOf<EncodedEvent>()
+        val registry = directSinkRegistry()
         val observability =
             ObservabilityFactory.create(
-                CapturingSink(seen),
+                ObservabilityFactory.Config(
+                    sinks = listOf(DirectSinkConfig(CapturingSink(seen))),
+                    sinkRegistry = registry,
+                ),
             )
 
         observability.use {
@@ -126,16 +132,21 @@ class ObservabilityFactoryTest {
     @Test
     fun `factory accepts custom codec`() {
         val seen = mutableListOf<EncodedEvent>()
+        val customCodec =
+            ObservabilityCodec { event ->
+                EncodedEvent(
+                    original = event,
+                    encoded = "custom".toByteArray(Charsets.UTF_8),
+                )
+            }
+        val registry = directSinkRegistry()
         val observability =
             ObservabilityFactory.create(
-                CapturingSink(seen),
-                codec =
-                ObservabilityCodec { event ->
-                    EncodedEvent(
-                        original = event,
-                        encoded = "custom".toByteArray(Charsets.UTF_8),
-                    )
-                },
+                ObservabilityFactory.Config(
+                    sinks = listOf(DirectSinkConfig(CapturingSink(seen))),
+                    sinkRegistry = registry,
+                    codec = customCodec,
+                ),
             )
 
         observability.use {
@@ -240,17 +251,70 @@ class ObservabilityFactoryTest {
     }
 
     @Test
+    fun `factory config accepts custom processors`() {
+        val seen = mutableListOf<EncodedEvent>()
+        val passwordKey =
+            object : io.github.aeshen.observability.key.TypedKey<String> {
+                override val keyName: String = "password"
+            }
+        val processor =
+            SensitiveFieldProcessor(
+                rules = listOf(SensitiveFieldRule.remove("context.password")),
+            )
+        val registry =
+            SinkRegistry
+                .builder()
+                .register<ThirdPartySinkConfig> { CapturingSink(seen) }
+                .build()
+
+        val observability =
+            ObservabilityFactory.create(
+                ObservabilityFactory.Config(
+                    sinks = listOf(ThirdPartySinkConfig("partner-processor")),
+                    sinkRegistry = registry,
+                    processors = listOf(processor),
+                ),
+            )
+
+        val context =
+            ObservabilityContext
+                .builder()
+                .put(passwordKey, "secret")
+                .build()
+
+        observability.use {
+            it.info(
+                name = TestEvent.TEST,
+                message = "processor via config",
+                context = context,
+            )
+        }
+
+        val encoded = seen.single().encoded.toString(Charsets.UTF_8)
+        assertTrue(encoded.contains("processor via config"))
+        assertTrue(encoded.contains("\"context\":{}"))
+        assertTrue(encoded.contains("\"payloadPresent\":false"))
+        assertTrue(encoded.contains("\"payloadBase64\":\"\""))
+        assertTrue(encoded.contains("\"message\":\"processor via config\""))
+        assertTrue(!encoded.contains("secret"))
+    }
+
+    @Test
     fun `audit durable profile enforces strict sink failures`() {
         val failing =
             object : ObservabilitySink {
                 override fun handle(event: EncodedEvent) = error("always fails")
             }
+        val registry = directSinkRegistry()
 
         val observability =
             ObservabilityFactory.create(
-                failing,
-                failOnSinkError = false,
-                profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+                ObservabilityFactory.Config(
+                    sinks = listOf(DirectSinkConfig(failing)),
+                    sinkRegistry = registry,
+                    failOnSinkError = false,
+                    profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+                ),
             )
 
         assertFailsWith<IllegalStateException> {
@@ -274,11 +338,15 @@ class ObservabilityFactoryTest {
                     }
                 }
             }
+        val registry = directSinkRegistry()
 
         val observability =
             ObservabilityFactory.create(
-                flaky,
-                profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+                ObservabilityFactory.Config(
+                    sinks = listOf(DirectSinkConfig(flaky)),
+                    sinkRegistry = registry,
+                    profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+                ),
             )
 
         observability.use {
@@ -361,12 +429,16 @@ class ObservabilityFactoryTest {
             object : ObservabilitySink {
                 override fun handle(event: EncodedEvent) = error("always fail")
             }
+        val registry = directSinkRegistry()
 
         val observability =
             ObservabilityFactory.create(
-                failing,
-                profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
-                diagnostics = diagnostics,
+                ObservabilityFactory.Config(
+                    sinks = listOf(DirectSinkConfig(failing)),
+                    sinkRegistry = registry,
+                    profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+                    diagnostics = diagnostics,
+                ),
             )
 
         assertFailsWith<IllegalStateException> {
@@ -394,6 +466,16 @@ class ObservabilityFactoryTest {
     private data class ThirdPartySinkConfig(
         val target: String,
     ) : SinkConfig
+
+    private data class DirectSinkConfig(
+        val sink: ObservabilitySink,
+    ) : SinkConfig
+
+    private fun directSinkRegistry(): SinkRegistry =
+        SinkRegistry
+            .builder()
+            .register<DirectSinkConfig> { config -> config.sink }
+            .build()
 
     private class CapturingSink(
         private val seen: MutableList<EncodedEvent>,

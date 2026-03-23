@@ -9,8 +9,9 @@ The formal compatibility policy lives in `docs/spi-contract.md`.
 - `SinkConfig` is an open interface. Third-party modules can define their own config type.
 - `SinkProvider` maps a `SinkConfig` into an `ObservabilitySink`.
 - `SinkRegistry` resolves configured sinks through registered providers.
-- `ObservabilityFactory.create(...)` supports direct sink instances.
+- `ObservabilityFactory.create(ObservabilityFactory.Config(...))` wires sinks through `SinkRegistry`.
 - `MetadataEnricher` is a stable extension point for enriching encoded events with runtime metadata.
+- `ObservabilityProcessor` is a stable extension point for byte/metadata transformations after enrichment and before sink delivery.
 
 ## Metadata Enrichers
 
@@ -93,6 +94,37 @@ Enrichers are applied in the order provided. Choose ordering carefully if enrich
 
 `MetadataEnricher.enrich()` is always called under a read lock within the emit cycle and should be fast and thread-safe. If your enricher holds state, ensure it is thread-safe (e.g., using `AtomicReference` or synchronized access).
 
+## Processors
+
+Processors run after encoding and metadata enrichment, but before sink fan-out. They can transform the encoded bytes, `EncodedEvent.original`, and `EncodedEvent.metadata`.
+
+The library now ships with a first-party `SensitiveFieldProcessor` for deterministic masking/removal of fields such as `context.password`, `metadata.apiToken`, `message`, and `payload`.
+
+### Configuration
+
+```kotlin
+import io.github.aeshen.observability.ObservabilityFactory
+import io.github.aeshen.observability.processor.builtin.SensitiveFieldProcessor
+import io.github.aeshen.observability.processor.builtin.SensitiveFieldRule
+
+val observability =
+    ObservabilityFactory.create(
+        ObservabilityFactory.Config(
+            sinks = listOf(/* ... */),
+            processors = listOf(
+                SensitiveFieldProcessor(
+                    rules = listOf(
+                        SensitiveFieldRule.remove("context.password"),
+                        SensitiveFieldRule.mask("metadata.email", "[EMAIL]"),
+                    ),
+                ),
+            ),
+        ),
+    )
+```
+
+Processors are applied in the order provided. When encryption is enabled, custom processors run before the built-in encryption processor.
+
 ## Sinks
 
 ### Threading And Lifecycle Guarantees
@@ -100,7 +132,8 @@ Enrichers are applied in the order provided. Choose ordering carefully if enrich
 - `ObservabilitySink.handle` may be called frequently and should be fast and thread-safe.
 - `ObservabilitySink.close` is called when `Observability` is closed; implementations should flush and release resources.
 - `close()` should be safe to call more than once.
-- Sink exceptions are swallowed by default unless `failOnSinkError = true`.
+- `IllegalArgumentException` and `IllegalStateException` from sinks are swallowed by default unless `failOnSinkError = true`.
+- Other exception types from `handle` are not swallowed by the pipeline.
 
 ## Error Handling Expectations
 

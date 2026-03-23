@@ -57,7 +57,8 @@ subprojects {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.10.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
     compileOnly("io.opentelemetry:opentelemetry-api:$openTelemetryVersion")
     compileOnly("io.opentelemetry:opentelemetry-sdk:$openTelemetryVersion")
     compileOnly("io.opentelemetry:opentelemetry-exporter-otlp:$openTelemetryVersion")
