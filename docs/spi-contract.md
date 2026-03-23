@@ -81,6 +81,19 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 - Continue accepting `AuditQuery` during migration and convert via `AuditQuery.toSearchQuery()`
 - `AuditQueryService` remains available for compatibility but is deprecated in favor of `AuditSearchQueryService`
 - Surfaces `AuditRecord` with timestamp, event, level, message, context, and metadata
+- Use `AuditSearchQueryTranslator` + `StandardAuditFieldMapper` to implement reusable field/criterion/text/sort translation logic
+- `ReferenceBackendTranslator` provides a documented end-to-end implementation pattern for third-party backends
+
+### Query Translation Semantics
+
+- Apply time window as inclusive bounds: `fromEpochMillis <= timestamp <= toEpochMillis`
+- Treat top-level `AuditSearchQuery.criteria` as logical `AND`
+- Evaluate `AuditCriterion.Group` recursively using the group operator (`AND` or `OR`)
+- Map `AuditCriterion.Exists(field, true)` to field-present/non-null semantics
+- Map `AuditCriterion.Exists(field, false)` to field-missing/null semantics
+- Apply `AuditTextQuery.CONTAINS` as substring, `EXACT` as full-string, and `PREFIX` as starts-with
+- Preserve `AuditSort` declaration order
+- Apply `AuditPage.limit` and `AuditPage.offset` after filtering and sorting
 
 ## Recommended Extension Patterns
 
@@ -96,4 +109,3 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 - Patch/minor releases preserve binary compatibility for SPI symbols above.
 - Deprecated query fields (`AuditQuery.filters`, `AuditQuery.freeText`) remain additive compatibility shims until a future major release.
 - Major releases may remove deprecated SPI with migration notes.
-

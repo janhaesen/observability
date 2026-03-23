@@ -17,6 +17,10 @@ The format is based on Keep a Changelog and the project follows Semantic Version
   - `HostEnricher`: adds `hostname` and optional `nodeId` for multi-instance deployments
   - `CorrelationIdEnricher`: adds `traceId` and `requestId` from supplier functions for distributed tracing
 - Added async diagnostics hooks for queue depth and worker state (`onAsyncQueueDepth`, `onAsyncWorkerState`) to support health/readiness reporting.
+- Added a backend-neutral `query-spi` translator kit with `AuditSearchQueryTranslator`, `AuditFieldMapper`, `AuditPredicateFactory`, `AuditSortFactory`, `AuditTextFactory`, and `TranslatedAuditQuery` to support reusable backend query translation.
+- Added standard query field mapping helpers in `query-spi`: `StandardAuditFieldMappings`, `StandardAuditField`, and `StandardAuditFieldMapper` for canonical built-ins plus `context.<key>` and `metadata.<key>` prefixes.
+- Added `ReferenceBackendTranslator` and `ReferenceBackendQuery` as a documented end-to-end translation example for `AuditSearchQuery` (criteria groups, text query semantics, sort mapping, and pagination).
+- Added translator-kit contract tests in `query-spi` covering canonical field resolution, translator behavior, and end-to-end reference translation output.
 
 ### Changed
 - Moved the `MetadataEnricher` contract to `io.github.aeshen.observability.enricher` and grouped library-provided enrichers under `io.github.aeshen.observability.enricher.builtin` for clearer SPI-versus-builtins separation.
@@ -24,6 +28,7 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 - Standardized the recommended `query-spi` naming convention for dynamic query fields as `context.<key>` and `metadata.<key>`, with additive `AuditField` helpers for those namespaces.
 - Added first-class `processors` support to `ObservabilityFactory.Config` while ensuring custom processors run before encryption.
 - Standardized sink creation guidance around `ObservabilityFactory.Config.sinks` + `SinkRegistry`; kept direct sink injection as a deprecated compatibility bridge.
+- Expanded `query-spi` documentation (`query-spi/README.md`, `README.md`, `docs/spi-contract.md`) with concrete implementation guidance and explicit query translation semantics for third-party backend authors.
 
 ## [1.0.0] - 2026-03-21
 

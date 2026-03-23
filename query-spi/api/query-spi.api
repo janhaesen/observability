@@ -307,3 +307,159 @@ public final class io/github/aeshen/observability/query/AuditValue$TextList : io
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class io/github/aeshen/observability/query/reference/AuditFieldMapper {
+	public abstract fun map-Jr6fKy0 (Ljava/lang/String;)Ljava/lang/Object;
+}
+
+public abstract interface class io/github/aeshen/observability/query/reference/AuditPredicateFactory {
+	public abstract fun comparison (Ljava/lang/Object;Lio/github/aeshen/observability/query/AuditComparisonOperator;Lio/github/aeshen/observability/query/AuditValue;)Ljava/lang/Object;
+	public abstract fun exists (Ljava/lang/Object;Z)Ljava/lang/Object;
+	public abstract fun group (Lio/github/aeshen/observability/query/AuditLogicalOperator;Ljava/util/List;)Ljava/lang/Object;
+}
+
+public final class io/github/aeshen/observability/query/reference/AuditSearchQueryTranslator {
+	public fun <init> (Lio/github/aeshen/observability/query/reference/AuditFieldMapper;Lio/github/aeshen/observability/query/reference/AuditPredicateFactory;Lio/github/aeshen/observability/query/reference/AuditSortFactory;Lio/github/aeshen/observability/query/reference/AuditTextFactory;)V
+	public final fun translate (Lio/github/aeshen/observability/query/AuditSearchQuery;)Lio/github/aeshen/observability/query/reference/TranslatedAuditQuery;
+}
+
+public abstract interface class io/github/aeshen/observability/query/reference/AuditSortFactory {
+	public abstract fun sort (Ljava/lang/Object;Lio/github/aeshen/observability/query/AuditSortDirection;)Ljava/lang/Object;
+}
+
+public abstract interface class io/github/aeshen/observability/query/reference/AuditTextFactory {
+	public abstract fun text (Lio/github/aeshen/observability/query/AuditTextQuery;)Ljava/lang/Object;
+}
+
+public abstract interface class io/github/aeshen/observability/query/reference/StandardAuditField {
+}
+
+public final class io/github/aeshen/observability/query/reference/StandardAuditField$Context : io/github/aeshen/observability/query/reference/StandardAuditField {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/aeshen/observability/query/reference/StandardAuditField$Context;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/reference/StandardAuditField$Context;Ljava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/query/reference/StandardAuditField$Context;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/StandardAuditField$Custom : io/github/aeshen/observability/query/reference/StandardAuditField {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/aeshen/observability/query/reference/StandardAuditField$Custom;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/reference/StandardAuditField$Custom;Ljava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/query/reference/StandardAuditField$Custom;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/StandardAuditField$Event : io/github/aeshen/observability/query/reference/StandardAuditField {
+	public static final field INSTANCE Lio/github/aeshen/observability/query/reference/StandardAuditField$Event;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/StandardAuditField$Id : io/github/aeshen/observability/query/reference/StandardAuditField {
+	public static final field INSTANCE Lio/github/aeshen/observability/query/reference/StandardAuditField$Id;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/StandardAuditField$Level : io/github/aeshen/observability/query/reference/StandardAuditField {
+	public static final field INSTANCE Lio/github/aeshen/observability/query/reference/StandardAuditField$Level;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/StandardAuditField$Message : io/github/aeshen/observability/query/reference/StandardAuditField {
+	public static final field INSTANCE Lio/github/aeshen/observability/query/reference/StandardAuditField$Message;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/StandardAuditField$Metadata : io/github/aeshen/observability/query/reference/StandardAuditField {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/aeshen/observability/query/reference/StandardAuditField$Metadata;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/reference/StandardAuditField$Metadata;Ljava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/query/reference/StandardAuditField$Metadata;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/StandardAuditField$TimestampEpochMillis : io/github/aeshen/observability/query/reference/StandardAuditField {
+	public static final field INSTANCE Lio/github/aeshen/observability/query/reference/StandardAuditField$TimestampEpochMillis;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/StandardAuditFieldMapper : io/github/aeshen/observability/query/reference/AuditFieldMapper {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun map-Jr6fKy0 (Ljava/lang/String;)Ljava/lang/Object;
+	public fun map-Jr6fKy0 (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/StandardAuditFieldMappings {
+	public static final field CONTEXT_PREFIX Ljava/lang/String;
+	public static final field INSTANCE Lio/github/aeshen/observability/query/reference/StandardAuditFieldMappings;
+	public static final field METADATA_PREFIX Ljava/lang/String;
+	public final fun resolve-Jr6fKy0 (Ljava/lang/String;)Lio/github/aeshen/observability/query/reference/StandardAuditField;
+}
+
+public final class io/github/aeshen/observability/query/reference/TranslatedAuditQuery {
+	public fun <init> (JJLjava/lang/Object;Ljava/lang/Object;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPage;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/lang/Object;
+	public final fun component4 ()Ljava/lang/Object;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Lio/github/aeshen/observability/query/AuditPage;
+	public final fun copy (JJLjava/lang/Object;Ljava/lang/Object;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPage;)Lio/github/aeshen/observability/query/reference/TranslatedAuditQuery;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/reference/TranslatedAuditQuery;JJLjava/lang/Object;Ljava/lang/Object;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPage;ILjava/lang/Object;)Lio/github/aeshen/observability/query/reference/TranslatedAuditQuery;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFilter ()Ljava/lang/Object;
+	public final fun getFromEpochMillis ()J
+	public final fun getPage ()Lio/github/aeshen/observability/query/AuditPage;
+	public final fun getSort ()Ljava/util/List;
+	public final fun getText ()Ljava/lang/Object;
+	public final fun getToEpochMillis ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery {
+	public fun <init> (JJLjava/lang/String;Ljava/util/List;II)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun copy (JJLjava/lang/String;Ljava/util/List;II)Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery;JJLjava/lang/String;Ljava/util/List;IIILjava/lang/Object;)Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFromEpochMillis ()J
+	public final fun getLimit ()I
+	public final fun getOffset ()I
+	public final fun getSortClauses ()Ljava/util/List;
+	public final fun getToEpochMillis ()J
+	public final fun getWhereClause ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/reference/demo/ReferenceBackendTranslator {
+	public static final field INSTANCE Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendTranslator;
+	public final fun translate (Lio/github/aeshen/observability/query/AuditSearchQuery;)Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery;
+}
+

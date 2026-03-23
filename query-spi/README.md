@@ -36,6 +36,77 @@ Examples:
 Use `AuditField.context("...")` and `AuditField.metadata("...")` for the recommended convention.
 Keep `AuditField.custom("...")` for vendor-specific fields that are outside the shared portable model.
 
+## Reference translator kit
+
+`query-spi` ships a backend-neutral translator kit so backend authors can focus on target query syntax instead of hand-rolling model traversal.
+
+Core building blocks:
+
+- `AuditSearchQueryTranslator` to walk `AuditSearchQuery` consistently
+- `AuditFieldMapper` to map canonical SPI fields to backend field identifiers
+- `AuditPredicateFactory`, `AuditSortFactory`, and `AuditTextFactory` to build backend clauses
+- `StandardAuditFieldMappings` and `StandardAuditFieldMapper` to parse/map built-ins plus `context.<key>` and `metadata.<key>`
+- `ReferenceBackendTranslator` (demo) showing one complete end-to-end translation path
+
+Example backend-neutral wiring:
+
+```kotlin
+import io.github.aeshen.observability.query.AuditComparisonOperator
+import io.github.aeshen.observability.query.AuditLogicalOperator
+import io.github.aeshen.observability.query.AuditSearchQuery
+import io.github.aeshen.observability.query.AuditValue
+import io.github.aeshen.observability.query.reference.AuditPredicateFactory
+import io.github.aeshen.observability.query.reference.AuditSearchQueryTranslator
+import io.github.aeshen.observability.query.reference.AuditSortFactory
+import io.github.aeshen.observability.query.reference.AuditTextFactory
+import io.github.aeshen.observability.query.reference.StandardAuditFieldMapper
+
+val translator =
+    AuditSearchQueryTranslator(
+        fieldMapper = StandardAuditFieldMapper(),
+        predicateFactory =
+            object : AuditPredicateFactory<String, String> {
+                override fun comparison(field: String, operator: AuditComparisonOperator, value: AuditValue): String =
+                    "$field $operator $value"
+
+                override fun exists(field: String, shouldExist: Boolean): String =
+                    if (shouldExist) "$field IS NOT NULL" else "$field IS NULL"
+
+                override fun group(operator: AuditLogicalOperator, criteria: List<String>): String =
+                    criteria.joinToString(
+                        separator = if (operator == AuditLogicalOperator.AND) " AND " else " OR ",
+                        prefix = "(",
+                        postfix = ")",
+                    )
+            },
+        sortFactory = AuditSortFactory { field, direction -> "$field ${direction.name}" },
+        textFactory = AuditTextFactory { text -> "TEXT(${text.mode},${text.query},${text.caseSensitive})" },
+    )
+
+fun toBackendQuery(query: AuditSearchQuery): String {
+    val translated = translator.translate(query)
+    return listOfNotNull(translated.filter, translated.text).joinToString(" AND ")
+}
+```
+
+For a full reference translation demo (criteria groups, text semantics, sort mapping, paging), see:
+`io.github.aeshen.observability.query.reference.demo.ReferenceBackendTranslator`.
+
+## Query semantics guidance
+
+Recommended semantics for portable behavior across backends:
+
+- time window: always apply `fromEpochMillis <= timestamp <= toEpochMillis`
+- top-level `criteria` list: combine with `AND`
+- nested `AuditCriterion.Group`: combine according to its `operator`
+- `AuditCriterion.Exists(field, true)`: field is present/non-null
+- `AuditCriterion.Exists(field, false)`: field is missing/null
+- `AuditTextQuery.CONTAINS`: substring match
+- `AuditTextQuery.EXACT`: full-string match
+- `AuditTextQuery.PREFIX`: starts-with match
+- `AuditSort`: apply in declaration order
+- `AuditPage`: apply `limit` and `offset` after filtering and sorting
+
 ```kotlin
 class OpenSearchAuditQueryService : io.github.aeshen.observability.query.AuditSearchQueryService {
     override fun search(query: io.github.aeshen.observability.query.AuditSearchQuery): io.github.aeshen.observability.query.AuditQueryResult {
@@ -82,4 +153,3 @@ If you still expose the old SPI to consumers, bridge a typed implementation back
 val legacyService: io.github.aeshen.observability.query.AuditQueryService =
     io.github.aeshen.observability.query.asLegacyService(OpenSearchAuditQueryService())
 ```
-
