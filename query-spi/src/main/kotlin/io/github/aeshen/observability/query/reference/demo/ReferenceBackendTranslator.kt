@@ -25,15 +25,15 @@ object ReferenceBackendTranslator {
     private val translator =
         AuditSearchQueryTranslator(
             fieldMapper =
-                StandardAuditFieldMapper(
-                    idField = "audit_id",
-                    timestampField = "event_ts_ms",
-                    levelField = "severity",
-                    eventField = "event_name",
-                    messageField = "message_text",
-                    contextPrefix = "ctx.",
-                    metadataPrefix = "meta.",
-                ),
+            StandardAuditFieldMapper(
+                idField = "audit_id",
+                timestampField = "event_ts_ms",
+                levelField = "severity",
+                eventField = "event_name",
+                messageField = "message_text",
+                contextPrefix = "ctx.",
+                metadataPrefix = "meta.",
+            ),
             predicateFactory = ReferencePredicateFactory,
             sortFactory = { field, direction -> "$field ${direction.name}" },
             textFactory = { text -> referenceTextClause(text) },
@@ -118,7 +118,9 @@ object ReferenceBackendTranslator {
         }
 
         private fun renderInValue(value: AuditValue): String {
-            require(value is AuditValue.TextList) { "IN operator requires AuditValue.TextList in the reference translator." }
+            require(
+                value is AuditValue.TextList
+            ) { "IN operator requires AuditValue.TextList in the reference translator." }
             val rendered = value.values.joinToString(",") { "'${escapeSingleQuotes(it)}'" }
             return "($rendered)"
         }
@@ -136,15 +138,27 @@ object ReferenceBackendTranslator {
 
         private fun renderScalarValue(value: AuditValue): String =
             when (value) {
-                is AuditValue.Text -> "'${escapeSingleQuotes(value.value)}'"
-                is AuditValue.Number -> value.value.toString()
-                is AuditValue.Decimal -> value.value.toString()
-                is AuditValue.Bool -> value.value.toString().uppercase()
-                is AuditValue.TextList ->
+                is AuditValue.Text -> {
+                    "'${escapeSingleQuotes(value.value)}'"
+                }
+
+                is AuditValue.Number -> {
+                    value.value.toString()
+                }
+
+                is AuditValue.Decimal -> {
+                    value.value.toString()
+                }
+
+                is AuditValue.Bool -> {
+                    value.value.toString().uppercase()
+                }
+
+                is AuditValue.TextList -> {
                     error("Text list values are only supported with the IN operator in the reference translator.")
+                }
             }
     }
 
     private fun escapeSingleQuotes(value: String): String = value.replace("'", "''")
 }
-

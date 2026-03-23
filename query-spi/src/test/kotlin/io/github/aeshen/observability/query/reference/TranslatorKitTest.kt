@@ -38,30 +38,7 @@ class TranslatorKitTest {
 
     @Test
     fun `translator kit maps criteria sort and text using backend factories`() {
-        val translator =
-            AuditSearchQueryTranslator(
-                fieldMapper = { field -> "mapped.${field.key}" },
-                predicateFactory =
-                    object : AuditPredicateFactory<String, String> {
-                        override fun comparison(
-                            field: String,
-                            operator: AuditComparisonOperator,
-                            value: AuditValue,
-                        ): String = "cmp($field,$operator,$value)"
-
-                        override fun exists(
-                            field: String,
-                            shouldExist: Boolean,
-                        ): String = "exists($field,$shouldExist)"
-
-                        override fun group(
-                            operator: AuditLogicalOperator,
-                            criteria: List<String>,
-                        ): String = "group($operator,${criteria.joinToString(";")})"
-                    },
-                sortFactory = { field, direction -> "sort($field,$direction)" },
-                textFactory = { text -> "text(${text.mode},${text.caseSensitive},${text.query})" },
-            )
+        val translator = createQueryTranslator()
 
         val translated =
             translator.translate(
@@ -70,40 +47,41 @@ class TranslatorKitTest {
                     toEpochMillis = 20,
                     page = AuditPage(limit = 25, offset = 5),
                     criteria =
-                        listOf(
-                            AuditCriterion.Comparison(
-                                field = AuditField.LEVEL,
-                                operator = AuditComparisonOperator.EQ,
-                                value = AuditValue.Text("ERROR"),
-                            ),
-                            AuditCriterion.Group(
-                                operator = AuditLogicalOperator.OR,
-                                criteria =
-                                    listOf(
-                                        AuditCriterion.Exists(
-                                            field = AuditField.context("request_id"),
-                                        ),
-                                        AuditCriterion.Comparison(
-                                            field = AuditField.metadata("source"),
-                                            operator = AuditComparisonOperator.NEQ,
-                                            value = AuditValue.Text("api"),
-                                        ),
-                                    ),
+                    listOf(
+                        AuditCriterion.Comparison(
+                            field = AuditField.LEVEL,
+                            operator = AuditComparisonOperator.EQ,
+                            value = AuditValue.Text("ERROR"),
+                        ),
+                        AuditCriterion.Group(
+                            operator = AuditLogicalOperator.OR,
+                            criteria =
+                            listOf(
+                                AuditCriterion.Exists(
+                                    field = AuditField.context("request_id"),
+                                ),
+                                AuditCriterion.Comparison(
+                                    field = AuditField.metadata("source"),
+                                    operator = AuditComparisonOperator.NEQ,
+                                    value = AuditValue.Text("api"),
+                                ),
                             ),
                         ),
+                    ),
                     text = AuditTextQuery(query = "payment", mode = AuditTextMatchMode.PREFIX),
                     sort =
-                        listOf(
-                            AuditSort(AuditField.TIMESTAMP_EPOCH_MILLIS, AuditSortDirection.DESC),
-                            AuditSort(AuditField.LEVEL, AuditSortDirection.ASC),
-                        ),
+                    listOf(
+                        AuditSort(AuditField.TIMESTAMP_EPOCH_MILLIS, AuditSortDirection.DESC),
+                        AuditSort(AuditField.LEVEL, AuditSortDirection.ASC),
+                    ),
                 ),
             )
 
         assertEquals(10, translated.fromEpochMillis)
         assertEquals(20, translated.toEpochMillis)
         assertEquals(
-            "group(AND,cmp(mapped.level,EQ,Text(value=ERROR));group(OR,exists(mapped.context.request_id,true);cmp(mapped.metadata.source,NEQ,Text(value=api))))",
+            "group(AND,cmp(mapped.level,EQ,Text(value=ERROR));group(OR,exists" +
+                "(mapped.context.request_id,true);cmp(mapped.metadata.source,NEQ,Text(value=api))))",
             translated.filter,
         )
         assertEquals("text(PREFIX,false,payment)", translated.text)
@@ -117,6 +95,34 @@ class TranslatorKitTest {
         assertEquals(AuditPage(limit = 25, offset = 5), translated.page)
     }
 
+    private fun createQueryTranslator(): AuditSearchQueryTranslator<String, String, String, String> {
+        val translator =
+            AuditSearchQueryTranslator(
+                fieldMapper = { field -> "mapped.${field.key}" },
+                predicateFactory =
+                object : AuditPredicateFactory<String, String> {
+                    override fun comparison(
+                        field: String,
+                        operator: AuditComparisonOperator,
+                        value: AuditValue,
+                    ): String = "cmp($field,$operator,$value)"
+
+                    override fun exists(
+                        field: String,
+                        shouldExist: Boolean,
+                    ): String = "exists($field,$shouldExist)"
+
+                    override fun group(
+                        operator: AuditLogicalOperator,
+                        criteria: List<String>,
+                    ): String = "group($operator,${criteria.joinToString(";")})"
+                },
+                sortFactory = { field, direction -> "sort($field,$direction)" },
+                textFactory = { text -> "text(${text.mode},${text.caseSensitive},${text.query})" },
+            )
+        return translator
+    }
+
     @Test
     fun `reference translator demonstrates end to end audit search query translation`() {
         val translated: ReferenceBackendQuery =
@@ -126,35 +132,35 @@ class TranslatorKitTest {
                     toEpochMillis = 1_710_003_600_000,
                     page = AuditPage(limit = 100, offset = 200),
                     criteria =
-                        listOf(
-                            AuditCriterion.Comparison(
-                                field = AuditField.LEVEL,
-                                operator = AuditComparisonOperator.EQ,
-                                value = AuditValue.Text("ERROR"),
-                            ),
-                            AuditCriterion.Group(
-                                operator = AuditLogicalOperator.OR,
-                                criteria =
-                                    listOf(
-                                        AuditCriterion.Comparison(
-                                            field = AuditField.context("request_id"),
-                                            operator = AuditComparisonOperator.EQ,
-                                            value = AuditValue.Text("req-123"),
-                                        ),
-                                        AuditCriterion.Comparison(
-                                            field = AuditField.metadata("source"),
-                                            operator = AuditComparisonOperator.IN,
-                                            value = AuditValue.TextList(listOf("api", "worker")),
-                                        ),
-                                    ),
+                    listOf(
+                        AuditCriterion.Comparison(
+                            field = AuditField.LEVEL,
+                            operator = AuditComparisonOperator.EQ,
+                            value = AuditValue.Text("ERROR"),
+                        ),
+                        AuditCriterion.Group(
+                            operator = AuditLogicalOperator.OR,
+                            criteria =
+                            listOf(
+                                AuditCriterion.Comparison(
+                                    field = AuditField.context("request_id"),
+                                    operator = AuditComparisonOperator.EQ,
+                                    value = AuditValue.Text("req-123"),
+                                ),
+                                AuditCriterion.Comparison(
+                                    field = AuditField.metadata("source"),
+                                    operator = AuditComparisonOperator.IN,
+                                    value = AuditValue.TextList(listOf("api", "worker")),
+                                ),
                             ),
                         ),
+                    ),
                     text = AuditTextQuery(query = "payment", mode = AuditTextMatchMode.CONTAINS),
                     sort =
-                        listOf(
-                            AuditSort(field = AuditField.TIMESTAMP_EPOCH_MILLIS, direction = AuditSortDirection.DESC),
-                            AuditSort(field = AuditField.ID, direction = AuditSortDirection.ASC),
-                        ),
+                    listOf(
+                        AuditSort(field = AuditField.TIMESTAMP_EPOCH_MILLIS, direction = AuditSortDirection.DESC),
+                        AuditSort(field = AuditField.ID, direction = AuditSortDirection.ASC),
+                    ),
                 ),
             )
 

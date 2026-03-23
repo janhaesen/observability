@@ -133,4 +133,3 @@ class AuditSearchQueryTranslator<F, P, S, T>(
                 )
         }
 }
-

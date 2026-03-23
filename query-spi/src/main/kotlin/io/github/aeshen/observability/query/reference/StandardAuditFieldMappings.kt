@@ -77,4 +77,3 @@ class StandardAuditFieldMapper(
             is StandardAuditField.Custom -> resolved.key
         }
 }
-
