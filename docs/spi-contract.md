@@ -23,13 +23,14 @@ Behavior changes to the above are treated as breaking changes.
 - `handle(event)` may be called concurrently.
 - Implementations should be thread-safe or explicitly wrapped (for example with `AsyncObservabilitySink`).
 - `close()` must release resources and be safe to call repeatedly.
-- If `handle` throws an `Exception`, pipeline behavior is controlled by `failOnSinkError`.
+- If `handle` throws `IllegalArgumentException` or `IllegalStateException`, behavior is controlled by `failOnSinkError`.
+- Other exception types from `handle` are not swallowed by the pipeline.
 - Fatal JVM `Error` types are never swallowed.
 
 ## Error Propagation Modes
 
-- `failOnSinkError = true`: sink exceptions are propagated to the caller.
-- `failOnSinkError = false`: sink exceptions are logged and processing continues.
+- `failOnSinkError = true`: handled sink exceptions are propagated to the caller.
+- `failOnSinkError = false`: handled sink exceptions are reported via `ObservabilityDiagnostics` and processing continues.
 
 ## Audit-Hardening Profile
 
@@ -85,7 +86,8 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 
 - Config-driven sink creation: custom `SinkConfig` + `SinkRegistry.builder().register<...> { ... }.build()`.
 - Operator diagnostics: implement `ObservabilityDiagnostics` and pass through `ObservabilityFactory.Config`.
-- Runtime instance injection: `ObservabilityFactory.create(mySink)`.
+- Runtime sink wiring: pass `SinkConfig` entries via `ObservabilityFactory.Config.sinks` and resolve through `SinkRegistry`.
+- Legacy compatibility: `ObservabilityFactory.create(vararg sinks, ...)` still exists as a deprecated bridge and is not the recommended SPI wiring path.
 - Reliability wrappers: `RetryingObservabilitySink`, `AsyncObservabilitySink`, `BatchingObservabilitySink`.
 - Audit queries: implement `AuditSearchQueryService`; expose `AuditQueryService` only as a compatibility adapter when needed.
 

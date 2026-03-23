@@ -24,6 +24,9 @@ object ObservabilityFactory {
     private const val AUDIT_MAX_ATTEMPTS = 5
     private const val AUDIT_MAX_BATCH_SIZE = 100
     private const val AUDIT_FLUSH_INTERVAL_MILLIS = 250L
+    private const val LEGACY_CREATE_DEPRECATION_MESSAGE =
+        "Use create(Config) with SinkRegistry-based sink wiring. " +
+            "This overload is kept for backward compatibility."
 
     enum class Profile {
         STANDARD,
@@ -40,6 +43,7 @@ object ObservabilityFactory {
         val metadataEnrichers: List<MetadataEnricher> = emptyList(),
         val diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP,
         val profile: Profile = Profile.STANDARD,
+        val processors: List<ObservabilityProcessor> = emptyList(),
     ) {
         companion object {
             fun aesGcmFromRawKeyBytes(rawKey: ByteArray) =
@@ -56,17 +60,23 @@ object ObservabilityFactory {
     }
 
     fun create(config: Config): Observability {
-        val sinks: List<ObservabilitySink> = applyProfile(buildSinks(config), config.profile, config.diagnostics)
+        val sinks: List<ObservabilitySink> =
+            applyProfile(
+                buildSinks(config),
+                config.profile,
+                config.diagnostics,
+            )
 
         require(sinks.isNotEmpty()) { "At least one sink must be configured." }
 
-        val processors: List<ObservabilityProcessor> = buildProcessors(config.encryption)
+        val resolvedProcessors: List<ObservabilityProcessor> =
+            buildProcessors(config.processors, config.encryption)
 
         return ObservabilityPipeline(
             codec = config.codec,
             contextProviders = config.contextProviders,
             metadataEnrichers = config.metadataEnrichers,
-            processors = processors,
+            processors = resolvedProcessors,
             sinks = sinks,
             failOnSinkError = resolveFailOnSinkError(config.failOnSinkError, config.profile),
             diagnostics = config.diagnostics,
@@ -74,9 +84,13 @@ object ObservabilityFactory {
     }
 
     /**
-     * Advanced convenience for runtime-provided sink instances.
-     * Prefer [create] with [Config] for configuration-driven wiring.
+     * Legacy runtime-sink convenience API.
+     *
+     * Prefer [create] with [Config] and explicit [SinkRegistry] wiring.
      */
+    @Deprecated(
+        message = LEGACY_CREATE_DEPRECATION_MESSAGE,
+    )
     fun create(
         vararg sinks: ObservabilitySink,
         encryption: EncryptionConfig? = null,
@@ -87,27 +101,36 @@ object ObservabilityFactory {
         diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP,
         profile: Profile = Profile.STANDARD,
     ): Observability {
-        val sinkList = sinks.toList()
+        val registry =
+            SinkRegistry
+                .builder()
+                .register<LegacyDirectSinkConfig> { cfg -> cfg.sink }
+                .build()
 
-        require(sinkList.isNotEmpty()) { "At least one sink must be configured." }
-
-        val processors: List<ObservabilityProcessor> = buildProcessors(encryption)
-        val profiledSinks = applyProfile(sinkList, profile, diagnostics)
-
-        return ObservabilityPipeline(
-            codec = codec,
-            contextProviders = contextProviders,
-            metadataEnrichers = metadataEnrichers,
-            processors = processors,
-            sinks = profiledSinks,
-            failOnSinkError = resolveFailOnSinkError(failOnSinkError, profile),
-            diagnostics = diagnostics,
+        return create(
+            Config(
+                sinks = sinks.map { sink -> LegacyDirectSinkConfig(sink) },
+                encryption = encryption,
+                failOnSinkError = failOnSinkError,
+                sinkRegistry = registry,
+                codec = codec,
+                contextProviders = contextProviders,
+                metadataEnrichers = metadataEnrichers,
+                diagnostics = diagnostics,
+                profile = profile,
+            ),
         )
     }
 
-    private fun buildSinks(config: Config): List<ObservabilitySink> = config.sinkRegistry.resolveAll(config.sinks)
+    private fun buildSinks(config: Config): List<ObservabilitySink> =
+        config.sinkRegistry.resolveAll(config.sinks)
 
-    private fun buildProcessors(encryption: EncryptionConfig?): List<ObservabilityProcessor> =
+    private fun buildProcessors(
+        customProcessors: List<ObservabilityProcessor>,
+        encryption: EncryptionConfig?,
+    ): List<ObservabilityProcessor> = customProcessors + buildEncryptionProcessors(encryption)
+
+    private fun buildEncryptionProcessors(encryption: EncryptionConfig?): List<ObservabilityProcessor> =
         when (val enc = encryption) {
             null -> {
                 emptyList()
@@ -138,6 +161,10 @@ object ObservabilityFactory {
         profile: Profile,
     ): Boolean = if (profile == Profile.AUDIT_DURABLE) true else explicit
 
+    private data class LegacyDirectSinkConfig(
+        val sink: ObservabilitySink,
+    ) : SinkConfig
+
     private fun applyProfile(
         sinks: List<ObservabilitySink>,
         profile: Profile,
@@ -151,8 +178,7 @@ object ObservabilityFactory {
             Profile.AUDIT_DURABLE -> {
                 sinks.map { sink ->
                     BatchingObservabilitySink(
-                        delegate =
-                        RetryingObservabilitySink(
+                        delegate = RetryingObservabilitySink(
                             delegate = sink,
                             maxAttempts = AUDIT_MAX_ATTEMPTS,
                             diagnostics = diagnostics,

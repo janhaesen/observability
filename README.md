@@ -29,6 +29,7 @@ Provides a single, type-safe entry point to emit structured events with typed co
 - [Configure Encryption](#configure-encryption)
   - [AES-GCM with a fixed key](#aes-gcm-with-a-fixed-key)
   - [RSA-wrapped per-event data key](#rsa-wrapped-per-event-data-key)
+- [Sensitive Field Processors](#sensitive-field-processors)
 - [Custom Codec](#custom-codec)
 - [Extend with Custom Sinks](#extend-with-custom-sinks)
 - [Diagnostics Hooks](#diagnostics-hooks)
@@ -76,6 +77,7 @@ Sinks (fan-out)      (write to Console, File, OpenTelemetry, …)
 - **Type-safe context** — typed keys (`StringKey`, `LongKey`, `DoubleKey`, `BooleanKey`) and namespaced key grouping
 - **Multiple sinks with fan-out** — Console, SLF4J, File (JSONL), ZipFile, OpenTelemetry OTLP
 - **Optional encryption** — AES-GCM with a fixed key, or per-event data key wrapped with RSA-OAEP-256
+- **Sensitive-field filtering** — ordered allow/mask/remove processors for `context.*`, `metadata.*`, `message`, and `payload`
 - **Reliability decorators** — `AsyncObservabilitySink`, `BatchingObservabilitySink`, `RetryingObservabilitySink`
 - **Profiles** — `STANDARD` (best-effort) or `AUDIT_DURABLE` (strict, retried, batched)
 - **Pluggable codec** — default JSONL, fully replaceable
@@ -461,7 +463,7 @@ val config =
 | `ZipFile`        | Appends JSONL entries to a ZIP archive, preserving existing entries via startup replay | None                                              |
 | `OpenTelemetry`  | Exports via OTLP HTTP to any OTel-compatible backend      | `opentelemetry-api`, `-sdk`, `-exporter-otlp`     |
 
-All sinks receive fan-out delivery; a failure in one does not block others (unless `failOnSinkError = true`).
+All sinks receive fan-out delivery. `IllegalArgumentException` and `IllegalStateException` from one sink do not block others (unless `failOnSinkError = true`).
 
 ### Default JSONL Format
 
@@ -582,7 +584,7 @@ val fixedRetrySink =
 
 ### STANDARD (default)
 
-Best-effort delivery. Sink exceptions are swallowed unless `failOnSinkError = true`.
+Best-effort delivery. `IllegalArgumentException` and `IllegalStateException` from sinks are swallowed unless `failOnSinkError = true`.
 
 ### AUDIT_DURABLE
 
@@ -659,6 +661,74 @@ Encrypted output format:
 
 ---
 
+## Sensitive Field Processors
+
+Use `SensitiveFieldProcessor` to mask or remove sensitive fields before sink delivery.
+Custom processors run before built-in encryption, so redaction happens on plaintext first.
+
+### Rule model
+
+- Rules are evaluated in declaration order.
+- The **first matching rule wins**.
+- Match paths are case-insensitive and support `*` globs.
+- Common paths:
+  - `message`
+  - `payload`
+  - `context.<key>`
+  - `metadata.<key>`
+
+### Example: allow/deny rules
+
+```kotlin
+import io.github.aeshen.observability.ObservabilityFactory
+import io.github.aeshen.observability.config.sink.File
+import io.github.aeshen.observability.processor.builtin.SensitiveFieldProcessor
+import io.github.aeshen.observability.processor.builtin.SensitiveFieldRule
+import java.nio.file.Path
+
+val observability =
+    ObservabilityFactory.create(
+        ObservabilityFactory.Config(
+            sinks = listOf(File(Path.of("./logs/audit.jsonl"))),
+            processors =
+                listOf(
+                    SensitiveFieldProcessor(
+                        rules = listOf(
+                            SensitiveFieldRule.allow("context.requestId"),
+                            SensitiveFieldRule.remove("context.password"),
+                            SensitiveFieldRule.mask("context.email", "[EMAIL]"),
+                            SensitiveFieldRule.mask("metadata.apiToken", "[TOKEN]"),
+                            SensitiveFieldRule.mask("message", "[REDACTED]"),
+                            SensitiveFieldRule.remove("payload"),
+                        ),
+                    ),
+                ),
+            ),
+    )
+```
+
+### Example: built-in common-secret presets
+
+```kotlin
+import io.github.aeshen.observability.processor.builtin.SensitiveFieldPresets
+
+val processor =
+    SensitiveFieldProcessor(
+        rules = listOf(
+            SensitiveFieldRule.allow("context.apiToken"), // explicit allow wins
+        ),
+        presets = SensitiveFieldPresets.commonSecrets(mask = "[MASKED]"),
+    )
+```
+
+### Codec compatibility
+
+`SensitiveFieldProcessor` always sanitizes `EncodedEvent.original` and `EncodedEvent.metadata`.
+If the encoded payload is a UTF-8 JSON object, it also sanitizes the serialized body.
+That means it works out of the box with the default `JsonLineCodec` and with JSON-based custom codecs.
+
+---
+
 ## Custom Codec
 
 Replace the default JSONL codec with any `ObservabilityCodec` implementation:
@@ -690,13 +760,16 @@ val observability =
 
 ## Extend with Custom Sinks
 
-### Option A: Direct sink instance
+### Option A: Runtime sink instance via registry adapter
 
-Pass a sink directly; useful for testing or lightweight wiring:
+If you already have a sink instance at runtime (for example in tests), wrap it in a local `SinkConfig` and register a provider that returns the instance:
 
 ```kotlin
+import io.github.aeshen.observability.ObservabilityFactory
+import io.github.aeshen.observability.config.sink.SinkConfig
 import io.github.aeshen.observability.sink.ObservabilitySink
 import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.sink.registry.SinkRegistry
 
 class MySink : ObservabilitySink {
     override fun handle(event: EncodedEvent) {
@@ -704,7 +777,21 @@ class MySink : ObservabilitySink {
     }
 }
 
-val observability = ObservabilityFactory.create(MySink())
+data class DirectSinkConfig(val sink: ObservabilitySink) : SinkConfig
+
+val registry =
+    SinkRegistry
+        .builder()
+        .register<DirectSinkConfig> { config -> config.sink }
+        .build()
+
+val observability =
+    ObservabilityFactory.create(
+        ObservabilityFactory.Config(
+            sinks = listOf(DirectSinkConfig(MySink())),
+            sinkRegistry = registry,
+        ),
+    )
 ```
 
 ### Option B: Config-driven via SinkRegistry
@@ -1061,7 +1148,7 @@ The test suite covers:
 ## Notes
 
 - `Observability` is `Closeable`; always call `close()` or use `use { }` to flush sinks and release threads.
-- Sink failures from `Exception` are swallowed by default; set `failOnSinkError = true` for strict propagation.
+- `IllegalArgumentException` and `IllegalStateException` from sinks are swallowed by default; set `failOnSinkError = true` for strict propagation.
 - Fatal JVM `Error` types are **never** swallowed by the pipeline.
 - The default JSONL codec has no external runtime dependencies.
 - `opentelemetry-*` and `slf4j-api` are `compileOnly`; they must be on the runtime classpath of your application when those sinks are used.
