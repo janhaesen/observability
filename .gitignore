@@ -37,7 +37,8 @@ gradle-app.setting
 !gradle-wrapper.jar
 
 # Local Gradle config (machine-specific)
-gradle.properties
+**/gradle.properties
+!/gradle.properties
 
 # --- IntelliJ IDEA ---
 .idea/
