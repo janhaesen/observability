@@ -201,6 +201,33 @@ public final class io/github/aeshen/observability/config/sink/File : io/github/a
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/aeshen/observability/config/sink/Http : io/github/aeshen/observability/config/sink/SinkConfig {
+	public fun <init> (Ljava/lang/String;Lio/github/aeshen/observability/config/sink/HttpMethod;Ljava/util/Map;J)V
+	public synthetic fun <init> (Ljava/lang/String;Lio/github/aeshen/observability/config/sink/HttpMethod;Ljava/util/Map;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lio/github/aeshen/observability/config/sink/HttpMethod;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun component4 ()J
+	public final fun copy (Ljava/lang/String;Lio/github/aeshen/observability/config/sink/HttpMethod;Ljava/util/Map;J)Lio/github/aeshen/observability/config/sink/Http;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/sink/Http;Ljava/lang/String;Lio/github/aeshen/observability/config/sink/HttpMethod;Ljava/util/Map;JILjava/lang/Object;)Lio/github/aeshen/observability/config/sink/Http;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEndpoint ()Ljava/lang/String;
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getMethod ()Lio/github/aeshen/observability/config/sink/HttpMethod;
+	public final fun getTimeoutMillis ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/config/sink/HttpMethod : java/lang/Enum {
+	public static final field PATCH Lio/github/aeshen/observability/config/sink/HttpMethod;
+	public static final field POST Lio/github/aeshen/observability/config/sink/HttpMethod;
+	public static final field PUT Lio/github/aeshen/observability/config/sink/HttpMethod;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/config/sink/HttpMethod;
+	public static fun values ()[Lio/github/aeshen/observability/config/sink/HttpMethod;
+}
+
 public final class io/github/aeshen/observability/config/sink/OpenTelemetry : io/github/aeshen/observability/config/sink/SinkConfig {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;JJII)V
@@ -602,35 +629,6 @@ public final class io/github/aeshen/observability/sink/registry/SinkRegistry$Com
 	public final fun default ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
 	public final fun defaultBuilder ()Lio/github/aeshen/observability/sink/registry/SinkRegistry$Builder;
 	public final fun empty ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
-}
-
-public abstract interface class io/github/aeshen/observability/transport/TransportEnvelope {
-}
-
-public final class io/github/aeshen/observability/transport/TransportEnvelope$Binary : io/github/aeshen/observability/transport/TransportEnvelope {
-	public fun <init> ([BLjava/util/Map;)V
-	public final fun component1 ()[B
-	public final fun component2 ()Ljava/util/Map;
-	public final fun copy ([BLjava/util/Map;)Lio/github/aeshen/observability/transport/TransportEnvelope$Binary;
-	public static synthetic fun copy$default (Lio/github/aeshen/observability/transport/TransportEnvelope$Binary;[BLjava/util/Map;ILjava/lang/Object;)Lio/github/aeshen/observability/transport/TransportEnvelope$Binary;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getMetadata ()Ljava/util/Map;
-	public final fun getPayload ()[B
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/aeshen/observability/transport/TransportEnvelope$Json : io/github/aeshen/observability/transport/TransportEnvelope {
-	public fun <init> ([BLjava/util/Map;)V
-	public final fun component1 ()[B
-	public final fun component2 ()Ljava/util/Map;
-	public final fun copy ([BLjava/util/Map;)Lio/github/aeshen/observability/transport/TransportEnvelope$Json;
-	public static synthetic fun copy$default (Lio/github/aeshen/observability/transport/TransportEnvelope$Json;[BLjava/util/Map;ILjava/lang/Object;)Lio/github/aeshen/observability/transport/TransportEnvelope$Json;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getMetadata ()Ljava/util/Map;
-	public final fun getPayload ()[B
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/aeshen/observability/util/CryptoUtils {

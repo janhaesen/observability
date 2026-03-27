@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and the project follows Semantic Versioning.
 
+## [1.2.0] - Unreleased
+
+### Added
+- Added built-in generic HTTP sink support via `Http` config (`POST`, `PUT`, `PATCH`) for webhook/ingestion endpoint delivery with configurable headers and timeout.
+
+### Changed
+- Documented HTTP sink failure semantics: non-2xx responses and transport failures surface as `IllegalStateException`, enabling composition with existing retry/batching/async decorators.
+
 ## [1.1.0] - 2026-03-27
 
 ### Added

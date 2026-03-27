@@ -2,6 +2,7 @@ package io.github.aeshen.observability.sink.registry
 
 import io.github.aeshen.observability.codec.EncodedEvent
 import io.github.aeshen.observability.config.sink.Console
+import io.github.aeshen.observability.config.sink.Http
 import io.github.aeshen.observability.config.sink.SinkConfig
 import io.github.aeshen.observability.sink.ObservabilitySink
 import kotlin.test.Test
@@ -42,6 +43,10 @@ class SinkRegistryTest {
     fun `default registry still resolves built in sinks`() {
         val resolved = SinkRegistry.default().resolve(Console)
         assertNotNull(resolved)
+
+        val httpResolved =
+            SinkRegistry.default().resolve(Http(endpoint = "https://example.com/ingest"))
+        assertNotNull(httpResolved)
     }
 
     @Test
