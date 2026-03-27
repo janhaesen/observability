@@ -7,14 +7,24 @@ on:
 
 permissions:
   contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_USERNAME: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
 
       - name: Setup JDK
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
@@ -27,6 +37,9 @@ jobs:
 
       - name: Validate quality gates
         run: ./gradlew test apiCheck detekt --no-daemon
+
+      - name: Publish packages
+        run: ./gradlew publish --no-daemon
 
       - name: Build artifacts
         run: ./gradlew :jar :query-spi:jar --no-daemon

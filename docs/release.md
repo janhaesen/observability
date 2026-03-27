@@ -1,30 +1,39 @@
 # Release Process
 
-This repository uses tagged releases and GitHub release notes.
+This repository uses a two-stage GitHub Actions release flow with tagged releases and GitHub release notes.
 
 ## Versioning
 
 - Follow Semantic Versioning (`MAJOR.MINOR.PATCH`).
-- `main` tracks the next stable release version (no `-SNAPSHOT`).
+- The current release version is stored in `gradle.properties` as `VERSION_NAME`.
 - Public API compatibility is validated with `apiCheck` before release.
 
-## Pre-release checklist
+## Prepare a release
 
-1. Update `CHANGELOG.md` with the planned version section.
-2. Ensure CI is green (`test`, `apiCheck`, `detekt`, CVE scan, publish dry-run).
-3. Commit version and changelog updates.
+1. Update `CHANGELOG.md` with the target version section.
+2. Merge the release-ready changes into `main`.
+3. Run the `Prepare Release` workflow from GitHub Actions with the version number (for example `1.1.0`).
 
-## Create a release
+### Authorization and safety gates
 
-```bash
-./gradlew test apiCheck detekt --no-daemon
-./gradlew publish --dry-run --no-daemon
-git tag v1.0.0
-git push origin v1.0.0
-```
+- The workflow runs in the `release` environment, so environment protection rules can require approval before execution.
+- The actor must be listed in the repository variable `RELEASE_MANAGERS` (comma-separated usernames).
+- The workflow fails if `CHANGELOG.md` is modified during preparation; changelog edits must be committed to `main` first.
+
+The `Prepare Release` workflow will:
+
+- validate the version format,
+- verify the changelog section exists,
+- update `gradle.properties`,
+- run `test`, `apiCheck`, `detekt`, and `publish --dry-run`,
+- commit the version bump,
+- create and push the `v*` tag.
+
+## Publish a release
 
 Pushing a `v*` tag triggers `.github/workflows/release.yml`, which:
 - re-runs quality gates,
+- publishes artifacts to GitHub Packages,
 - builds artifacts,
 - creates a GitHub Release with generated notes.
 

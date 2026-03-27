@@ -13,8 +13,8 @@ plugins {
 val openTelemetryVersion = "1.49.0"
 val detektVersion = "1.23.8"
 
-group = "io.github.aeshen" // A company name, for example, `org.jetbrains`
-version = "1.0.0"
+group = providers.gradleProperty("GROUP").get()
+version = providers.gradleProperty("VERSION_NAME").get()
 
 repositories {
     mavenCentral()

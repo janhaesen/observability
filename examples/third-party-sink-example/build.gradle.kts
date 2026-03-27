@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "io.github.aeshen.examples"
-version = "1.0.0"
+version = rootProject.version
 
 repositories {
     mavenCentral()
