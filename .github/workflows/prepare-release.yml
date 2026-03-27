@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: prepare-release-${{ github.event.inputs.version }}
@@ -149,3 +150,14 @@ jobs:
           git push origin HEAD:main
           git push origin "v${{ github.event.inputs.version }}"
 
+      - name: Trigger release workflow
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          curl -sSf -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/release.yml/dispatches" \
+            -d "{\"ref\":\"main\",\"inputs\":{\"tag\":\"v${VERSION}\"}}"
