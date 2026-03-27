@@ -440,6 +440,12 @@ val config =
             Slf4j(MyService::class),
             File(Path.of("./logs/events.jsonl")),
             ZipFile(Path.of("./logs/events.zip")),
+            Http(
+                endpoint = "https://collector.example.com/ingest",
+                method = HttpMethod.POST,
+                headers = mapOf("Content-Type" to "application/x-ndjson"),
+                timeoutMillis = 5_000,
+            ),
             OpenTelemetry(
                 endpoint = "http://localhost:4318/v1/logs",
                 serviceName = "my-service",
@@ -461,9 +467,16 @@ val config =
 | `Slf4j`          | Logs encoded payload through SLF4J at mapped levels       | `org.slf4j:slf4j-api`                             |
 | `File`           | Appends JSONL to a buffered file writer; creates parent dirs if needed | None                                              |
 | `ZipFile`        | Appends JSONL entries to a ZIP archive, preserving existing entries via startup replay | None                                              |
+| `Http`           | Sends encoded payload bytes to an arbitrary HTTP/HTTPS endpoint (`POST`, `PUT`, `PATCH`) | None                                              |
 | `OpenTelemetry`  | Exports via OTLP HTTP to any OTel-compatible backend      | `opentelemetry-api`, `-sdk`, `-exporter-otlp`     |
 
 All sinks receive fan-out delivery. `IllegalArgumentException` and `IllegalStateException` from one sink do not block others (unless `failOnSinkError = true`).
+
+`Http` sink behavior:
+
+- `timeoutMillis` applies to request connect/send timing.
+- Any non-2xx response throws `IllegalStateException` (so `RetryingObservabilitySink` can retry).
+- Transport errors (`IOException`, `InterruptedException`) are surfaced as `IllegalStateException`.
 
 ### Default JSONL Format
 

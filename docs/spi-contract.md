@@ -69,6 +69,8 @@ Implement for monitoring, alerting, or metrics collection without side effects.
 
 - `OpenTelemetry` and `Slf4j` sinks rely on optional runtime dependencies in the host application.
 - If missing, sink creation fails fast with guidance to add integration dependencies.
+- `Http` sink is dependency-free and posts encoded event bytes to arbitrary HTTP/HTTPS endpoints.
+- `Http` sink treats non-2xx responses as failures (`IllegalStateException`) so retry decorators can re-attempt delivery.
 
 ## Query Service Integration (query-spi)
 

@@ -1,9 +1,12 @@
 package io.github.aeshen.observability.sink.impl
 
+import com.sun.net.httpserver.HttpServer
 import io.github.aeshen.observability.EventName
 import io.github.aeshen.observability.ObservabilityContext
 import io.github.aeshen.observability.ObservabilityEvent
 import io.github.aeshen.observability.codec.EncodedEvent
+import io.github.aeshen.observability.config.sink.Http
+import io.github.aeshen.observability.config.sink.HttpMethod
 import io.github.aeshen.observability.key.LongKey
 import io.github.aeshen.observability.key.StringKey
 import io.github.aeshen.observability.sink.EventLevel
@@ -15,7 +18,10 @@ import io.opentelemetry.sdk.logs.export.SimpleLogRecordProcessor
 import io.opentelemetry.sdk.testing.exporter.InMemoryLogRecordExporter
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
+import java.net.InetSocketAddress
 import java.nio.file.Files
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import java.util.zip.ZipInputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,6 +30,35 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class SinkImplementationsTest {
+    private class CapturedHttpRequest(
+        val method: String,
+        val path: String,
+        val contentType: String?,
+        val body: ByteArray,
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as CapturedHttpRequest
+
+            if (method != other.method) return false
+            if (path != other.path) return false
+            if (contentType != other.contentType) return false
+            if (!body.contentEquals(other.body)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = method.hashCode()
+            result = 31 * result + path.hashCode()
+            result = 31 * result + (contentType?.hashCode() ?: 0)
+            result = 31 * result + body.contentHashCode()
+            return result
+        }
+    }
+
     private enum class TestEvent(
         override val eventName: String? = null,
     ) : EventName {
@@ -122,6 +157,81 @@ class SinkImplementationsTest {
     }
 
     @Test
+    fun `http sink posts encoded payload with configured method and headers`() {
+        val requests = LinkedBlockingQueue<CapturedHttpRequest>()
+        val server =
+            HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
+                createContext("/ingest") { exchange ->
+                    requests.offer(
+                        CapturedHttpRequest(
+                            method = exchange.requestMethod,
+                            path = exchange.requestURI.path,
+                            contentType = exchange.requestHeaders.getFirst("Content-Type"),
+                            body = exchange.requestBody.use { it.readBytes() },
+                        ),
+                    )
+                    exchange.sendResponseHeaders(204, -1)
+                    exchange.close()
+                }
+                start()
+            }
+
+        try {
+            val sink =
+                HttpObservabilitySink(
+                    Http(
+                        endpoint = "http://127.0.0.1:${server.address.port}/ingest",
+                        method = HttpMethod.PUT,
+                        headers = mapOf("Content-Type" to "application/json"),
+                    ),
+                )
+
+            sink.handle(encoded("{\"status\":\"ok\"}\n"))
+
+            val captured = requests.poll(5, TimeUnit.SECONDS)
+            assertNotNull(captured)
+            assertEquals("PUT", captured.method)
+            assertEquals("/ingest", captured.path)
+            assertEquals("application/json", captured.contentType)
+            assertEquals("{\"status\":\"ok\"}\n", captured.body.toString(Charsets.UTF_8))
+        } finally {
+            server.stop(0)
+        }
+    }
+
+    @Test
+    fun `http sink throws illegal state exception on non success response`() {
+        val server =
+            HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
+                createContext("/ingest") { exchange ->
+                    exchange.requestBody.use { it.readBytes() }
+                    exchange.sendResponseHeaders(503, -1)
+                    exchange.close()
+                }
+                start()
+            }
+
+        try {
+            val sink =
+                HttpObservabilitySink(
+                    Http(
+                        endpoint = "http://127.0.0.1:${server.address.port}/ingest",
+                        method = HttpMethod.POST,
+                    ),
+                )
+
+            val error =
+                assertFailsWith<IllegalStateException> {
+                    sink.handle(encoded("failed"))
+                }
+
+            assertTrue(error.message.orEmpty().contains("status=503"))
+        } finally {
+            server.stop(0)
+        }
+    }
+
+    @Test
     fun `otel sink maps event fields to otel log record`() {
         val exporter = InMemoryLogRecordExporter.create()
         val loggerProvider =
@@ -181,7 +291,7 @@ class SinkImplementationsTest {
         assertEquals("boom", record.attributes.get(AttributeKey.stringKey("exception.message")))
         assertNotNull(record.attributes.get(AttributeKey.stringKey("exception.stacktrace")))
 
-        loggerProvider.shutdown().join(5, java.util.concurrent.TimeUnit.SECONDS)
+        loggerProvider.shutdown().join(5, TimeUnit.SECONDS)
     }
 
     @Test
