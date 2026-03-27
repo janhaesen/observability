@@ -942,6 +942,15 @@ Canonical query field names follow a simple portable convention:
 Use `AuditField.context("...")` and `AuditField.metadata("...")` when targeting those dynamic maps.
 Reserve `AuditField.custom("...")` for vendor-specific fields outside the shared portable convention.
 
+`query-spi` also includes a backend-neutral translator kit for implementation reuse:
+
+- `AuditSearchQueryTranslator` for recursive criteria traversal
+- `StandardAuditFieldMapper` for canonical field mapping (`id`, `timestampEpochMillis`, `level`, `event`, `message`, `context.<key>`, `metadata.<key>`)
+- `AuditPredicateFactory`, `AuditSortFactory`, `AuditTextFactory` hooks for backend-specific clause generation
+- `ReferenceBackendTranslator` for a complete end-to-end translation example
+
+The reference semantics are intentionally explicit: top-level criteria are `AND`, groups honor their own operator, time bounds are inclusive, text modes map to contains/exact/prefix intent, and pagination is applied after filter/sort.
+
 ```kotlin
 // query-spi artifact: io.github.aeshen:query-spi:1.0.0
 
