@@ -52,8 +52,7 @@ internal val observabilityContextThreadLocal = ThreadLocal<ObservabilityContext?
  * provider-supplied values for the same key.
  */
 class CoroutineContextProvider : ContextProvider {
-    override fun provide(): ObservabilityContext =
-        observabilityContextThreadLocal.get() ?: ObservabilityContext.empty()
+    override fun provide(): ObservabilityContext = observabilityContextThreadLocal.get() ?: ObservabilityContext.empty()
 }
 
 /**
@@ -66,9 +65,6 @@ class CoroutineContextProvider : ContextProvider {
 class ObservabilityCoroutineContext(
     val observabilityContext: ObservabilityContext,
 ) : ThreadContextElement<ObservabilityContext?> {
-
-    companion object Key : CoroutineContext.Key<ObservabilityCoroutineContext>
-
     override val key: CoroutineContext.Key<*> = Key
 
     override fun updateThreadContext(context: CoroutineContext): ObservabilityContext? {
@@ -77,9 +73,14 @@ class ObservabilityCoroutineContext(
         return previous
     }
 
-    override fun restoreThreadContext(context: CoroutineContext, oldState: ObservabilityContext?) {
+    override fun restoreThreadContext(
+        context: CoroutineContext,
+        oldState: ObservabilityContext?,
+    ) {
         observabilityContextThreadLocal.set(oldState)
     }
+
+    companion object Key : CoroutineContext.Key<ObservabilityCoroutineContext>
 }
 
 /**
@@ -112,4 +113,3 @@ suspend fun <T> withObservabilityContext(
     observabilityContext: ObservabilityContext,
     block: suspend () -> T,
 ): T = withContext(ObservabilityCoroutineContext(observabilityContext)) { block() }
-

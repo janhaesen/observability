@@ -61,4 +61,3 @@ class MdcContextProvider(
     /** A runtime-created [TypedKey] for a single MDC entry. */
     private data class DynamicStringKey(override val keyName: String) : TypedKey<String>
 }
-

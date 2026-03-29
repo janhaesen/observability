@@ -67,4 +67,3 @@ class OpenTelemetryContextProvider : ContextProvider {
         TRACE_FLAGS("trace.flags"),
     }
 }
-
