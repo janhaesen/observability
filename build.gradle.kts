@@ -63,6 +63,7 @@ dependencies {
     compileOnly("io.opentelemetry:opentelemetry-sdk:$openTelemetryVersion")
     compileOnly("io.opentelemetry:opentelemetry-exporter-otlp:$openTelemetryVersion")
     compileOnly("org.slf4j:slf4j-api:2.0.17")
+    compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 
     testImplementation(kotlin("test"))
     testImplementation(testFixtures(project(":")))
@@ -71,6 +72,9 @@ dependencies {
     testImplementation("io.opentelemetry:opentelemetry-exporter-otlp:$openTelemetryVersion")
     testImplementation("io.opentelemetry:opentelemetry-sdk-testing:$openTelemetryVersion")
     testImplementation("org.slf4j:slf4j-api:2.0.17")
+    testRuntimeOnly("org.slf4j:slf4j-reload4j:2.0.17")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
 
     testFixturesApi(kotlin("test"))
 }
