@@ -4,6 +4,7 @@ import io.github.aeshen.observability.ObservabilityEvent
 import io.github.aeshen.observability.codec.EncodedEvent
 import io.github.aeshen.observability.codec.ObservabilityCodec
 import java.util.Base64
+import java.util.UUID
 
 /**
  * Minimal JSONL-like encoding without external dependencies.
@@ -11,8 +12,9 @@ import java.util.Base64
  */
 class JsonLineCodec : ObservabilityCodec {
     override fun encode(event: ObservabilityEvent): EncodedEvent {
+        val contextMap = event.context.asMap()
         val ctxJson =
-            event.context.asMap().entries.joinToString(
+            contextMap.entries.joinToString(
                 separator = ",",
                 prefix = "{",
                 postfix = "}",
@@ -21,6 +23,14 @@ class JsonLineCodec : ObservabilityCodec {
                 val v = jsonValue(it.value)
                 "\"${escape(k)}\":$v"
             }
+
+        val eventId = UUID.randomUUID().toString()
+        val correlationId =
+            contextMap.entries
+                .firstOrNull { it.key.keyName == CORRELATION_ID_CONTEXT_KEY }
+                ?.value
+                ?.toString()
+        val correlationIdJson = correlationId?.let { "\"${escape(it)}\"" } ?: "null"
 
         val messageJson = event.message?.let { "\"${escape(it)}\"" } ?: "null"
         val errorJson =
@@ -36,6 +46,9 @@ class JsonLineCodec : ObservabilityCodec {
         val line =
             buildString {
                 append('{')
+                append("\"schemaVersion\":\"").append(SCHEMA_VERSION).append("\",")
+                append("\"eventId\":\"").append(eventId).append("\",")
+                append("\"correlationId\":").append(correlationIdJson).append(',')
                 append("\"name\":\"").append(escape(event.name.resolvedName())).append("\",")
                 append("\"level\":\"").append(event.level.name).append("\",")
                 append("\"timestamp\":\"").append(event.timestamp.toString()).append("\",")
@@ -61,7 +74,9 @@ class JsonLineCodec : ObservabilityCodec {
     private fun jsonValue(value: Any?): String =
         when (value) {
             null -> "null"
+
             is Boolean -> value.toString()
+
             is Byte,
             is Short,
             is Int,
@@ -69,6 +84,7 @@ class JsonLineCodec : ObservabilityCodec {
             is Float,
             is Double,
             -> numberJson(value)
+
             else -> "\"${escape(value.toString())}\""
         }
 
@@ -79,5 +95,10 @@ class JsonLineCodec : ObservabilityCodec {
         } else {
             "\"${escape(number.toString())}\""
         }
+    }
+
+    private companion object {
+        const val SCHEMA_VERSION = "1"
+        const val CORRELATION_ID_CONTEXT_KEY = "id"
     }
 }

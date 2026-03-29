@@ -14,6 +14,7 @@ Provides a single, type-safe entry point to emit structured events with typed co
 - [Emitting Events](#emitting-events)
 - [Event DSL](#event-dsl)
 - [Binary Payloads](#binary-payloads)
+- [Event Schema Contract](#event-schema-contract)
 - [Type-safe Context](#type-safe-context)
   - [Built-in Keys](#built-in-keys)
   - [Namespaced Keys](#namespaced-keys)
@@ -485,15 +486,23 @@ Each event is written as a single JSON line with these fields:
 
 ```json
 {
+  "schemaVersion": "1",
+  "eventId": "dc7fc4d6-f5e3-4ca0-a0da-0f258f5f79ac",
+  "correlationId": "req-123",
   "name": "request.done",
   "level": "INFO",
   "timestamp": "2026-03-21T10:00:00Z",
   "message": "Request completed",
-  "context": {"id": "req-123", "status_code": "200"},
+  "context": {"id": "req-123", "status_code": 200},
   "payloadPresent": false,
   "payloadBase64": ""
 }
 ```
+
+- `schemaVersion` is the versioned envelope contract for encoded events.
+- `eventId` is generated per encoded event.
+- `correlationId` mirrors `context.id` when present, otherwise `null`.
+- Numeric and boolean context values are encoded as JSON primitives.
 
 When a `throwable` is attached:
 
@@ -507,6 +516,21 @@ When a `throwable` is attached:
   }
 }
 ```
+
+## Event Schema Contract
+
+The default `JsonLineCodec` emits a versioned envelope (`schemaVersion = "1"`) with stable core fields:
+
+Canonical references: `docs/event-schema.md` and `docs/schema/event-envelope-v1.schema.json`.
+
+- Required: `schemaVersion`, `eventId`, `name`, `level`, `timestamp`, `message`, `context`, `payloadPresent`, `payloadBase64`
+- Optional: `correlationId` (nullable), `error`
+
+Compatibility policy:
+
+- Additive fields may be introduced within schema version `1`.
+- Breaking shape changes require a new `schemaVersion`.
+- Consumers should branch on `schemaVersion` before strict decoding.
 
 ---
 

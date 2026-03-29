@@ -1,5 +1,8 @@
 package io.github.aeshen.observability.codec.impl
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.networknt.schema.JsonSchemaFactory
+import com.networknt.schema.SpecVersion
 import io.github.aeshen.observability.EventName
 import io.github.aeshen.observability.ObservabilityContext
 import io.github.aeshen.observability.ObservabilityEvent
@@ -9,10 +12,15 @@ import io.github.aeshen.observability.key.DoubleKey
 import io.github.aeshen.observability.key.LongKey
 import io.github.aeshen.observability.key.StringKey
 import io.github.aeshen.observability.sink.EventLevel
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class JsonLineCodecTest {
+    private val objectMapper = ObjectMapper()
+
     private enum class TestEvent(
         override val eventName: String? = null,
     ) : EventName {
@@ -30,6 +38,9 @@ class JsonLineCodecTest {
             )
 
         val encoded = JsonLineCodec().encode(event).encoded.toString(Charsets.UTF_8)
+        assertTrue(encoded.contains("\"schemaVersion\":\"1\""))
+        assertTrue(encoded.contains("\"eventId\":"))
+        assertTrue(encoded.contains("\"correlationId\":null"))
         assertTrue(encoded.contains("\"payloadPresent\":false"))
         assertTrue(encoded.contains("\"payloadBase64\":\"\""))
         assertTrue(encoded.endsWith("\n"))
@@ -46,8 +57,7 @@ class JsonLineCodecTest {
                         payload = byteArrayOf(),
                         context = ObservabilityContext.empty(),
                     ),
-                )
-                .encoded
+                ).encoded
                 .toString(Charsets.UTF_8)
 
         assertTrue(encoded.contains("\"payloadPresent\":true"))
@@ -82,8 +92,7 @@ class JsonLineCodecTest {
                         level(EventLevel.WARN)
                         message("request failed")
                     },
-                )
-                .encoded
+                ).encoded
                 .toString(Charsets.UTF_8)
 
         assertTrue(encoded.contains("\"name\":\"test.event\""))
@@ -111,13 +120,40 @@ class JsonLineCodecTest {
                         level = EventLevel.INFO,
                         context = context,
                     ),
-                )
-                .encoded
+                ).encoded
                 .toString(Charsets.UTF_8)
 
         assertTrue(encoded.contains("\"status_code\":200"))
         assertTrue(encoded.contains("\"bytes\":12.5"))
         assertTrue(encoded.contains("\"success\":true"))
         assertTrue(encoded.contains("\"id\":\"req-1\""))
+        assertTrue(encoded.contains("\"correlationId\":\"req-1\""))
+    }
+
+    @Test
+    fun `codec output conforms to event envelope json schema`() {
+        val event =
+            event(TestEvent.TEST) {
+                level(EventLevel.ERROR)
+                message("request failed")
+                context(StringKey.REQUEST_ID, "req-1")
+                context(LongKey.STATUS_CODE, 500L)
+                error(IllegalStateException("boom"))
+            }
+
+        val encoded = JsonLineCodec().encode(event).encoded.toString(Charsets.UTF_8)
+        val eventNode = objectMapper.readTree(encoded)
+        val schemaNode =
+            objectMapper.readTree(
+                Files.readString(
+                    Path.of("docs", "schema", "event-envelope-v1.schema.json"),
+                    StandardCharsets.UTF_8,
+                ),
+            )
+        val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012)
+        val schema = schemaFactory.getSchema(schemaNode)
+        val errors = schema.validate(eventNode)
+
+        assertTrue(errors.isEmpty(), "Schema violations: ${errors.joinToString { it.message }}")
     }
 }
