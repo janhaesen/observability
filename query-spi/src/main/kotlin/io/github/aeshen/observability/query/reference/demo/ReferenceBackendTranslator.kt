@@ -25,15 +25,15 @@ object ReferenceBackendTranslator {
     private val translator =
         AuditSearchQueryTranslator(
             fieldMapper =
-            StandardAuditFieldMapper(
-                idField = "audit_id",
-                timestampField = "event_ts_ms",
-                levelField = "severity",
-                eventField = "event_name",
-                messageField = "message_text",
-                contextPrefix = "ctx.",
-                metadataPrefix = "meta.",
-            ),
+                StandardAuditFieldMapper(
+                    idField = "audit_id",
+                    timestampField = "event_ts_ms",
+                    levelField = "severity",
+                    eventField = "event_name",
+                    messageField = "message_text",
+                    contextPrefix = "ctx.",
+                    metadataPrefix = "meta.",
+                ),
             predicateFactory = ReferencePredicateFactory,
             sortFactory = { field, direction -> "$field ${direction.name}" },
             textFactory = { text -> referenceTextClause(text) },
@@ -119,7 +119,7 @@ object ReferenceBackendTranslator {
 
         private fun renderInValue(value: AuditValue): String {
             require(
-                value is AuditValue.TextList
+                value is AuditValue.TextList,
             ) { "IN operator requires AuditValue.TextList in the reference translator." }
             val rendered = value.values.joinToString(",") { "'${escapeSingleQuotes(it)}'" }
             return "($rendered)"

@@ -122,8 +122,7 @@ object ObservabilityFactory {
         )
     }
 
-    private fun buildSinks(config: Config): List<ObservabilitySink> =
-        config.sinkRegistry.resolveAll(config.sinks)
+    private fun buildSinks(config: Config): List<ObservabilitySink> = config.sinkRegistry.resolveAll(config.sinks)
 
     private fun buildProcessors(
         customProcessors: List<ObservabilityProcessor>,
@@ -178,11 +177,12 @@ object ObservabilityFactory {
             Profile.AUDIT_DURABLE -> {
                 sinks.map { sink ->
                     BatchingObservabilitySink(
-                        delegate = RetryingObservabilitySink(
-                            delegate = sink,
-                            maxAttempts = AUDIT_MAX_ATTEMPTS,
-                            diagnostics = diagnostics,
-                        ),
+                        delegate =
+                            RetryingObservabilitySink(
+                                delegate = sink,
+                                maxAttempts = AUDIT_MAX_ATTEMPTS,
+                                diagnostics = diagnostics,
+                            ),
                         maxBatchSize = AUDIT_MAX_BATCH_SIZE,
                         flushIntervalMillis = AUDIT_FLUSH_INTERVAL_MILLIS,
                         diagnostics = diagnostics,

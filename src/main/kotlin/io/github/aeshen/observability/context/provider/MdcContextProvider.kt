@@ -44,7 +44,6 @@ import org.slf4j.MDC
 class MdcContextProvider(
     private val prefix: String = "mdc",
 ) : ContextProvider {
-
     override fun provide(): ObservabilityContext {
         val mdc = MDC.getCopyOfContextMap() ?: return ObservabilityContext.empty()
         if (mdc.isEmpty()) return ObservabilityContext.empty()
@@ -59,5 +58,7 @@ class MdcContextProvider(
     }
 
     /** A runtime-created [TypedKey] for a single MDC entry. */
-    private data class DynamicStringKey(override val keyName: String) : TypedKey<String>
+    private data class DynamicStringKey(
+        override val keyName: String,
+    ) : TypedKey<String>
 }

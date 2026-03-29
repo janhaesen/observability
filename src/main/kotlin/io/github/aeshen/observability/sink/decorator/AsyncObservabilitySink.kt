@@ -179,6 +179,5 @@ class AsyncObservabilitySink(
     private fun mergeCloseFailure(
         currentFailure: Exception?,
         newFailure: Exception,
-    ): Exception =
-        currentFailure?.apply { addSuppressed(newFailure) } ?: newFailure
+    ): Exception = currentFailure?.apply { addSuppressed(newFailure) } ?: newFailure
 }

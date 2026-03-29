@@ -45,10 +45,10 @@ private class NoopSink : ObservabilitySink {
 private fun sampleEvent(payload: String): EncodedEvent =
     EncodedEvent(
         original =
-        event(BenchmarkEvent.BENCH) {
-            level(EventLevel.INFO)
-            context(ObservabilityContext.empty())
-        },
+            event(BenchmarkEvent.BENCH) {
+                level(EventLevel.INFO)
+                context(ObservabilityContext.empty())
+            },
         encoded = payload.toByteArray(Charsets.UTF_8),
     )
 

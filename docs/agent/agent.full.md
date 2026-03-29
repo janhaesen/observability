@@ -1,8 +1,8 @@
 # Agent Context: observability
 
-Last updated: 2026-03-22  
-Repository: `observability`  
-Primary language: Kotlin (JVM, Kotlin 2.3.20)  
+Last updated: 2026-03-22
+Repository: `observability`
+Primary language: Kotlin (JVM, Kotlin 2.3.20)
 Build tool: Gradle Kotlin DSL
 
 ## Project Purpose
@@ -142,7 +142,7 @@ Provides backend-agnostic audit query interfaces:
 - `AuditSearchQueryService`
 - `AuditQueryService` (deprecated compatibility bridge)
 
-Intended for backend-specific implementations (OpenSearch, ClickHouse, PostgreSQL, etc.).  
+Intended for backend-specific implementations (OpenSearch, ClickHouse, PostgreSQL, etc.).
 Module is lightweight and has no heavy runtime dependencies.
 
 ## Repository / Module Structure
@@ -157,7 +157,8 @@ Configured in `settings.gradle.kts`:
 
 From build scripts/docs:
 - Kotlin JVM `2.3.20`
-- Static analysis: Detekt (`1.23.8`) with formatting plugin
+- Lint/format: ktlint Gradle plugin (`ktlintCheck`, `ktlintFormat`)
+- Static analysis: Detekt (`1.23.8`) for non-formatting quality rules
 - Binary compatibility validator plugin (`apiCheck` workflow)
 - Publishing: Maven publication (`io.github.aeshen:observability:1.0.0`) and GitHub Packages repo config
 - Release process documented in `docs/release.md` (tagged `v*` workflow)

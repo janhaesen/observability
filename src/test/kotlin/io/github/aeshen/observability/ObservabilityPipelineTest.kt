@@ -49,17 +49,17 @@ class ObservabilityPipelineTest {
             ObservabilityPipeline(
                 codec = StaticCodec("raw".toByteArray()),
                 processors =
-                listOf(
-                    object : ObservabilityProcessor {
-                        override fun process(event: EncodedEvent): EncodedEvent =
-                            event.copy(
-                                encoded =
-                                event.encoded +
-                                    ":processed"
-                                        .toByteArray(),
-                            )
-                    },
-                ),
+                    listOf(
+                        object : ObservabilityProcessor {
+                            override fun process(event: EncodedEvent): EncodedEvent =
+                                event.copy(
+                                    encoded =
+                                        event.encoded +
+                                            ":processed"
+                                                .toByteArray(),
+                                )
+                        },
+                    ),
                 sinks = listOf(sink),
             )
 
@@ -226,15 +226,15 @@ class ObservabilityPipelineTest {
             ObservabilityPipeline(
                 codec = StaticCodec("raw".toByteArray()),
                 contextProviders =
-                listOf(
-                    ContextProvider {
-                        ObservabilityContext
-                            .builder()
-                            .put(StringKey.USER_AGENT, "provider-agent")
-                            .put(StringKey.REQUEST_ID, "provider-id")
-                            .build()
-                    },
-                ),
+                    listOf(
+                        ContextProvider {
+                            ObservabilityContext
+                                .builder()
+                                .put(StringKey.USER_AGENT, "provider-agent")
+                                .put(StringKey.REQUEST_ID, "provider-id")
+                                .build()
+                        },
+                    ),
                 processors = emptyList(),
                 sinks = listOf(sink),
             )

@@ -1,9 +1,11 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
     kotlin("jvm") version "2.3.20"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
     `java-library`
     `java-test-fixtures`
@@ -11,7 +13,6 @@ plugins {
 }
 
 val openTelemetryVersion = "1.49.0"
-val detektVersion = "1.23.8"
 
 group = providers.gradleProperty("GROUP").get()
 version = providers.gradleProperty("VERSION_NAME").get()
@@ -28,16 +29,21 @@ detekt {
     parallel = true
 }
 
-dependencies {
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$detektVersion")
-}
-
 tasks.withType<Detekt>().configureEach {
     jvmTarget = "21"
 }
 
+configure<KtlintExtension> {
+    version.set("1.2.1")
+}
+
+tasks.matching { it.name == "check" }.configureEach {
+    dependsOn("ktlintCheck")
+}
+
 subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     extensions.configure<DetektExtension> {
         config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
@@ -51,8 +57,12 @@ subprojects {
         jvmTarget = "21"
     }
 
-    dependencies {
-        add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:$detektVersion")
+    extensions.configure<KtlintExtension> {
+        version.set("1.2.1")
+    }
+
+    tasks.matching { it.name == "check" }.configureEach {
+        dependsOn("ktlintCheck")
     }
 }
 

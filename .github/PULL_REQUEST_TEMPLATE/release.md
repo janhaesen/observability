@@ -7,14 +7,14 @@
 ## Pre-release checklist (from `docs/release.md`)
 
 - [ ] Updated `CHANGELOG.md` with the planned version section
-- [ ] CI is green for quality gates (`test`, `apiCheck`, `detekt`, CVE scan, publish dry-run)
+- [ ] CI is green for quality gates (`test`, `apiCheck`, `ktlintCheck`, `detekt`, CVE scan, publish dry-run)
 - [ ] Committed version/changelog updates
 
 ## Verification Evidence
 
 ### Core checks
 
-- [ ] `./gradlew test apiCheck detekt --no-daemon` executed
+- [ ] `./gradlew test apiCheck ktlintCheck detekt --no-daemon` executed
 - [ ] `./gradlew publish --dry-run --no-daemon` executed
 
 ### Output / links

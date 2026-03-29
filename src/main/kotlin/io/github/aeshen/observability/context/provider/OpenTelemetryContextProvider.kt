@@ -46,7 +46,6 @@ import io.opentelemetry.api.trace.Span
  * ```
  */
 class OpenTelemetryContextProvider : ContextProvider {
-
     override fun provide(): ObservabilityContext {
         val spanContext = Span.current().spanContext
         if (!spanContext.isValid) return ObservabilityContext.empty()

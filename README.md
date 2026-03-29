@@ -39,6 +39,7 @@ Provides a single, type-safe entry point to emit structured events with typed co
 - [Conformance Testing](#conformance-testing)
 - [Benchmarks](#benchmarks)
 - [Run the Test Suite](#run-the-test-suite)
+- [Code Quality](#code-quality)
 - [Module Structure](#module-structure)
 - [Notes](#notes)
 
@@ -416,7 +417,7 @@ import io.github.aeshen.observability.enricher.MetadataEnricher
 
 class RequestCounterEnricher : MetadataEnricher {
     private val counter = AtomicLong(0)
-    
+
     override fun enrich(encoded: EncodedEvent) {
         encoded.metadata["requestNumber"] = counter.incrementAndGet()
     }
@@ -1153,6 +1154,25 @@ The test suite covers:
 - Sink registry (`SinkRegistryTest`)
 - Advanced conformance tests (`AdvancedConformanceTest`)
 - OpenTelemetry config validation (`OpenTelemetryConfigTest`)
+
+---
+
+## Code Quality
+
+This project uses a split setup to avoid linting clashes:
+
+- `ktlint` owns Kotlin style/formatting consistency.
+- `detekt` owns static analysis and code-quality rules.
+
+```bash
+./gradlew ktlintCheck detekt
+```
+
+To auto-format Kotlin sources:
+
+```bash
+./gradlew ktlintFormat
+```
 
 ---
 

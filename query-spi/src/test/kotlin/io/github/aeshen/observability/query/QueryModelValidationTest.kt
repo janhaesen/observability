@@ -113,10 +113,11 @@ class QueryModelValidationTest {
             AuditQuery(
                 fromEpochMillis = 10,
                 toEpochMillis = 20,
-                filters = mapOf(
-                    "context.request_id" to "req-123",
-                    "metadata.ingestedAt" to "1710000000000",
-                ),
+                filters =
+                    mapOf(
+                        "context.request_id" to "req-123",
+                        "metadata.ingestedAt" to "1710000000000",
+                    ),
             )
 
         val typed = legacy.toSearchQuery()

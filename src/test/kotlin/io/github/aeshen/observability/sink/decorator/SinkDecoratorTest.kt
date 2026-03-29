@@ -59,12 +59,12 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
         val sink =
             AsyncObservabilitySink(
                 delegate =
-                object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent) {
-                        started.countDown()
-                        unblock.await(5, TimeUnit.SECONDS)
-                    }
-                },
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            started.countDown()
+                            unblock.await(5, TimeUnit.SECONDS)
+                        }
+                    },
                 closeTimeoutMillis = 50,
                 shutdownPolicy = AsyncObservabilitySink.ShutdownPolicy.DRAIN,
             )
@@ -95,11 +95,11 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
         val sink =
             AsyncObservabilitySink(
                 delegate =
-                object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent) {
-                        release.await(5, TimeUnit.SECONDS)
-                    }
-                },
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            release.await(5, TimeUnit.SECONDS)
+                        }
+                    },
                 capacity = 1,
                 offerTimeoutMillis = 1,
                 failOnDrop = false,
@@ -133,12 +133,12 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
         val sink =
             AsyncObservabilitySink(
                 delegate =
-                object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent) {
-                        started.countDown()
-                        release.await(5, TimeUnit.SECONDS)
-                    }
-                },
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            started.countDown()
+                            release.await(5, TimeUnit.SECONDS)
+                        }
+                    },
                 capacity = 8,
                 shutdownPolicy = AsyncObservabilitySink.ShutdownPolicy.DROP_PENDING,
                 closeTimeoutMillis = 200,
@@ -177,9 +177,9 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
         val sink =
             AsyncObservabilitySink(
                 delegate =
-                object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent) = error("worker-failed")
-                },
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) = error("worker-failed")
+                    },
                 capacity = 1,
                 offerTimeoutMillis = 1,
                 diagnostics = diagnostics,
@@ -207,29 +207,29 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
         val sink =
             AsyncObservabilitySink(
                 delegate =
-                object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent) {
-                        release.await(2, TimeUnit.SECONDS)
-                    }
-                },
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            release.await(2, TimeUnit.SECONDS)
+                        }
+                    },
                 capacity = 2,
                 offerTimeoutMillis = 5,
                 diagnostics =
-                object : ObservabilityDiagnostics {
-                    override fun onAsyncQueueDepth(
-                        queueDepth: Int,
-                        capacity: Int,
-                    ) {
-                        queueDepths += queueDepth
-                    }
+                    object : ObservabilityDiagnostics {
+                        override fun onAsyncQueueDepth(
+                            queueDepth: Int,
+                            capacity: Int,
+                        ) {
+                            queueDepths += queueDepth
+                        }
 
-                    override fun onAsyncWorkerState(
-                        healthy: Boolean,
-                        message: String?,
-                    ) {
-                        workerStates += healthy to message
-                    }
-                },
+                        override fun onAsyncWorkerState(
+                            healthy: Boolean,
+                            message: String?,
+                        ) {
+                            workerStates += healthy to message
+                        }
+                    },
             )
 
         sink.handle(sample("one"))
@@ -250,13 +250,13 @@ class AsyncObservabilitySinkConformanceTest : ObservabilitySinkConformanceSuite(
         val sink =
             AsyncObservabilitySink(
                 delegate =
-                object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent) {
-                        if (attempts.incrementAndGet() == 1) {
-                            error("worker boom")
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            if (attempts.incrementAndGet() == 1) {
+                                error("worker boom")
+                            }
                         }
-                    }
-                },
+                    },
                 offerTimeoutMillis = 10,
             )
 
@@ -378,13 +378,13 @@ class RetryingObservabilitySinkTest {
         val sink =
             RetryingObservabilitySink(
                 delegate =
-                object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent) {
-                        if (attempts.incrementAndGet() < 3) {
-                            error("transient")
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            if (attempts.incrementAndGet() < 3) {
+                                error("transient")
+                            }
                         }
-                    }
-                },
+                    },
                 maxAttempts = 5,
                 backoff = BackoffStrategy.fixed(0),
             )
@@ -398,11 +398,11 @@ class RetryingObservabilitySinkTest {
         val sink =
             RetryingObservabilitySink(
                 delegate =
-                object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent) {
-                        error("always failing")
-                    }
-                },
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) {
+                            error("always failing")
+                        }
+                    },
                 maxAttempts = 2,
                 backoff = BackoffStrategy.fixed(0),
             )
@@ -429,9 +429,9 @@ class RetryingObservabilitySinkTest {
         val sink =
             RetryingObservabilitySink(
                 delegate =
-                object : ObservabilitySink {
-                    override fun handle(event: EncodedEvent) = error("persistent failure")
-                },
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) = error("persistent failure")
+                    },
                 maxAttempts = 3,
                 backoff = BackoffStrategy.fixed(0),
                 diagnostics = diagnostics,
@@ -515,11 +515,11 @@ private class CapturingSink(
 private fun sample(payload: String): EncodedEvent =
     EncodedEvent(
         original =
-        ObservabilityEvent(
-            name = DecoratorEvent.TEST,
-            level = EventLevel.INFO,
-            context = ObservabilityContext.empty(),
-        ),
+            ObservabilityEvent(
+                name = DecoratorEvent.TEST,
+                level = EventLevel.INFO,
+                context = ObservabilityContext.empty(),
+            ),
         encoded = payload.toByteArray(Charsets.UTF_8),
     )
 

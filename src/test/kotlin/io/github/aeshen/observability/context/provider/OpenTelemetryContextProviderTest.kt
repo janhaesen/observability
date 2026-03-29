@@ -15,19 +15,20 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class OpenTelemetryContextProviderTest {
-
     private lateinit var spanExporter: InMemorySpanExporter
     private lateinit var sdk: OpenTelemetrySdk
 
     @BeforeTest
     fun setUp() {
         spanExporter = InMemorySpanExporter.create()
-        val tracerProvider = SdkTracerProvider.builder()
-            .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
-            .build()
-        sdk = OpenTelemetrySdk.builder()
-            .setTracerProvider(tracerProvider)
-            .build()
+        val tracerProvider =
+            SdkTracerProvider.builder()
+                .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
+                .build()
+        sdk =
+            OpenTelemetrySdk.builder()
+                .setTracerProvider(tracerProvider)
+                .build()
     }
 
     @AfterTest
@@ -44,14 +45,15 @@ class OpenTelemetryContextProviderTest {
 
     @Test
     fun `returns empty context for invalid span context`() {
-        val invalidSpan = Span.wrap(
-            SpanContext.create(
-                "00000000000000000000000000000000",
-                "0000000000000000",
-                TraceFlags.getDefault(),
-                TraceState.getDefault(),
-            ),
-        )
+        val invalidSpan =
+            Span.wrap(
+                SpanContext.create(
+                    "00000000000000000000000000000000",
+                    "0000000000000000",
+                    TraceFlags.getDefault(),
+                    TraceState.getDefault(),
+                ),
+            )
         invalidSpan.makeCurrent().use {
             val context = OpenTelemetryContextProvider().provide()
             assertTrue(context.asMap().isEmpty())
@@ -92,8 +94,9 @@ class OpenTelemetryContextProviderTest {
         val span = tracer.spanBuilder("hex-check").startSpan()
 
         span.makeCurrent().use {
-            val traceId = OpenTelemetryContextProvider().provide()
-                .get(OpenTelemetryContextProvider.OtelKey.TRACE_ID)
+            val traceId =
+                OpenTelemetryContextProvider().provide()
+                    .get(OpenTelemetryContextProvider.OtelKey.TRACE_ID)
             assertEquals(32, traceId?.length)
             assertTrue(traceId!!.all { it.isDigit() || it in 'a'..'f' })
         }
@@ -107,8 +110,9 @@ class OpenTelemetryContextProviderTest {
         val span = tracer.spanBuilder("span-hex-check").startSpan()
 
         span.makeCurrent().use {
-            val spanId = OpenTelemetryContextProvider().provide()
-                .get(OpenTelemetryContextProvider.OtelKey.SPAN_ID)
+            val spanId =
+                OpenTelemetryContextProvider().provide()
+                    .get(OpenTelemetryContextProvider.OtelKey.SPAN_ID)
             assertEquals(16, spanId?.length)
             assertTrue(spanId!!.all { it.isDigit() || it in 'a'..'f' })
         }

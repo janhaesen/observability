@@ -8,7 +8,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class MdcContextProviderTest {
-
     @BeforeTest
     fun setUp() {
         MDC.clear()

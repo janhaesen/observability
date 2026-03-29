@@ -252,11 +252,11 @@ class SinkImplementationsTest {
                 level = EventLevel.WARN,
                 message = "Request completed",
                 context =
-                ObservabilityContext
-                    .builder()
-                    .put(StringKey.REQUEST_ID, "req-123")
-                    .put(LongKey.STATUS_CODE, 200L)
-                    .build(),
+                    ObservabilityContext
+                        .builder()
+                        .put(StringKey.REQUEST_ID, "req-123")
+                        .put(LongKey.STATUS_CODE, 200L)
+                        .build(),
                 error = boom,
             )
 
@@ -265,10 +265,10 @@ class SinkImplementationsTest {
                 original = event,
                 encoded = "payload".toByteArray(),
                 metadata =
-                mutableMapOf(
-                    "event" to TestEvent.TEST.resolvedName(),
-                    "size" to 7,
-                ),
+                    mutableMapOf(
+                        "event" to TestEvent.TEST.resolvedName(),
+                        "size" to 7,
+                    ),
             ),
         )
 

@@ -40,4 +40,3 @@ extensions.configure<PublishingExtension> {
         }
     }
 }
-

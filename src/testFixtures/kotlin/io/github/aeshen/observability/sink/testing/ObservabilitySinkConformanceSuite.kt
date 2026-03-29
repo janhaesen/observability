@@ -14,6 +14,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
+private const val TIMEOUT_IN_SECONDS: Long = 10
+
 /**
  * Reusable contract tests for third-party sink implementations.
  */
@@ -63,7 +65,7 @@ abstract class ObservabilitySinkConformanceSuite {
         }
 
         start.countDown()
-        assertTrue(done.await(10, TimeUnit.SECONDS))
+        assertTrue(done.await(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS))
         sink.close()
         pool.shutdownNow()
 
@@ -115,4 +117,3 @@ abstract class ObservabilitySinkConformanceSuite {
         TEST("sink.conformance.test"),
     }
 }
-

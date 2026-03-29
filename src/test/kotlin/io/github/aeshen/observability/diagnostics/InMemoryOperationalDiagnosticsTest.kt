@@ -78,11 +78,12 @@ class InMemoryOperationalDiagnosticsTest {
 
     private fun sampleEvent(): EncodedEvent =
         EncodedEvent(
-            original = ObservabilityEvent(
-                name = TestEvent.TEST,
-                level = EventLevel.INFO,
-                context = ObservabilityContext.empty(),
-            ),
+            original =
+                ObservabilityEvent(
+                    name = TestEvent.TEST,
+                    level = EventLevel.INFO,
+                    context = ObservabilityContext.empty(),
+                ),
             encoded = "payload".toByteArray(Charsets.UTF_8),
         )
 

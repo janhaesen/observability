@@ -79,12 +79,12 @@ class ObservabilityFactoryTest {
                 ObservabilityFactory.create(
                     ObservabilityFactory.Config(
                         sinks =
-                        listOf(
-                            OpenTelemetry(
-                                endpoint = endpoint,
-                                serviceName = "observability-test",
+                            listOf(
+                                OpenTelemetry(
+                                    endpoint = endpoint,
+                                    serviceName = "observability-test",
+                                ),
                             ),
-                        ),
                     ),
                 )
 
@@ -223,19 +223,19 @@ class ObservabilityFactoryTest {
                 ObservabilityFactory.Config(
                     sinks = listOf(ThirdPartySinkConfig("partner-c")),
                     sinkRegistry =
-                    SinkRegistry
-                        .builder()
-                        .register<ThirdPartySinkConfig> { CapturingSink(seen) }
-                        .build(),
+                        SinkRegistry
+                            .builder()
+                            .register<ThirdPartySinkConfig> { CapturingSink(seen) }
+                            .build(),
                     contextProviders =
-                    listOf(
-                        ContextProvider {
-                            ObservabilityContext
-                                .builder()
-                                .put(StringKey.USER_AGENT, "provider-agent")
-                                .build()
-                        },
-                    ),
+                        listOf(
+                            ContextProvider {
+                                ObservabilityContext
+                                    .builder()
+                                    .put(StringKey.USER_AGENT, "provider-agent")
+                                    .build()
+                            },
+                        ),
                 ),
             )
 
@@ -387,12 +387,11 @@ class ObservabilityFactoryTest {
                 ObservabilityFactory.Config(
                     sinks = listOf(ThirdPartySinkConfig("test")),
                     sinkRegistry =
-                    SinkRegistry
-                        .builder()
-                        .register<ThirdPartySinkConfig> {
-                            CapturingSink(mutableListOf())
-                        }
-                        .build(),
+                        SinkRegistry
+                            .builder()
+                            .register<ThirdPartySinkConfig> {
+                                CapturingSink(mutableListOf())
+                            }.build(),
                     profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
                     diagnostics = diagnostics,
                 ),

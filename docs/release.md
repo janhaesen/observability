@@ -25,7 +25,7 @@ The `Prepare Release` workflow will:
 - validate the version format,
 - verify the changelog section exists,
 - update `gradle.properties`,
-- run `test`, `apiCheck`, `detekt`, and `publish --dry-run`,
+- run `test`, `apiCheck`, `ktlintCheck`, `detekt`, and `publish --dry-run`,
 - commit the version bump,
 - create and push the `v*` tag.
 

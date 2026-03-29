@@ -1,6 +1,6 @@
 # Agent Context (Quick): observability
 
-Canonical deep reference: `docs/agent/agent.full.md`  
+Canonical deep reference: `docs/agent/agent.full.md`
 If this file and the full file diverge, treat `docs/agent/agent.full.md` as source of truth.
 
 ## Mission
@@ -79,6 +79,7 @@ From `settings.gradle.kts`:
 
 ## Working Guardrails
 
+- Keep quality gates split: `ktlint` for style/formatting, `detekt` for static analysis.
 - Treat this as a structured event framework, not just logging wrappers.
 - Preserve close/lifecycle semantics (`Observability` is `Closeable`).
 - Keep sink behavior thread-safe and close-safe.

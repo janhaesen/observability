@@ -113,7 +113,7 @@ jobs:
           VERSION: ${{ github.event.inputs.version }}
 
       - name: Validate release build
-        run: ./gradlew test apiCheck detekt publish --dry-run --no-daemon
+        run: ./gradlew test apiCheck ktlintCheck detekt publish --dry-run --no-daemon
 
       - name: Guard changelog immutability
         shell: bash

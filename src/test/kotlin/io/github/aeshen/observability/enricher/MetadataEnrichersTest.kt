@@ -12,7 +12,9 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class MetadataEnrichersTest {
-    private enum class TestEvent(override val eventName: String?) : EventName {
+    private enum class TestEvent(
+        override val eventName: String?,
+    ) : EventName {
         TEST_MESSAGE("test.event"),
     }
 
@@ -103,12 +105,13 @@ class MetadataEnrichersTest {
             ObservabilityFactory.create(
                 ObservabilityFactory.Config(
                     sinks = listOf(Console),
-                    metadataEnrichers = listOf(
-                        CorrelationIdEnricher(
-                            traceIdSupplier = { traceId },
-                            requestIdSupplier = { requestId },
+                    metadataEnrichers =
+                        listOf(
+                            CorrelationIdEnricher(
+                                traceIdSupplier = { traceId },
+                                requestIdSupplier = { requestId },
+                            ),
                         ),
-                    ),
                 ),
             )
 
@@ -125,12 +128,13 @@ class MetadataEnrichersTest {
             ObservabilityFactory.create(
                 ObservabilityFactory.Config(
                     sinks = listOf(Console),
-                    metadataEnrichers = listOf(
-                        IngestedAtEnricher,
-                        VersionEnricher("1.0.0", "def456"),
-                        EnvironmentEnricher("staging", "us-east-1"),
-                        HostEnricher("host-123"),
-                    ),
+                    metadataEnrichers =
+                        listOf(
+                            IngestedAtEnricher,
+                            VersionEnricher("1.0.0", "def456"),
+                            EnvironmentEnricher("staging", "us-east-1"),
+                            HostEnricher("host-123"),
+                        ),
                 ),
             )
 

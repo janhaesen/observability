@@ -263,13 +263,14 @@ class SensitiveFieldProcessor(
         return when (value) {
             is JsonObject -> sanitizeJsonObject(value, path)
             JsonNull -> JsonNull
-            else -> when (rule) {
-                is CompiledRule.Remove -> null
-                is CompiledRule.Mask -> JsonPrimitive(rule.replacement)
-                is CompiledRule.Allow,
-                null,
-                -> value
-            }
+            else ->
+                when (rule) {
+                    is CompiledRule.Remove -> null
+                    is CompiledRule.Mask -> JsonPrimitive(rule.replacement)
+                    is CompiledRule.Allow,
+                    null,
+                    -> value
+                }
         }
     }
 
@@ -329,30 +330,31 @@ class SensitiveFieldProcessor(
 
             private fun globToRegex(pattern: String): Regex {
                 val normalized = pattern.trim().lowercase()
-                val regex = buildString {
-                    append('^')
-                    normalized.forEach { ch ->
-                        when (ch) {
-                            '*' -> append(".*")
-                            '.',
-                            '(',
-                            ')',
-                            '[',
-                            ']',
-                            '{',
-                            '}',
-                            '+',
-                            '?',
-                            '^',
-                            '$',
-                            '|',
-                            '\\',
-                            -> append('\\').append(ch)
-                            else -> append(ch)
+                val regex =
+                    buildString {
+                        append('^')
+                        normalized.forEach { ch ->
+                            when (ch) {
+                                '*' -> append(".*")
+                                '.',
+                                '(',
+                                ')',
+                                '[',
+                                ']',
+                                '{',
+                                '}',
+                                '+',
+                                '?',
+                                '^',
+                                '$',
+                                '|',
+                                '\\',
+                                -> append('\\').append(ch)
+                                else -> append(ch)
+                            }
                         }
+                        append('$')
                     }
-                    append('$')
-                }
                 return Regex(regex)
             }
         }

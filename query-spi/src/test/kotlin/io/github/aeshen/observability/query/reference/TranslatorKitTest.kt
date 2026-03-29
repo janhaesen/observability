@@ -47,33 +47,33 @@ class TranslatorKitTest {
                     toEpochMillis = 20,
                     page = AuditPage(limit = 25, offset = 5),
                     criteria =
-                    listOf(
-                        AuditCriterion.Comparison(
-                            field = AuditField.LEVEL,
-                            operator = AuditComparisonOperator.EQ,
-                            value = AuditValue.Text("ERROR"),
-                        ),
-                        AuditCriterion.Group(
-                            operator = AuditLogicalOperator.OR,
-                            criteria =
-                            listOf(
-                                AuditCriterion.Exists(
-                                    field = AuditField.context("request_id"),
-                                ),
-                                AuditCriterion.Comparison(
-                                    field = AuditField.metadata("source"),
-                                    operator = AuditComparisonOperator.NEQ,
-                                    value = AuditValue.Text("api"),
-                                ),
+                        listOf(
+                            AuditCriterion.Comparison(
+                                field = AuditField.LEVEL,
+                                operator = AuditComparisonOperator.EQ,
+                                value = AuditValue.Text("ERROR"),
+                            ),
+                            AuditCriterion.Group(
+                                operator = AuditLogicalOperator.OR,
+                                criteria =
+                                    listOf(
+                                        AuditCriterion.Exists(
+                                            field = AuditField.context("request_id"),
+                                        ),
+                                        AuditCriterion.Comparison(
+                                            field = AuditField.metadata("source"),
+                                            operator = AuditComparisonOperator.NEQ,
+                                            value = AuditValue.Text("api"),
+                                        ),
+                                    ),
                             ),
                         ),
-                    ),
                     text = AuditTextQuery(query = "payment", mode = AuditTextMatchMode.PREFIX),
                     sort =
-                    listOf(
-                        AuditSort(AuditField.TIMESTAMP_EPOCH_MILLIS, AuditSortDirection.DESC),
-                        AuditSort(AuditField.LEVEL, AuditSortDirection.ASC),
-                    ),
+                        listOf(
+                            AuditSort(AuditField.TIMESTAMP_EPOCH_MILLIS, AuditSortDirection.DESC),
+                            AuditSort(AuditField.LEVEL, AuditSortDirection.ASC),
+                        ),
                 ),
             )
 
@@ -100,23 +100,23 @@ class TranslatorKitTest {
             AuditSearchQueryTranslator(
                 fieldMapper = { field -> "mapped.${field.key}" },
                 predicateFactory =
-                object : AuditPredicateFactory<String, String> {
-                    override fun comparison(
-                        field: String,
-                        operator: AuditComparisonOperator,
-                        value: AuditValue,
-                    ): String = "cmp($field,$operator,$value)"
+                    object : AuditPredicateFactory<String, String> {
+                        override fun comparison(
+                            field: String,
+                            operator: AuditComparisonOperator,
+                            value: AuditValue,
+                        ): String = "cmp($field,$operator,$value)"
 
-                    override fun exists(
-                        field: String,
-                        shouldExist: Boolean,
-                    ): String = "exists($field,$shouldExist)"
+                        override fun exists(
+                            field: String,
+                            shouldExist: Boolean,
+                        ): String = "exists($field,$shouldExist)"
 
-                    override fun group(
-                        operator: AuditLogicalOperator,
-                        criteria: List<String>,
-                    ): String = "group($operator,${criteria.joinToString(";")})"
-                },
+                        override fun group(
+                            operator: AuditLogicalOperator,
+                            criteria: List<String>,
+                        ): String = "group($operator,${criteria.joinToString(";")})"
+                    },
                 sortFactory = { field, direction -> "sort($field,$direction)" },
                 textFactory = { text -> "text(${text.mode},${text.caseSensitive},${text.query})" },
             )
@@ -132,35 +132,35 @@ class TranslatorKitTest {
                     toEpochMillis = 1_710_003_600_000,
                     page = AuditPage(limit = 100, offset = 200),
                     criteria =
-                    listOf(
-                        AuditCriterion.Comparison(
-                            field = AuditField.LEVEL,
-                            operator = AuditComparisonOperator.EQ,
-                            value = AuditValue.Text("ERROR"),
-                        ),
-                        AuditCriterion.Group(
-                            operator = AuditLogicalOperator.OR,
-                            criteria =
-                            listOf(
-                                AuditCriterion.Comparison(
-                                    field = AuditField.context("request_id"),
-                                    operator = AuditComparisonOperator.EQ,
-                                    value = AuditValue.Text("req-123"),
-                                ),
-                                AuditCriterion.Comparison(
-                                    field = AuditField.metadata("source"),
-                                    operator = AuditComparisonOperator.IN,
-                                    value = AuditValue.TextList(listOf("api", "worker")),
-                                ),
+                        listOf(
+                            AuditCriterion.Comparison(
+                                field = AuditField.LEVEL,
+                                operator = AuditComparisonOperator.EQ,
+                                value = AuditValue.Text("ERROR"),
+                            ),
+                            AuditCriterion.Group(
+                                operator = AuditLogicalOperator.OR,
+                                criteria =
+                                    listOf(
+                                        AuditCriterion.Comparison(
+                                            field = AuditField.context("request_id"),
+                                            operator = AuditComparisonOperator.EQ,
+                                            value = AuditValue.Text("req-123"),
+                                        ),
+                                        AuditCriterion.Comparison(
+                                            field = AuditField.metadata("source"),
+                                            operator = AuditComparisonOperator.IN,
+                                            value = AuditValue.TextList(listOf("api", "worker")),
+                                        ),
+                                    ),
                             ),
                         ),
-                    ),
                     text = AuditTextQuery(query = "payment", mode = AuditTextMatchMode.CONTAINS),
                     sort =
-                    listOf(
-                        AuditSort(field = AuditField.TIMESTAMP_EPOCH_MILLIS, direction = AuditSortDirection.DESC),
-                        AuditSort(field = AuditField.ID, direction = AuditSortDirection.ASC),
-                    ),
+                        listOf(
+                            AuditSort(field = AuditField.TIMESTAMP_EPOCH_MILLIS, direction = AuditSortDirection.DESC),
+                            AuditSort(field = AuditField.ID, direction = AuditSortDirection.ASC),
+                        ),
                 ),
             )
 

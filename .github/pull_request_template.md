@@ -30,6 +30,7 @@
 - [ ] Ran `./gradlew test`
 - [ ] Ran module-specific tests for touched modules (for example `:query-spi:test`, `:examples:third-party-sink-example:test`)
 - [ ] Ran `./gradlew apiCheck`
+- [ ] Ran `./gradlew ktlintCheck`
 - [ ] Ran `./gradlew detekt`
 - [ ] (If applicable) ran benchmark/example module checks
 
