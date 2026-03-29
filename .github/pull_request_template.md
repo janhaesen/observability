@@ -14,6 +14,7 @@
 ## Scope touched
 
 - [ ] Core pipeline (`ObservabilityFactory` / `ObservabilityPipeline`)
+- [ ] Providers (`ContextProvider` / `MetadataEnricher` / built-in enrichers)
 - [ ] Built-in sinks / sink decorators (`Console`, `File`, `ZipFile`, `OpenTelemetry`, `Http`)
 - [ ] SPI contracts (`SinkProvider` / `SinkConfig` / codec / enrichers)
 - [ ] Codec / processors / encryption
@@ -36,6 +37,7 @@
 
 - [ ] No stable SPI breakage (`docs/spi-contract.md`)
 - [ ] If SPI changed, migration notes included
+- [ ] Provider ordering/merge behavior reviewed (context + metadata precedence)
 - [ ] `AUDIT_DURABLE` behavior reviewed when reliability logic changed
 - [ ] Sink failure semantics reviewed when changing delivery/retry behavior
 
