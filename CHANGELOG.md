@@ -8,9 +8,11 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 
 ### Added
 - Added built-in generic HTTP sink support via `Http` config (`POST`, `PUT`, `PATCH`) for webhook/ingestion endpoint delivery with configurable headers and timeout.
+- Expanded contribution guidance to cover the broader multi-module surface (`observability`, `query-spi`, `benchmarks`, and `examples`) through a richer PR request template.
 
 ### Changed
 - Documented HTTP sink failure semantics: non-2xx responses and transport failures surface as `IllegalStateException`, enabling composition with existing retry/batching/async decorators.
+- Clarified release notes expectations so user-visible changes are tracked consistently across core APIs, SPI contracts, module docs, and integration examples.
 
 ## [1.1.0] - 2026-03-27
 

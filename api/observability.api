@@ -282,6 +282,55 @@ public final class io/github/aeshen/observability/config/sink/ZipFile : io/githu
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/aeshen/observability/context/provider/CoroutineContextProvider : io/github/aeshen/observability/ContextProvider {
+	public fun <init> ()V
+	public fun provide ()Lio/github/aeshen/observability/ObservabilityContext;
+}
+
+public final class io/github/aeshen/observability/context/provider/CoroutineObservabilityContextKt {
+	public static final fun withObservabilityContext (Lio/github/aeshen/observability/ObservabilityContext;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/aeshen/observability/context/provider/MdcContextProvider : io/github/aeshen/observability/ContextProvider {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun provide ()Lio/github/aeshen/observability/ObservabilityContext;
+}
+
+public final class io/github/aeshen/observability/context/provider/ObservabilityCoroutineContext : kotlinx/coroutines/ThreadContextElement {
+	public static final field Key Lio/github/aeshen/observability/context/provider/ObservabilityCoroutineContext$Key;
+	public fun <init> (Lio/github/aeshen/observability/ObservabilityContext;)V
+	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public final fun getObservabilityContext ()Lio/github/aeshen/observability/ObservabilityContext;
+	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+	public fun restoreThreadContext (Lkotlin/coroutines/CoroutineContext;Lio/github/aeshen/observability/ObservabilityContext;)V
+	public synthetic fun restoreThreadContext (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Object;)V
+	public fun updateThreadContext (Lkotlin/coroutines/CoroutineContext;)Lio/github/aeshen/observability/ObservabilityContext;
+	public synthetic fun updateThreadContext (Lkotlin/coroutines/CoroutineContext;)Ljava/lang/Object;
+}
+
+public final class io/github/aeshen/observability/context/provider/ObservabilityCoroutineContext$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class io/github/aeshen/observability/context/provider/OpenTelemetryContextProvider : io/github/aeshen/observability/ContextProvider {
+	public fun <init> ()V
+	public fun provide ()Lio/github/aeshen/observability/ObservabilityContext;
+}
+
+public final class io/github/aeshen/observability/context/provider/OpenTelemetryContextProvider$OtelKey : java/lang/Enum, io/github/aeshen/observability/key/TypedKey {
+	public static final field SPAN_ID Lio/github/aeshen/observability/context/provider/OpenTelemetryContextProvider$OtelKey;
+	public static final field TRACE_FLAGS Lio/github/aeshen/observability/context/provider/OpenTelemetryContextProvider$OtelKey;
+	public static final field TRACE_ID Lio/github/aeshen/observability/context/provider/OpenTelemetryContextProvider$OtelKey;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getKeyName ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/context/provider/OpenTelemetryContextProvider$OtelKey;
+	public static fun values ()[Lio/github/aeshen/observability/context/provider/OpenTelemetryContextProvider$OtelKey;
+}
+
 public final class io/github/aeshen/observability/diagnostics/HealthStatus : java/lang/Enum {
 	public static final field DEGRADED Lio/github/aeshen/observability/diagnostics/HealthStatus;
 	public static final field READY Lio/github/aeshen/observability/diagnostics/HealthStatus;
