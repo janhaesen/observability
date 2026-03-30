@@ -1,0 +1,185 @@
+name: Create Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semantic version to release (e.g. 1.2.3)"
+        required: true
+        type: string
+
+concurrency:
+  group: create-release-pr-${{ github.event.inputs.version }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+
+jobs:
+  quality-gates:
+    name: quality-gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+
+      - name: Run tests, API compatibility, lint, and static analysis
+        run: ./gradlew test apiCheck ktlintCheck detekt --no-daemon
+
+      - name: Publish dry-run
+        run: ./gradlew publish --dry-run --no-daemon
+
+  open-release-pr:
+    name: Open release PR
+    needs: quality-gates
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate version format
+        shell: bash
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must match MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+
+      - name: Authorize release actor
+        shell: bash
+        env:
+          ACTOR: ${{ github.actor }}
+          RELEASE_MANAGERS: ${{ vars.RELEASE_MANAGERS }}
+        run: |
+          if [[ -z "${RELEASE_MANAGERS}" ]]; then
+            echo "Repository variable RELEASE_MANAGERS is not configured"
+            echo "Set a comma-separated allowlist, for example: janhaesen,release-bot"
+            exit 1
+          fi
+
+          authorized="false"
+          IFS=',' read -ra managers <<< "${RELEASE_MANAGERS}"
+          for manager in "${managers[@]}"; do
+            trimmed="$(echo "${manager}" | xargs)"
+            if [[ "${ACTOR}" == "${trimmed}" ]]; then
+              authorized="true"
+              break
+            fi
+          done
+
+          if [[ "${authorized}" != "true" ]]; then
+            echo "Actor ${ACTOR} is not in RELEASE_MANAGERS"
+            exit 1
+          fi
+
+      - name: Ensure release label exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh label list --limit 200 --json name --jq '.[].name' | grep -Fxq "release"; then
+            echo "Missing required label: release"
+            echo "Create it once in repository settings to keep release governance explicit"
+            exit 1
+          fi
+
+      - name: Ensure changelog section exists
+        shell: bash
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          grep -F "## [${VERSION}]" CHANGELOG.md >/dev/null
+
+      - name: Fail if release branch exists
+        shell: bash
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          if git ls-remote --exit-code --heads origin "release/v${VERSION}" >/dev/null 2>&1; then
+            echo "release/v${VERSION} already exists"
+            exit 1
+          fi
+
+      - name: Fail if release PR already exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          existing_pr_count="$(gh pr list --base main --head "release/v${VERSION}" --state open --json number --jq 'length')"
+          if [[ "${existing_pr_count}" != "0" ]]; then
+            echo "An open PR already exists for release/v${VERSION}"
+            exit 1
+          fi
+
+      - name: Create release branch
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          git checkout -b "release/v${VERSION}"
+
+      - name: Bump version
+        shell: bash
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          path = Path("gradle.properties")
+          lines = path.read_text().splitlines()
+
+          replaced = False
+          updated = []
+          for line in lines:
+              if line.startswith("VERSION_NAME="):
+                  updated.append(f"VERSION_NAME={version}")
+                  replaced = True
+              else:
+                  updated.append(line)
+
+          if not replaced:
+              raise SystemExit("VERSION_NAME entry not found in gradle.properties")
+
+          path.write_text("\n".join(updated) + "\n")
+          PY
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle.properties
+          if git diff --cached --quiet; then
+            echo "gradle.properties already contains VERSION_NAME=${VERSION}"
+            exit 1
+          fi
+          git commit -m "chore(release): bump version to ${VERSION}"
+          git push origin "release/v${VERSION}"
+
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          gh pr create \
+            --base  main \
+            --head  "release/v${VERSION}" \
+            --title "chore(release): v${VERSION}" \
+            --body  "Automated release PR for **v${VERSION}**." \
+            --label "release"
+

@@ -1,6 +1,6 @@
 # Release Process
 
-This repository uses a two-stage GitHub Actions release flow with tagged releases and GitHub release notes.
+This repository uses a PR-first release flow that is compatible with branch protection rules on `main`.
 
 ## Versioning
 
@@ -8,32 +8,43 @@ This repository uses a two-stage GitHub Actions release flow with tagged release
 - The current release version is stored in `gradle.properties` as `VERSION_NAME`.
 - Public API compatibility is validated with `apiCheck` before release.
 
-## Prepare a release
+## Create a release PR
 
 1. Update `CHANGELOG.md` with the target version section.
 2. Merge the release-ready changes into `main`.
-3. Run the `Prepare Release` workflow from GitHub Actions with the version number (for example `1.1.0`).
+3. Run the `Create Release PR` workflow from GitHub Actions with the version number (for example `1.1.0`).
 
-### Authorization and safety gates
+The `Create Release PR` workflow will:
 
-- The workflow runs in the `release` environment, so environment protection rules can require approval before execution.
-- The actor must be listed in the repository variable `RELEASE_MANAGERS` (comma-separated usernames).
-- The workflow fails if `CHANGELOG.md` is modified during preparation; changelog edits must be committed to `main` first.
+- run `quality-gates` before opening a PR,
+- validate semantic version input,
+- require the actor to be in `RELEASE_MANAGERS`,
+- require approval through the `release` environment,
+- require `CHANGELOG.md` to contain the release section,
+- ensure `release/vX.Y.Z` branch and PR do not already exist,
+- update `VERSION_NAME` in `gradle.properties`,
+- open a release-labelled PR targeting `main`.
 
-The `Prepare Release` workflow will:
+### Authorization setup
 
-- validate the version format,
-- verify the changelog section exists,
-- update `gradle.properties`,
-- run `test`, `apiCheck`, `ktlintCheck`, `detekt`, and `publish --dry-run`,
-- commit the version bump,
-- create and push the `v*` tag.
+- Configure repository variable `RELEASE_MANAGERS` with a comma-separated list of usernames.
+- Configure environment `release` with required reviewers.
+- Create a `release` label once in repository settings.
 
-## Publish a release
+## Tag and publish a release
 
-Pushing a `v*` tag triggers `.github/workflows/release.yml`, which:
-- re-runs quality gates,
-- publishes artifacts to GitHub Packages,
-- builds artifacts,
-- creates a GitHub Release with generated notes.
+When that PR is merged:
+
+- `.github/workflows/release-tag.yml` tags the PR merge commit as `vX.Y.Z`.
+- `.github/workflows/release-tag.yml` only tags PRs merged from `release/vX.Y.Z`.
+- Pushing that tag triggers `.github/workflows/release.yml` (tag pushes only), which:
+  - re-runs quality gates,
+  - publishes artifacts to GitHub Packages,
+  - builds artifacts,
+  - creates a GitHub Release with generated notes,
+  - requires approval through the `release` environment.
+
+## Deprecated workflow
+
+`.github/workflows/prepare-release.yml` is intentionally deprecated because it pushed directly to `main`, which conflicts with repository rules that require pull requests.
 

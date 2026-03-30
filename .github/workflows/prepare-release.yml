@@ -1,163 +1,23 @@
-name: Prepare Release
+name: Prepare Release (Deprecated)
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'SemVer version without v prefix (example: 1.1.0)'
-        required: true
-        type: string
+    inputs: {}
 
 permissions:
-  contents: write
-  actions: write
+  contents: read
 
 concurrency:
-  group: prepare-release-${{ github.event.inputs.version }}
+  group: prepare-release-deprecated
   cancel-in-progress: false
 
 jobs:
   prepare-release:
     runs-on: ubuntu-latest
-    environment: release
-
     steps:
-      - name: Checkout main
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Authorize release actor
-        shell: bash
-        env:
-          ACTOR: ${{ github.actor }}
-          RELEASE_MANAGERS: ${{ vars.RELEASE_MANAGERS }}
+      - name: Explain deprecation
         run: |
-          if [[ -z "${RELEASE_MANAGERS}" ]]; then
-            echo "Repository variable RELEASE_MANAGERS is not configured."
-            echo "Set a comma-separated allowlist, for example: janhaesen,release-bot"
-            exit 1
-          fi
-
-          authorized="false"
-          IFS=',' read -ra managers <<< "${RELEASE_MANAGERS}"
-          for manager in "${managers[@]}"; do
-            trimmed="$(echo "${manager}" | xargs)"
-            if [[ "${ACTOR}" == "${trimmed}" ]]; then
-              authorized="true"
-              break
-            fi
-          done
-
-          if [[ "${authorized}" != "true" ]]; then
-            echo "Actor ${ACTOR} is not in RELEASE_MANAGERS."
-            exit 1
-          fi
-
-      - name: Validate version format
-        shell: bash
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Version must match MAJOR.MINOR.PATCH"
-            exit 1
-          fi
-
-      - name: Fail if tag already exists
-        shell: bash
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          git fetch --tags --force
-          if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
-            echo "Tag v${VERSION} already exists"
-            exit 1
-          fi
-
-      - name: Ensure changelog section exists
-        shell: bash
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          grep -F "## [${VERSION}]" CHANGELOG.md >/dev/null
-
-      - name: Setup JDK
-        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
-
-      - name: Update version
-        shell: bash
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          python3 - <<'PY'
-          from pathlib import Path
-          import os
-
-          version = os.environ["VERSION"]
-          path = Path("gradle.properties")
-          content = path.read_text()
-          if "VERSION_NAME=" not in content:
-              raise SystemExit("VERSION_NAME entry not found in gradle.properties")
-          path.write_text(
-              "\n".join(
-                  f"VERSION_NAME={version}" if line.startswith("VERSION_NAME=") else line
-                  for line in content.splitlines()
-              ) + "\n"
-          )
-          PY
-        env:
-          VERSION: ${{ github.event.inputs.version }}
-
-      - name: Validate release build
-        run: ./gradlew test apiCheck ktlintCheck detekt publish --dry-run --no-daemon
-
-      - name: Guard changelog immutability
-        shell: bash
-        run: |
-          if ! git diff --quiet -- CHANGELOG.md; then
-            echo "CHANGELOG.md was modified during release preparation."
-            echo "Commit changelog updates to main before running Prepare Release."
-            git --no-pager diff -- CHANGELOG.md | cat
-            exit 1
-          fi
-
-      - name: Commit version bump
-        shell: bash
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add gradle.properties
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: release ${VERSION}"
-          else
-            echo "No version file changes to commit"
-          fi
-
-      - name: Create tag
-        shell: bash
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          git tag "v${VERSION}"
-
-      - name: Push commit and tag
-        shell: bash
-        run: |
-          git push origin HEAD:main
-          git push origin "v${{ github.event.inputs.version }}"
-
-      - name: Trigger release workflow
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ github.event.inputs.version }}
-        run: |
-          curl -sSf -X POST \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/release.yml/dispatches" \
-            -d "{\"ref\":\"main\",\"inputs\":{\"tag\":\"v${VERSION}\"}}"
+          echo "This workflow is deprecated because branch protection requires pull requests for main."
+          echo "Use the 'Create Release PR' workflow to bump VERSION_NAME through a PR."
+          echo "After the PR is merged with the release label, 'Tag Release' and 'Release' will run automatically."
+          exit 1

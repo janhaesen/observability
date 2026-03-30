@@ -1,0 +1,72 @@
+name: Tag Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tag-release-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  tag-and-release:
+    if: >
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'release')
+    name: Tag Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merged commit
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          version="$(grep '^VERSION_NAME=' gradle.properties | cut -d'=' -f2-)"
+          if [[ -z "${version}" ]]; then
+            echo "VERSION_NAME not found in gradle.properties"
+            exit 1
+          fi
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "VERSION_NAME must match MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          echo "value=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate release PR metadata
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          expected_branch="release/v${VERSION}"
+          if [[ "${HEAD_REF}" != "${expected_branch}" ]]; then
+            echo "Expected merged release branch ${expected_branch}, got ${HEAD_REF}"
+            exit 1
+          fi
+
+      - name: Fail if tag already exists
+        shell: bash
+        run: |
+          tag="v${{ steps.version.outputs.value }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag ${tag} already exists"
+            exit 1
+          fi
+
+      - name: Create & push tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.version.outputs.value }}" -m "Release v${{ steps.version.outputs.value }}"
+          git push origin "v${{ steps.version.outputs.value }}"
+
+
