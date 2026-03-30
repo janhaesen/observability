@@ -68,19 +68,13 @@ jobs:
 
       - name: Ensure release label exists
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' && secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           if ! gh label list --limit 200 --json name --jq '.[].name' | grep -Fxq "release"; then
             echo "Missing required label: release"
             echo "Create it once in repository settings to keep release governance explicit"
             exit 1
           fi
-
-      - name: Note token mode
-        if: ${{ secrets.RELEASE_PR_TOKEN == '' }}
-        run: |
-          echo "RELEASE_PR_TOKEN is not configured; falling back to GITHUB_TOKEN."
-          echo "If PR creation is blocked by repository policy, add RELEASE_PR_TOKEN as a fine-grained PAT."
 
       - name: Ensure changelog section exists
         shell: bash
@@ -101,7 +95,7 @@ jobs:
 
       - name: Fail if release PR already exists
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' && secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
           VERSION: ${{ github.event.inputs.version }}
         run: |
           existing_pr_count="$(gh pr list --base main --head "release/v${VERSION}" --state open --json number --jq 'length')"
@@ -156,7 +150,7 @@ jobs:
 
       - name: Open pull request
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' && secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
           VERSION: ${{ github.event.inputs.version }}
         run: |
           gh pr create \
