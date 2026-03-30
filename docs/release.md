@@ -16,7 +16,6 @@ This repository uses a PR-first release flow that is compatible with branch prot
 
 The `Create Release PR` workflow will:
 
-- run `quality-gates` before opening a PR,
 - validate semantic version input,
 - require the actor to be in `RELEASE_MANAGERS`,
 - require approval through the `release` environment,
@@ -25,11 +24,15 @@ The `Create Release PR` workflow will:
 - update `VERSION_NAME` in `gradle.properties`,
 - open a release-labelled PR targeting `main`.
 
+The opened PR will then require the `quality-gates` status check to pass (via `ci.yml`) before it can be merged.
+
 ### Authorization setup
 
 - Configure repository variable `RELEASE_MANAGERS` with a comma-separated list of usernames.
 - Configure environment `release` with required reviewers.
 - Create a `release` label once in repository settings.
+- Enable repository setting `Allow GitHub Actions to create and approve pull requests` when using `GITHUB_TOKEN` for PR creation.
+- If that setting cannot be enabled, add secret `RELEASE_PR_TOKEN` (fine-grained PAT with `contents: write` and `pull requests: write`) and the workflow will use it for PR operations.
 
 ## Tag and publish a release
 

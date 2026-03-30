@@ -18,31 +18,8 @@ permissions:
   issues: read
 
 jobs:
-  quality-gates:
-    name: quality-gates
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-
-      - name: Setup JDK
-        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
-
-      - name: Run tests, API compatibility, lint, and static analysis
-        run: ./gradlew test apiCheck ktlintCheck detekt --no-daemon
-
-      - name: Publish dry-run
-        run: ./gradlew publish --dry-run --no-daemon
-
   open-release-pr:
     name: Open release PR
-    needs: quality-gates
     runs-on: ubuntu-latest
     environment: release
     steps:
@@ -91,13 +68,19 @@ jobs:
 
       - name: Ensure release label exists
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' && secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           if ! gh label list --limit 200 --json name --jq '.[].name' | grep -Fxq "release"; then
             echo "Missing required label: release"
             echo "Create it once in repository settings to keep release governance explicit"
             exit 1
           fi
+
+      - name: Note token mode
+        if: ${{ secrets.RELEASE_PR_TOKEN == '' }}
+        run: |
+          echo "RELEASE_PR_TOKEN is not configured; falling back to GITHUB_TOKEN."
+          echo "If PR creation is blocked by repository policy, add RELEASE_PR_TOKEN as a fine-grained PAT."
 
       - name: Ensure changelog section exists
         shell: bash
@@ -118,7 +101,7 @@ jobs:
 
       - name: Fail if release PR already exists
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' && secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
           VERSION: ${{ github.event.inputs.version }}
         run: |
           existing_pr_count="$(gh pr list --base main --head "release/v${VERSION}" --state open --json number --jq 'length')"
@@ -173,7 +156,7 @@ jobs:
 
       - name: Open pull request
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' && secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
           VERSION: ${{ github.event.inputs.version }}
         run: |
           gh pr create \
