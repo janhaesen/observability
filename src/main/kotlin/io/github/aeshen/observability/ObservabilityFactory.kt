@@ -46,6 +46,7 @@ object ObservabilityFactory {
         val processors: List<ObservabilityProcessor> = emptyList(),
     ) {
         companion object {
+            @JvmStatic
             fun aesGcmFromRawKeyBytes(rawKey: ByteArray) =
                 AesGcm(SecretKeySpec(rawKey, "AES")).also {
                     require(
@@ -57,8 +58,64 @@ object ObservabilityFactory {
                     }
                 }
         }
+
+        /**
+         * Java-friendly builder for [Config].
+         *
+         * ```java
+         * Observability obs = ObservabilityFactory.create(
+         *     new ObservabilityFactory.Config.Builder(List.of(new Console()))
+         *         .profile(ObservabilityFactory.Profile.AUDIT_DURABLE)
+         *         .build()
+         * );
+         * ```
+         */
+        class Builder(private val sinks: List<SinkConfig>) {
+            private var encryption: EncryptionConfig? = null
+            private var failOnSinkError: Boolean = false
+            private var sinkRegistry: SinkRegistry = SinkRegistry.default()
+            private var codec: ObservabilityCodec = JsonLineCodec()
+            private var contextProviders: List<ContextProvider> = emptyList()
+            private var metadataEnrichers: List<MetadataEnricher> = emptyList()
+            private var diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP
+            private var profile: Profile = Profile.STANDARD
+            private var processors: List<ObservabilityProcessor> = emptyList()
+
+            fun encryption(value: EncryptionConfig?) = apply { encryption = value }
+
+            fun failOnSinkError(value: Boolean) = apply { failOnSinkError = value }
+
+            fun sinkRegistry(value: SinkRegistry) = apply { sinkRegistry = value }
+
+            fun codec(value: ObservabilityCodec) = apply { codec = value }
+
+            fun contextProviders(value: List<ContextProvider>) = apply { contextProviders = value }
+
+            fun metadataEnrichers(value: List<MetadataEnricher>) = apply { metadataEnrichers = value }
+
+            fun diagnostics(value: ObservabilityDiagnostics) = apply { diagnostics = value }
+
+            fun profile(value: Profile) = apply { profile = value }
+
+            fun processors(value: List<ObservabilityProcessor>) = apply { processors = value }
+
+            fun build(): Config =
+                Config(
+                    sinks = sinks,
+                    encryption = encryption,
+                    failOnSinkError = failOnSinkError,
+                    sinkRegistry = sinkRegistry,
+                    codec = codec,
+                    contextProviders = contextProviders,
+                    metadataEnrichers = metadataEnrichers,
+                    diagnostics = diagnostics,
+                    profile = profile,
+                    processors = processors,
+                )
+        }
     }
 
+    @JvmStatic
     fun create(config: Config): Observability {
         val sinks: List<ObservabilitySink> =
             applyProfile(

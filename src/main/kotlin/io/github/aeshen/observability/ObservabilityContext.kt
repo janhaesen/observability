@@ -14,8 +14,10 @@ class ObservabilityContext private constructor(
     fun asMap(): Map<TypedKey<*>, Any> = entriesByName.values.associate { it.first to it.second }
 
     companion object {
+        @JvmStatic
         fun builder(): Builder = Builder()
 
+        @JvmStatic
         fun empty(): ObservabilityContext = ObservabilityContext(emptyMap())
     }
 

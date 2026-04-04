@@ -4,8 +4,11 @@ fun interface BackoffStrategy {
     fun nextDelayMillis(attempt: Int): Long
 
     companion object {
+        @JvmStatic
         fun fixed(delayMillis: Long): BackoffStrategy = BackoffStrategy { _ -> delayMillis.coerceAtLeast(0L) }
 
+        @JvmStatic
+        @JvmOverloads
         fun exponential(
             initialDelayMillis: Long = 10,
             multiplier: Double = 2.0,
