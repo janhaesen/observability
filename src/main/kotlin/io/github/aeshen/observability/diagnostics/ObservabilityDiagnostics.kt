@@ -49,6 +49,7 @@ interface ObservabilityDiagnostics {
     ) {}
 
     companion object {
+        @JvmField
         val NOOP: ObservabilityDiagnostics = object : ObservabilityDiagnostics {}
     }
 }

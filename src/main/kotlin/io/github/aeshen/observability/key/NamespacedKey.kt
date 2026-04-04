@@ -1,3 +1,5 @@
+@file:JvmName("NamespacedKeys")
+
 package io.github.aeshen.observability.key
 
 import io.github.aeshen.observability.ObservabilityContext

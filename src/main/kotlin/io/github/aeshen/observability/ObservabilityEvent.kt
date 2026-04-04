@@ -1,3 +1,5 @@
+@file:JvmName("ObservabilityEvents")
+
 package io.github.aeshen.observability
 
 import io.github.aeshen.observability.ObservabilityEvent.EventBuilder
@@ -15,10 +17,15 @@ class ObservabilityEvent internal constructor(
     val context: ObservabilityContext,
     val error: Throwable? = null,
 ) {
+    /** Returns [timestamp] as a [java.time.Instant] for Java callers. */
+    fun getJavaTimestamp(): java.time.Instant =
+        java.time.Instant.ofEpochSecond(timestamp.epochSeconds, timestamp.nanosecondsOfSecond.toLong())
+
     class EventBuilder(
         private val name: EventName,
     ) {
         private var level: EventLevel = EventLevel.INFO
+        private var timestamp: Instant? = null
 
         private var payload: ByteArray? = null
         private var message: String? = null
@@ -41,10 +48,20 @@ class ObservabilityEvent internal constructor(
 
         fun error(t: Throwable) = apply { this.error = t }
 
+        /** Sets the event timestamp from a [kotlin.time.Instant]. */
+        fun timestamp(value: Instant) = apply { this.timestamp = value }
+
+        /** Sets the event timestamp from a [java.time.Instant] for Java callers. */
+        fun timestamp(value: java.time.Instant) =
+            apply {
+                this.timestamp = Instant.fromEpochSeconds(value.epochSecond, value.nano.toLong())
+            }
+
         fun build(): ObservabilityEvent =
             ObservabilityEvent(
                 name = name,
                 level = level,
+                timestamp = timestamp ?: Clock.System.now(),
                 payload = payload,
                 message = message,
                 context = context.build(),

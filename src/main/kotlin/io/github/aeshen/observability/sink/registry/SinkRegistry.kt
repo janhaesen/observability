@@ -43,16 +43,35 @@ class SinkRegistry private constructor(
                 }
             }
 
+        fun <T : SinkConfig> register(
+            type: Class<T>,
+            factory: java.util.function.Function<T, ObservabilitySink>,
+        ): Builder =
+            apply {
+                registerProvider { config ->
+                    if (type.isInstance(config)) {
+                        factory.apply(type.cast(config))
+                    } else {
+                        null
+                    }
+                }
+            }
+
         fun build(): SinkRegistry = SinkRegistry(providers = providers.toList())
     }
 
     companion object {
+        @JvmStatic
         fun builder(): Builder = Builder()
 
+        @JvmStatic
         fun defaultBuilder(): Builder = Builder(mutableListOf(BuiltInSinkProvider))
 
+        @JvmStatic
         fun empty(): SinkRegistry = builder().build()
 
+        @JvmStatic
+        @JvmName("getDefault")
         fun default(): SinkRegistry = defaultBuilder().build()
     }
 }
