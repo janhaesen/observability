@@ -35,6 +35,7 @@ Provides a single, type-safe entry point to emit structured events with typed co
 - [Extend with Custom Sinks](#extend-with-custom-sinks)
 - [Diagnostics Hooks](#diagnostics-hooks)
 - [Built-in Operational Diagnostics](#built-in-operational-diagnostics)
+- [Java Interoperability](#java-interoperability)
 - [Query SPI](#query-spi)
 - [OpenTelemetry Setup](#opentelemetry-setup)
 - [Conformance Testing](#conformance-testing)
@@ -90,6 +91,7 @@ Sinks (fan-out)      (write to Console, File, OpenTelemetry, …)
 - **Built-in operational collector** — `InMemoryOperationalDiagnostics` provides lightweight counters and health snapshots
 - **Binary compatibility tracking** — enforced via `binary-compatibility-validator`
 - **Audit query SPI** — `query-spi` module for backend-agnostic retrieval of audit records
+- **Java-friendly API** — `@JvmStatic`, `@JvmOverloads`, `Config.Builder`, and explicit overloads make the full API ergonomic from Java
 
 ---
 
@@ -964,6 +966,88 @@ val health = operational.healthSnapshot()
 ```
 
 The collector uses atomics only, keeps runtime overhead small, and works with existing sink implementations.
+
+---
+
+## Java Interoperability
+
+The library is written in Kotlin but is designed to be equally usable from Java. All public APIs expose Java-friendly static methods, explicit constructor overloads, and a fluent `Config.Builder`.
+
+### Creating an instance
+
+```java
+import io.github.aeshen.observability.*;
+import io.github.aeshen.observability.config.sink.Console;
+
+Observability obs = ObservabilityFactory.create(
+    new ObservabilityFactory.Config.Builder(List.of(Console.INSTANCE))
+        .profile(ObservabilityFactory.Profile.AUDIT_DURABLE)
+        .diagnostics(ObservabilityDiagnostics.NOOP)
+        .build()
+);
+```
+
+### Emitting events
+
+Explicit single- and two-arg overloads are provided for every level so Java callers never need to pass `null` or an empty context:
+
+```java
+obs.info(AppEvent.REQUEST_DONE);
+obs.info(AppEvent.REQUEST_DONE, "completed in 42ms");
+obs.warn(AppEvent.RATE_LIMITED, "quota exceeded", exception);
+obs.error(AppEvent.PAYMENT_FAILED, "card declined", exception);
+```
+
+### Registering a custom sink
+
+The `register(Class<T>, Function<T, ObservabilitySink>)` overload is callable from Java (the `inline reified` Kotlin overload is not):
+
+```java
+SinkRegistry registry = SinkRegistry.defaultBuilder()
+    .register(MyHttpSinkConfig.class, cfg -> new MyHttpSink(cfg.getEndpoint()))
+    .build();
+```
+
+### Decorators
+
+All decorator constructors use `@JvmOverloads`; optional parameters default to sensible values:
+
+```java
+ObservabilitySink retrying  = new RetryingObservabilitySink(delegate);
+ObservabilitySink batching  = new BatchingObservabilitySink(delegate);
+ObservabilitySink async     = new AsyncObservabilitySink(delegate);
+```
+
+### Backoff strategies
+
+```java
+BackoffStrategy fixed = BackoffStrategy.fixed(100L);
+BackoffStrategy exp   = BackoffStrategy.exponential();          // all defaults
+BackoffStrategy expCustom = BackoffStrategy.exponential(10L, 2.0, 1000L);
+```
+
+### Reading event timestamps
+
+`ObservabilityEvent.getJavaTimestamp()` returns a `java.time.Instant`:
+
+```java
+java.time.Instant ts = event.getJavaTimestamp();
+Duration age = Duration.between(ts, Instant.now());
+```
+
+### Top-level utility classes
+
+The top-level Kotlin files are exposed under intentional Java class names:
+
+| Java class | Contains |
+|---|---|
+| `ObservabilityEvents` | `event(name, builder)` DSL entry point |
+| `KeyGroups` | `put(builder, group)` extension helper |
+| `NamespacedKeys` | `putNamespaced(builder, prefix, key, value)` helper |
+
+### Backwards compatibility note
+
+The `@JvmField` annotation on `ObservabilityDiagnostics.NOOP` removes the old `Companion.getNOOP()` getter from the bytecode. The `@file:JvmName` renames mean `ObservabilityEventKt`, `KeyGroupKt`, and `NamespacedKeyKt` no longer exist. All other changes are purely additive. Kotlin callers are unaffected by any of these changes.
 
 ---
 

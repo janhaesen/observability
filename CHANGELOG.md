@@ -9,10 +9,24 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 ### Added
 - Added built-in generic HTTP sink support via `Http` config (`POST`, `PUT`, `PATCH`) for webhook/ingestion endpoint delivery with configurable headers and timeout.
 - Expanded contribution guidance to cover the broader multi-module surface (`observability`, `query-spi`, `benchmarks`, and `examples`) through a richer PR request template.
+- **Java interoperability** improvements across the public API (all additive):
+  - `@JvmStatic` on `ObservabilityContext.builder()` / `empty()`, `BackoffStrategy.fixed()` / `exponential()`, `SinkRegistry.builder()` / `defaultBuilder()` / `empty()` / `getDefault()`, `ObservabilityFactory.create()`, and `Config.aesGcmFromRawKeyBytes()` — eliminates `.Companion.` / `.INSTANCE.` noise from Java call sites.
+  - `@JvmField` on `ObservabilityDiagnostics.NOOP` — exposed as a direct static field.
+  - `@JvmOverloads` on `AsyncObservabilitySink`, `RetryingObservabilitySink`, and `BatchingObservabilitySink` constructors, the `Http` data class constructor, and `BackoffStrategy.exponential()` — Java callers can now omit trailing optional parameters.
+  - `ObservabilityFactory.Config.Builder` — new fluent Java builder for the 10-field `Config` data class.
+  - `SinkRegistry.Builder.register(Class<T>, Function<T, ObservabilitySink>)` — non-`reified` overload callable from Java (the existing `inline reified` overload is invisible to Java).
+  - Explicit single- and two-arg default methods on the `Observability` interface (`info(name)`, `info(name, msg)`, `error(name, msg, throwable)`, and equivalents for all levels) — Kotlin's `$default` stubs do not support partial argument application from Java.
+  - `ObservabilityEvent.getJavaTimestamp()` returning `java.time.Instant` and `EventBuilder.timestamp(java.time.Instant)` — bridges `kotlin.time.Instant` to the standard Java time API.
+  - `@file:JvmName` renames: `ObservabilityEventKt` → `ObservabilityEvents`, `KeyGroupKt` → `KeyGroups`, `NamespacedKeyKt` → `NamespacedKeys`.
+  - `JavaInteropTest.java` test suite with 15 tests covering all of the above improvements.
 
 ### Changed
 - Documented HTTP sink failure semantics: non-2xx responses and transport failures surface as `IllegalStateException`, enabling composition with existing retry/batching/async decorators.
 - Clarified release notes expectations so user-visible changes are tracked consistently across core APIs, SPI contracts, module docs, and integration examples.
+
+### Migration notes (Java callers only)
+- `ObservabilityDiagnostics.Companion.getNOOP()` has been replaced by the static field `ObservabilityDiagnostics.NOOP`. Update Java call sites accordingly.
+- The auto-generated classes `ObservabilityEventKt`, `KeyGroupKt`, and `NamespacedKeyKt` no longer exist; use `ObservabilityEvents`, `KeyGroups`, and `NamespacedKeys` respectively. Kotlin callers are unaffected.
 
 ## [1.1.0] - 2026-03-27
 
