@@ -92,6 +92,51 @@ fun toBackendQuery(query: AuditSearchQuery): String {
 For a full reference translation demo (criteria groups, text semantics, sort mapping, paging), see:
 `io.github.aeshen.observability.query.reference.demo.ReferenceBackendTranslator`.
 
+## Cursor-based pagination
+
+By default `AuditSearchQuery` uses offset pagination via the `AuditPage` type. For large datasets
+or real-time feeds, cursor-based pagination avoids the row-shift problem and is more efficient on
+most backends.
+
+Use `AuditPagination.Cursor` to opt in:
+
+```kotlin
+// First page — no cursor yet
+val firstPage = AuditSearchQuery(
+    fromEpochMillis = 1_710_000_000_000,
+    toEpochMillis   = 1_710_003_600_000,
+    pagination      = AuditPagination.Offset(limit = 50),
+    sort            = listOf(
+        AuditSort(AuditField.TIMESTAMP_EPOCH_MILLIS, AuditSortDirection.DESC),
+        AuditSort(AuditField.ID, AuditSortDirection.ASC),  // tiebreaker — required for cursor stability
+    ),
+)
+val result1: AuditQueryResult = service.search(firstPage)
+
+// Subsequent pages — pass nextCursor from the previous result
+result1.nextCursor?.let { cursor ->
+    val nextPage = AuditSearchQuery(
+        fromEpochMillis = 1_710_000_000_000,
+        toEpochMillis   = 1_710_003_600_000,
+        pagination      = AuditPagination.Cursor(limit = 50, after = cursor),
+        sort            = firstPage.sort,
+    )
+    val result2: AuditQueryResult = service.search(nextPage)
+}
+```
+
+`AuditQueryResult.nextCursor` is `null` when there are no more results or when the backend does
+not support cursor pagination.
+
+**Stable sort requirement:** cursor pagination depends on a deterministic result order. Always
+include a tie-breaking field such as `AuditField.ID` as the last sort clause. Backends may reject
+or silently fall back to offset pagination if no stable sort is present.
+
+**Backend authors:** backends that support cursor pagination should populate
+`AuditQueryResult.nextCursor` with an opaque token (e.g. base64-encoded keyset values,
+Elasticsearch `search_after` payload) and handle `AuditPagination.Cursor.after` in queries.
+Backends that do not support cursors may ignore the `after` field and leave `nextCursor` as `null`.
+
 ## Query semantics guidance
 
 Recommended semantics for portable behavior across backends:

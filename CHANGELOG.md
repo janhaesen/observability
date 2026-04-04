@@ -4,6 +4,44 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and the project follows Semantic Versioning.
 
+## [Unreleased]
+
+### Added
+- **Cursor-based pagination** in `query-spi` (issue #9):
+  - New `AuditPagination` sealed type with two subtypes:
+    - `AuditPagination.Offset(limit, offset)` — traditional limit/offset pagination, equivalent to the existing `AuditPage` semantics.
+    - `AuditPagination.Cursor(after, limit)` — cursor-based (keyset) pagination for large datasets and real-time feeds, avoiding row-shift inconsistency.
+  - `AuditSearchQuery.pagination: AuditPagination?` — new optional field that takes precedence over the deprecated `page` field when set.
+  - `AuditSearchQuery.resolvedPagination: AuditPagination` — computed property returning the effective pagination strategy regardless of which field was set.
+  - `AuditSearchQuery.Builder` — fluent Java-friendly builder (`AuditSearchQuery.builder(from, to).pagination(...).build()`).
+  - `AuditQueryResult.nextCursor: String?` — opaque continuation token returned by cursor-capable backends; `null` when there are no more results or the backend does not support cursors.
+  - `TranslatedAuditQuery.pagination: AuditPagination` replaces `page: AuditPage` in the reference translator kit output.
+  - `ReferenceBackendQuery.cursorAfter: String?` — non-null when cursor pagination is active; `offset` is set to `0` in that case.
+
+### Deprecated
+- `AuditPage` — use `AuditPagination.Offset` instead.
+- `AuditSearchQuery.page` — use `AuditSearchQuery.pagination` or `resolvedPagination` instead.
+- `TranslatedAuditQuery.page` — use `TranslatedAuditQuery.pagination` instead.
+
+### Breaking changes (`query-spi`)
+These are binary-incompatible changes inherent to evolving Kotlin data classes. Source-level
+compatibility is preserved for all existing call sites that use named parameters or omit trailing
+default arguments. Any module compiled against the previous `query-spi` artifact must be
+recompiled.
+
+- **`AuditQueryResult`** — `copy()` signature changed from `copy(records, total)` to
+  `copy(records, total, nextCursor)`. The two-argument Java constructor `new AuditQueryResult(records, total)`
+  is preserved via `@JvmOverloads`, but compiled Kotlin call sites that used `.copy(...)` must be
+  recompiled.
+- **`AuditSearchQuery`** — primary constructor gains a trailing `pagination: AuditPagination?`
+  parameter. The Kotlin synthetic default constructor changes accordingly. Existing Kotlin source
+  code (`AuditSearchQuery(from, to)`, `AuditSearchQuery(from, to, criteria = ...)`) recompiles
+  without modification, but code compiled against the previous binary must be recompiled.
+- **`TranslatedAuditQuery`** — the `page: AuditPage` constructor parameter is replaced by
+  `pagination: AuditPagination`. Code that constructed `TranslatedAuditQuery` directly
+  (uncommon — the type is normally produced by `AuditSearchQueryTranslator`) must be updated.
+  A backward-compatible `page` accessor is provided as a deprecated computed property.
+
 ## [1.2.0] - Unreleased
 
 ### Added

@@ -2,6 +2,7 @@ package io.github.aeshen.observability.query.reference.demo
 
 import io.github.aeshen.observability.query.AuditComparisonOperator
 import io.github.aeshen.observability.query.AuditLogicalOperator
+import io.github.aeshen.observability.query.AuditPagination
 import io.github.aeshen.observability.query.AuditSearchQuery
 import io.github.aeshen.observability.query.AuditTextMatchMode
 import io.github.aeshen.observability.query.AuditValue
@@ -11,6 +12,10 @@ import io.github.aeshen.observability.query.reference.StandardAuditFieldMapper
 
 /**
  * Demonstrates one complete translation path from [AuditSearchQuery] to backend clauses.
+ *
+ * When cursor-based pagination is used (see [AuditPagination.Cursor]) the [ReferenceBackendQuery.cursorAfter]
+ * field is populated and [ReferenceBackendQuery.offset] is set to 0. Backends should use [cursorAfter]
+ * as their keyset / search_after value and ignore [offset] in that case.
  */
 data class ReferenceBackendQuery(
     val fromEpochMillis: Long,
@@ -19,6 +24,8 @@ data class ReferenceBackendQuery(
     val sortClauses: List<String>,
     val limit: Int,
     val offset: Int,
+    /** Non-null when the query used [AuditPagination.Cursor]; pass to the backend keyset mechanism. */
+    val cursorAfter: String? = null,
 )
 
 object ReferenceBackendTranslator {
@@ -43,13 +50,20 @@ object ReferenceBackendTranslator {
         val translated = translator.translate(query)
         val whereClause = combineWhereClauses(translated.filter, translated.text)
 
+        val (limit, offset, cursorAfter) =
+            when (val p = translated.pagination) {
+                is AuditPagination.Offset -> Triple(p.limit, p.offset, null)
+                is AuditPagination.Cursor -> Triple(p.limit, 0, p.after)
+            }
+
         return ReferenceBackendQuery(
             fromEpochMillis = translated.fromEpochMillis,
             toEpochMillis = translated.toEpochMillis,
             whereClause = whereClause,
             sortClauses = translated.sort,
-            limit = translated.page.limit,
-            offset = translated.page.offset,
+            limit = limit,
+            offset = offset,
+            cursorAfter = cursorAfter,
         )
     }
 

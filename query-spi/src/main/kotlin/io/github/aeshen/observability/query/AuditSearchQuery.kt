@@ -4,19 +4,82 @@ package io.github.aeshen.observability.query
 
 /**
  * Typed, backend-agnostic query contract intended for long-term API stability.
+ *
+ * Use [pagination] to control how results are paged. When [pagination] is non-null it takes
+ * precedence over the deprecated [page] field. Use [resolvedPagination] to obtain the effective
+ * pagination strategy regardless of which field was set.
  */
 data class AuditSearchQuery(
     val fromEpochMillis: Long,
     val toEpochMillis: Long,
+    @Deprecated(
+        message = "Use pagination instead.",
+        replaceWith = ReplaceWith("pagination"),
+    )
     val page: AuditPage = AuditPage(),
     val criteria: List<AuditCriterion> = emptyList(),
     val text: AuditTextQuery? = null,
     val sort: List<AuditSort> = listOf(AuditSort(field = AuditField.TIMESTAMP_EPOCH_MILLIS)),
+    val pagination: AuditPagination? = null,
 ) {
     init {
         require(fromEpochMillis >= 0) { "fromEpochMillis must be greater than or equal to 0." }
         require(toEpochMillis >= 0) { "toEpochMillis must be greater than or equal to 0." }
         require(fromEpochMillis <= toEpochMillis) { "fromEpochMillis must be less than or equal to toEpochMillis." }
+    }
+
+    /**
+     * The effective pagination strategy. When [pagination] is set it is returned directly;
+     * otherwise falls back to an [AuditPagination.Offset] derived from the deprecated [page] field.
+     */
+    val resolvedPagination: AuditPagination
+        get() = pagination ?: AuditPagination.Offset(limit = page.limit, offset = page.offset)
+
+    companion object {
+        /** Java-friendly entry point for the fluent builder. */
+        @JvmStatic
+        fun builder(
+            fromEpochMillis: Long,
+            toEpochMillis: Long,
+        ): Builder = Builder(fromEpochMillis, toEpochMillis)
+    }
+
+    /**
+     * Fluent builder for [AuditSearchQuery] intended for Java callers.
+     *
+     * ```java
+     * AuditSearchQuery query = AuditSearchQuery.builder(from, to)
+     *     .pagination(new AuditPagination.Cursor("eyJpZCI6Imxhc3QifQ=="))
+     *     .sort(List.of(new AuditSort(AuditField.ID, AuditSortDirection.ASC)))
+     *     .build();
+     * ```
+     */
+    class Builder(
+        private val fromEpochMillis: Long,
+        private val toEpochMillis: Long,
+    ) {
+        private var criteria: List<AuditCriterion> = emptyList()
+        private var text: AuditTextQuery? = null
+        private var sort: List<AuditSort> = listOf(AuditSort(field = AuditField.TIMESTAMP_EPOCH_MILLIS))
+        private var pagination: AuditPagination? = null
+
+        fun criteria(criteria: List<AuditCriterion>) = apply { this.criteria = criteria }
+
+        fun text(text: AuditTextQuery) = apply { this.text = text }
+
+        fun sort(sort: List<AuditSort>) = apply { this.sort = sort }
+
+        fun pagination(pagination: AuditPagination) = apply { this.pagination = pagination }
+
+        fun build(): AuditSearchQuery =
+            AuditSearchQuery(
+                fromEpochMillis = fromEpochMillis,
+                toEpochMillis = toEpochMillis,
+                criteria = criteria,
+                text = text,
+                sort = sort,
+                pagination = pagination,
+            )
     }
 }
 

@@ -108,6 +108,41 @@ public final class io/github/aeshen/observability/query/AuditPage {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class io/github/aeshen/observability/query/AuditPagination {
+	public abstract fun getLimit ()I
+}
+
+public final class io/github/aeshen/observability/query/AuditPagination$Cursor : io/github/aeshen/observability/query/AuditPagination {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;I)V
+	public synthetic fun <init> (Ljava/lang/String;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun copy (Ljava/lang/String;I)Lio/github/aeshen/observability/query/AuditPagination$Cursor;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/AuditPagination$Cursor;Ljava/lang/String;IILjava/lang/Object;)Lio/github/aeshen/observability/query/AuditPagination$Cursor;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAfter ()Ljava/lang/String;
+	public fun getLimit ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/AuditPagination$Offset : io/github/aeshen/observability/query/AuditPagination {
+	public fun <init> ()V
+	public fun <init> (I)V
+	public fun <init> (II)V
+	public synthetic fun <init> (IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lio/github/aeshen/observability/query/AuditPagination$Offset;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/AuditPagination$Offset;IIILjava/lang/Object;)Lio/github/aeshen/observability/query/AuditPagination$Offset;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getLimit ()I
+	public final fun getOffset ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/aeshen/observability/query/AuditQuery {
 	public fun <init> (JJIILjava/util/Map;Ljava/lang/String;)V
 	public synthetic fun <init> (JJIILjava/util/Map;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -133,11 +168,15 @@ public final class io/github/aeshen/observability/query/AuditQuery {
 
 public final class io/github/aeshen/observability/query/AuditQueryResult {
 	public fun <init> (Ljava/util/List;J)V
+	public fun <init> (Ljava/util/List;JLjava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;JLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()J
-	public final fun copy (Ljava/util/List;J)Lio/github/aeshen/observability/query/AuditQueryResult;
-	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/AuditQueryResult;Ljava/util/List;JILjava/lang/Object;)Lio/github/aeshen/observability/query/AuditQueryResult;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;JLjava/lang/String;)Lio/github/aeshen/observability/query/AuditQueryResult;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/AuditQueryResult;Ljava/util/List;JLjava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/query/AuditQueryResult;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNextCursor ()Ljava/lang/String;
 	public final fun getRecords ()Ljava/util/List;
 	public final fun getTotal ()J
 	public fun hashCode ()I
@@ -177,25 +216,43 @@ public final class io/github/aeshen/observability/query/AuditRecord {
 }
 
 public final class io/github/aeshen/observability/query/AuditSearchQuery {
-	public fun <init> (JJLio/github/aeshen/observability/query/AuditPage;Ljava/util/List;Lio/github/aeshen/observability/query/AuditTextQuery;Ljava/util/List;)V
-	public synthetic fun <init> (JJLio/github/aeshen/observability/query/AuditPage;Ljava/util/List;Lio/github/aeshen/observability/query/AuditTextQuery;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final field Companion Lio/github/aeshen/observability/query/AuditSearchQuery$Companion;
+	public fun <init> (JJLio/github/aeshen/observability/query/AuditPage;Ljava/util/List;Lio/github/aeshen/observability/query/AuditTextQuery;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPagination;)V
+	public synthetic fun <init> (JJLio/github/aeshen/observability/query/AuditPage;Ljava/util/List;Lio/github/aeshen/observability/query/AuditTextQuery;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPagination;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun builder (JJ)Lio/github/aeshen/observability/query/AuditSearchQuery$Builder;
 	public final fun component1 ()J
 	public final fun component2 ()J
 	public final fun component3 ()Lio/github/aeshen/observability/query/AuditPage;
 	public final fun component4 ()Ljava/util/List;
 	public final fun component5 ()Lio/github/aeshen/observability/query/AuditTextQuery;
 	public final fun component6 ()Ljava/util/List;
-	public final fun copy (JJLio/github/aeshen/observability/query/AuditPage;Ljava/util/List;Lio/github/aeshen/observability/query/AuditTextQuery;Ljava/util/List;)Lio/github/aeshen/observability/query/AuditSearchQuery;
-	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/AuditSearchQuery;JJLio/github/aeshen/observability/query/AuditPage;Ljava/util/List;Lio/github/aeshen/observability/query/AuditTextQuery;Ljava/util/List;ILjava/lang/Object;)Lio/github/aeshen/observability/query/AuditSearchQuery;
+	public final fun component7 ()Lio/github/aeshen/observability/query/AuditPagination;
+	public final fun copy (JJLio/github/aeshen/observability/query/AuditPage;Ljava/util/List;Lio/github/aeshen/observability/query/AuditTextQuery;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPagination;)Lio/github/aeshen/observability/query/AuditSearchQuery;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/AuditSearchQuery;JJLio/github/aeshen/observability/query/AuditPage;Ljava/util/List;Lio/github/aeshen/observability/query/AuditTextQuery;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPagination;ILjava/lang/Object;)Lio/github/aeshen/observability/query/AuditSearchQuery;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCriteria ()Ljava/util/List;
 	public final fun getFromEpochMillis ()J
 	public final fun getPage ()Lio/github/aeshen/observability/query/AuditPage;
+	public final fun getPagination ()Lio/github/aeshen/observability/query/AuditPagination;
+	public final fun getResolvedPagination ()Lio/github/aeshen/observability/query/AuditPagination;
 	public final fun getSort ()Ljava/util/List;
 	public final fun getText ()Lio/github/aeshen/observability/query/AuditTextQuery;
 	public final fun getToEpochMillis ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/AuditSearchQuery$Builder {
+	public fun <init> (JJ)V
+	public final fun build ()Lio/github/aeshen/observability/query/AuditSearchQuery;
+	public final fun criteria (Ljava/util/List;)Lio/github/aeshen/observability/query/AuditSearchQuery$Builder;
+	public final fun pagination (Lio/github/aeshen/observability/query/AuditPagination;)Lio/github/aeshen/observability/query/AuditSearchQuery$Builder;
+	public final fun sort (Ljava/util/List;)Lio/github/aeshen/observability/query/AuditSearchQuery$Builder;
+	public final fun text (Lio/github/aeshen/observability/query/AuditTextQuery;)Lio/github/aeshen/observability/query/AuditSearchQuery$Builder;
+}
+
+public final class io/github/aeshen/observability/query/AuditSearchQuery$Companion {
+	public final fun builder (JJ)Lio/github/aeshen/observability/query/AuditSearchQuery$Builder;
 }
 
 public abstract interface class io/github/aeshen/observability/query/AuditSearchQueryService {
@@ -417,19 +474,20 @@ public final class io/github/aeshen/observability/query/reference/StandardAuditF
 }
 
 public final class io/github/aeshen/observability/query/reference/TranslatedAuditQuery {
-	public fun <init> (JJLjava/lang/Object;Ljava/lang/Object;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPage;)V
+	public fun <init> (JJLjava/lang/Object;Ljava/lang/Object;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPagination;)V
 	public final fun component1 ()J
 	public final fun component2 ()J
 	public final fun component3 ()Ljava/lang/Object;
 	public final fun component4 ()Ljava/lang/Object;
 	public final fun component5 ()Ljava/util/List;
-	public final fun component6 ()Lio/github/aeshen/observability/query/AuditPage;
-	public final fun copy (JJLjava/lang/Object;Ljava/lang/Object;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPage;)Lio/github/aeshen/observability/query/reference/TranslatedAuditQuery;
-	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/reference/TranslatedAuditQuery;JJLjava/lang/Object;Ljava/lang/Object;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPage;ILjava/lang/Object;)Lio/github/aeshen/observability/query/reference/TranslatedAuditQuery;
+	public final fun component6 ()Lio/github/aeshen/observability/query/AuditPagination;
+	public final fun copy (JJLjava/lang/Object;Ljava/lang/Object;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPagination;)Lio/github/aeshen/observability/query/reference/TranslatedAuditQuery;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/reference/TranslatedAuditQuery;JJLjava/lang/Object;Ljava/lang/Object;Ljava/util/List;Lio/github/aeshen/observability/query/AuditPagination;ILjava/lang/Object;)Lio/github/aeshen/observability/query/reference/TranslatedAuditQuery;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFilter ()Ljava/lang/Object;
 	public final fun getFromEpochMillis ()J
 	public final fun getPage ()Lio/github/aeshen/observability/query/AuditPage;
+	public final fun getPagination ()Lio/github/aeshen/observability/query/AuditPagination;
 	public final fun getSort ()Ljava/util/List;
 	public final fun getText ()Ljava/lang/Object;
 	public final fun getToEpochMillis ()J
@@ -438,16 +496,19 @@ public final class io/github/aeshen/observability/query/reference/TranslatedAudi
 }
 
 public final class io/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery {
-	public fun <init> (JJLjava/lang/String;Ljava/util/List;II)V
+	public fun <init> (JJLjava/lang/String;Ljava/util/List;IILjava/lang/String;)V
+	public synthetic fun <init> (JJLjava/lang/String;Ljava/util/List;IILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()J
 	public final fun component2 ()J
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/util/List;
 	public final fun component5 ()I
 	public final fun component6 ()I
-	public final fun copy (JJLjava/lang/String;Ljava/util/List;II)Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery;
-	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery;JJLjava/lang/String;Ljava/util/List;IIILjava/lang/Object;)Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (JJLjava/lang/String;Ljava/util/List;IILjava/lang/String;)Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery;JJLjava/lang/String;Ljava/util/List;IILjava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/query/reference/demo/ReferenceBackendQuery;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCursorAfter ()Ljava/lang/String;
 	public final fun getFromEpochMillis ()J
 	public final fun getLimit ()I
 	public final fun getOffset ()I

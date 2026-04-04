@@ -5,6 +5,7 @@ import io.github.aeshen.observability.query.AuditCriterion
 import io.github.aeshen.observability.query.AuditField
 import io.github.aeshen.observability.query.AuditLogicalOperator
 import io.github.aeshen.observability.query.AuditPage
+import io.github.aeshen.observability.query.AuditPagination
 import io.github.aeshen.observability.query.AuditSearchQuery
 import io.github.aeshen.observability.query.AuditSort
 import io.github.aeshen.observability.query.AuditSortDirection
@@ -16,6 +17,7 @@ import io.github.aeshen.observability.query.reference.demo.ReferenceBackendTrans
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class TranslatorKitTest {
@@ -92,7 +94,7 @@ class TranslatorKitTest {
             ),
             translated.sort,
         )
-        assertEquals(AuditPage(limit = 25, offset = 5), translated.page)
+        assertEquals(AuditPagination.Offset(limit = 25, offset = 5), translated.pagination)
     }
 
     private fun createQueryTranslator(): AuditSearchQueryTranslator<String, String, String, String> {
@@ -179,5 +181,42 @@ class TranslatorKitTest {
         )
         assertEquals(100, translated.limit)
         assertEquals(200, translated.offset)
+    }
+
+    @Test
+    fun `reference translator emits cursor fields when cursor pagination is used`() {
+        val translated: ReferenceBackendQuery =
+            ReferenceBackendTranslator.translate(
+                AuditSearchQuery(
+                    fromEpochMillis = 1_710_000_000_000,
+                    toEpochMillis = 1_710_003_600_000,
+                    pagination = AuditPagination.Cursor(limit = 50, after = "eyJpZCI6Imxhc3QifQ=="),
+                    sort =
+                        listOf(
+                            AuditSort(field = AuditField.TIMESTAMP_EPOCH_MILLIS, direction = AuditSortDirection.DESC),
+                            AuditSort(field = AuditField.ID, direction = AuditSortDirection.ASC),
+                        ),
+                ),
+            )
+
+        assertEquals(50, translated.limit)
+        assertEquals(0, translated.offset)
+        assertEquals("eyJpZCI6Imxhc3QifQ==", translated.cursorAfter)
+    }
+
+    @Test
+    fun `reference translator sets null cursor for offset pagination`() {
+        val translated: ReferenceBackendQuery =
+            ReferenceBackendTranslator.translate(
+                AuditSearchQuery(
+                    fromEpochMillis = 0,
+                    toEpochMillis = 100,
+                    pagination = AuditPagination.Offset(limit = 10, offset = 20),
+                ),
+            )
+
+        assertEquals(10, translated.limit)
+        assertEquals(20, translated.offset)
+        assertNull(translated.cursorAfter)
     }
 }
