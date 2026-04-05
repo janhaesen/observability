@@ -277,6 +277,29 @@ public final class io/github/aeshen/observability/config/sink/HttpMethod : java/
 	public static fun values ()[Lio/github/aeshen/observability/config/sink/HttpMethod;
 }
 
+public final class io/github/aeshen/observability/config/sink/Kafka : io/github/aeshen/observability/config/sink/SinkConfig {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;J)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun component5 ()J
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;J)Lio/github/aeshen/observability/config/sink/Kafka;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/sink/Kafka;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;JILjava/lang/Object;)Lio/github/aeshen/observability/config/sink/Kafka;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAdditionalProperties ()Ljava/util/Map;
+	public final fun getBootstrapServers ()Ljava/lang/String;
+	public final fun getClientId ()Ljava/lang/String;
+	public final fun getTimeoutMillis ()J
+	public final fun getTopic ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/aeshen/observability/config/sink/OpenTelemetry : io/github/aeshen/observability/config/sink/SinkConfig {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;JJII)V
@@ -306,6 +329,49 @@ public final class io/github/aeshen/observability/config/sink/OpenTelemetry : io
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/aeshen/observability/config/sink/Redis : io/github/aeshen/observability/config/sink/SinkConfig {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;J)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Long;
+	public final fun component4 ()J
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;J)Lio/github/aeshen/observability/config/sink/Redis;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/sink/Redis;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;JILjava/lang/Object;)Lio/github/aeshen/observability/config/sink/Redis;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxlen ()Ljava/lang/Long;
+	public final fun getStreamKey ()Ljava/lang/String;
+	public final fun getTimeoutMillis ()J
+	public final fun getUri ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/config/sink/S3 : io/github/aeshen/observability/config/sink/SinkConfig {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;J)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()J
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;J)Lio/github/aeshen/observability/config/sink/S3;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/sink/S3;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lio/github/aeshen/observability/config/sink/S3;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBucket ()Ljava/lang/String;
+	public final fun getEndpoint ()Ljava/lang/String;
+	public final fun getKeyPrefix ()Ljava/lang/String;
+	public final fun getRegion ()Ljava/lang/String;
+	public final fun getTimeoutMillis ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface class io/github/aeshen/observability/config/sink/SinkConfig {
 }
 
@@ -316,6 +382,29 @@ public final class io/github/aeshen/observability/config/sink/Slf4j : io/github/
 	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/sink/Slf4j;Lkotlin/reflect/KClass;ILjava/lang/Object;)Lio/github/aeshen/observability/config/sink/Slf4j;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getLogger ()Lkotlin/reflect/KClass;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/config/sink/Webhook : io/github/aeshen/observability/config/sink/SinkConfig {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;J)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun component5 ()J
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;J)Lio/github/aeshen/observability/config/sink/Webhook;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/config/sink/Webhook;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;JILjava/lang/Object;)Lio/github/aeshen/observability/config/sink/Webhook;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEndpoint ()Ljava/lang/String;
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getSecret ()Ljava/lang/String;
+	public final fun getSignatureHeader ()Ljava/lang/String;
+	public final fun getTimeoutMillis ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

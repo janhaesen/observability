@@ -3,7 +3,11 @@ package io.github.aeshen.observability.sink.registry
 import io.github.aeshen.observability.codec.EncodedEvent
 import io.github.aeshen.observability.config.sink.Console
 import io.github.aeshen.observability.config.sink.Http
+import io.github.aeshen.observability.config.sink.Kafka
+import io.github.aeshen.observability.config.sink.Redis
+import io.github.aeshen.observability.config.sink.S3
 import io.github.aeshen.observability.config.sink.SinkConfig
+import io.github.aeshen.observability.config.sink.Webhook
 import io.github.aeshen.observability.sink.ObservabilitySink
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
@@ -60,5 +64,33 @@ class SinkRegistryTest {
 
         assertNotNull(registry.resolve(Console))
         assertNotNull(registry.resolve(CustomSinkConfig("https://partner.example/logs")))
+    }
+
+    @Test
+    fun `default registry resolves kafka sink`() {
+        val resolved = SinkRegistry.default().resolve(Kafka(bootstrapServers = "localhost:9092", topic = "events"))
+        assertNotNull(resolved)
+        resolved.close()
+    }
+
+    @Test
+    fun `default registry resolves webhook sink`() {
+        val resolved = SinkRegistry.default().resolve(Webhook(endpoint = "https://hooks.example.com/e", secret = "s"))
+        assertNotNull(resolved)
+    }
+
+    @Test
+    fun `default registry resolves s3 sink`() {
+        val resolved = SinkRegistry.default().resolve(S3(bucket = "my-bucket", region = "eu-west-1"))
+        assertNotNull(resolved)
+        resolved.close()
+    }
+
+    @Test
+    fun `default registry resolves redis sink`() {
+        // fromConfig uses connectAsync — construction succeeds without a real Redis server
+        val resolved = SinkRegistry.default().resolve(Redis(uri = "redis://localhost:6379", streamKey = "events"))
+        assertNotNull(resolved)
+        resolved.close()
     }
 }

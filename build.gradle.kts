@@ -74,6 +74,9 @@ dependencies {
     compileOnly("io.opentelemetry:opentelemetry-exporter-otlp:$openTelemetryVersion")
     compileOnly("org.slf4j:slf4j-api:2.0.17")
     compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    compileOnly("org.apache.kafka:kafka-clients:3.9.0")
+    compileOnly("software.amazon.awssdk:s3:2.29.0")
+    compileOnly("io.lettuce:lettuce-core:6.3.2.RELEASE")
 
     testImplementation(kotlin("test"))
     testImplementation(testFixtures(project(":")))
@@ -86,6 +89,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
     testImplementation("com.networknt:json-schema-validator:1.5.8")
+    testImplementation("org.apache.kafka:kafka-clients:3.9.0")
+    testImplementation("software.amazon.awssdk:s3:2.29.0")
+    testImplementation("software.amazon.awssdk:url-connection-client:2.29.0")
+    testImplementation("io.lettuce:lettuce-core:6.3.2.RELEASE")
 
     testFixturesApi(kotlin("test"))
 }

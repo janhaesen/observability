@@ -3,16 +3,24 @@ package io.github.aeshen.observability.sink.registry
 import io.github.aeshen.observability.config.sink.Console
 import io.github.aeshen.observability.config.sink.File
 import io.github.aeshen.observability.config.sink.Http
+import io.github.aeshen.observability.config.sink.Kafka
 import io.github.aeshen.observability.config.sink.OpenTelemetry
+import io.github.aeshen.observability.config.sink.Redis
+import io.github.aeshen.observability.config.sink.S3
 import io.github.aeshen.observability.config.sink.SinkConfig
 import io.github.aeshen.observability.config.sink.Slf4j
+import io.github.aeshen.observability.config.sink.Webhook
 import io.github.aeshen.observability.config.sink.ZipFile
 import io.github.aeshen.observability.sink.ObservabilitySink
 import io.github.aeshen.observability.sink.impl.ConsoleObservabilitySink
 import io.github.aeshen.observability.sink.impl.FileObservabilitySink
 import io.github.aeshen.observability.sink.impl.HttpObservabilitySink
+import io.github.aeshen.observability.sink.impl.KafkaObservabilitySink
 import io.github.aeshen.observability.sink.impl.OpenTelemetryObservabilitySink
+import io.github.aeshen.observability.sink.impl.RedisObservabilitySink
+import io.github.aeshen.observability.sink.impl.S3ObservabilitySink
 import io.github.aeshen.observability.sink.impl.Slf4JObservabilitySink
+import io.github.aeshen.observability.sink.impl.WebhookObservabilitySink
 import io.github.aeshen.observability.sink.impl.ZipFileObservabilitySink
 
 class SinkRegistry private constructor(
@@ -88,6 +96,10 @@ private object BuiltInSinkProvider : SinkProvider {
                 createOptionalSink("OpenTelemetry OTLP") {
                     OpenTelemetryObservabilitySink.fromConfig(config)
                 }
+            is Kafka -> createOptionalSink("Kafka") { KafkaObservabilitySink(config) }
+            is Webhook -> WebhookObservabilitySink(config)
+            is S3 -> createOptionalSink("S3") { S3ObservabilitySink.fromConfig(config) }
+            is Redis -> createOptionalSink("Redis Streams") { RedisObservabilitySink.fromConfig(config) }
             else -> null
         }
 
