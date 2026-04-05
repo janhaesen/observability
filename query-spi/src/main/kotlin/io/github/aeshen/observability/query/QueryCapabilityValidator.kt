@@ -21,8 +21,8 @@ data class QueryCapabilityViolation(
 class UnsupportedQueryCapabilityException(
     val violations: List<QueryCapabilityViolation>,
 ) : IllegalArgumentException(
-    buildMessage(violations),
-) {
+        buildMessage(violations),
+    ) {
     init {
         require(violations.isNotEmpty()) { "violations must not be empty." }
     }
@@ -67,42 +67,57 @@ object QueryCapabilityValidator {
         val violations = mutableListOf<QueryCapabilityViolation>()
 
         if (query.text != null && !capabilities.supports(QueryCapability.TEXT_SEARCH)) {
-            violations += QueryCapabilityViolation(
-                capability = QueryCapability.TEXT_SEARCH,
-                detail = "query.text is set but the backend does not support text search.",
-            )
+            violations +=
+                QueryCapabilityViolation(
+                    capability = QueryCapability.TEXT_SEARCH,
+                    detail = "query.text is set but the backend does not support text search.",
+                )
         }
 
         if (query.sort != DEFAULT_SORT && !capabilities.supports(QueryCapability.SORT)) {
-            violations += QueryCapabilityViolation(
-                capability = QueryCapability.SORT,
-                detail = "query.sort contains a non-default sort order but the backend does not support custom sorting.",
-            )
+            violations +=
+                QueryCapabilityViolation(
+                    capability = QueryCapability.SORT,
+                    detail =
+                        "query.sort contains a non-default sort order but the backend does not " +
+                            "support custom sorting.",
+                )
         }
 
         if (hasNestedCriteria(query.criteria) && !capabilities.supports(QueryCapability.NESTED_CRITERIA)) {
-            violations += QueryCapabilityViolation(
-                capability = QueryCapability.NESTED_CRITERIA,
-                detail = "query.criteria contains an AuditCriterion.Group but the backend does not support nested criteria.",
-            )
+            violations +=
+                QueryCapabilityViolation(
+                    capability = QueryCapability.NESTED_CRITERIA,
+                    detail =
+                        "query.criteria contains an AuditCriterion.Group but the backend does not " +
+                            "support nested criteria.",
+                )
         }
 
         when (query.resolvedPagination) {
-            is AuditPagination.Offset ->
+            is AuditPagination.Offset -> {
                 if (!capabilities.supports(QueryCapability.OFFSET_PAGINATION)) {
-                    violations += QueryCapabilityViolation(
-                        capability = QueryCapability.OFFSET_PAGINATION,
-                        detail = "resolved pagination is Offset but the backend does not support offset pagination.",
-                    )
+                    violations +=
+                        QueryCapabilityViolation(
+                            capability = QueryCapability.OFFSET_PAGINATION,
+                            detail =
+                                "resolved pagination is Offset but the backend does not " +
+                                    "support offset pagination.",
+                        )
                 }
+            }
 
-            is AuditPagination.Cursor ->
+            is AuditPagination.Cursor -> {
                 if (!capabilities.supports(QueryCapability.CURSOR_PAGINATION)) {
-                    violations += QueryCapabilityViolation(
-                        capability = QueryCapability.CURSOR_PAGINATION,
-                        detail = "resolved pagination is Cursor but the backend does not support cursor pagination.",
-                    )
+                    violations +=
+                        QueryCapabilityViolation(
+                            capability = QueryCapability.CURSOR_PAGINATION,
+                            detail =
+                                "resolved pagination is Cursor but the backend does not " +
+                                    "support cursor pagination.",
+                        )
                 }
+            }
         }
 
         return violations

@@ -83,10 +83,11 @@ class QueryCapabilityTest {
     @Test
     fun `check does not flag default sort as SORT violation`() {
         val query = baseQuery()
-        val violations = QueryCapabilityValidator.check(
-            query,
-            QueryCapabilityDescriptor(setOf(QueryCapability.OFFSET_PAGINATION)),
-        )
+        val violations =
+            QueryCapabilityValidator.check(
+                query,
+                QueryCapabilityDescriptor(setOf(QueryCapability.OFFSET_PAGINATION)),
+            )
         assertTrue(violations.isEmpty())
     }
 
@@ -101,13 +102,23 @@ class QueryCapabilityTest {
 
     @Test
     fun `check detects NESTED_CRITERIA violation`() {
-        val group = AuditCriterion.Group(
-            operator = AuditLogicalOperator.OR,
-            criteria = listOf(
-                AuditCriterion.Comparison(AuditField.LEVEL, AuditComparisonOperator.EQ, AuditValue.Text("ERROR")),
-                AuditCriterion.Comparison(AuditField.LEVEL, AuditComparisonOperator.EQ, AuditValue.Text("WARN")),
-            ),
-        )
+        val group =
+            AuditCriterion.Group(
+                operator = AuditLogicalOperator.OR,
+                criteria =
+                    listOf(
+                        AuditCriterion.Comparison(
+                            AuditField.LEVEL,
+                            AuditComparisonOperator.EQ,
+                            AuditValue.Text("ERROR"),
+                        ),
+                        AuditCriterion.Comparison(
+                            AuditField.LEVEL,
+                            AuditComparisonOperator.EQ,
+                            AuditValue.Text("WARN"),
+                        ),
+                    ),
+            )
         val query = baseQuery(criteria = listOf(group))
         val violations = QueryCapabilityValidator.check(query, QueryCapabilityDescriptor.MINIMAL)
         assertEquals(1, violations.size)
@@ -127,10 +138,11 @@ class QueryCapabilityTest {
     @Test
     fun `check detects OFFSET_PAGINATION violation`() {
         val query = baseQuery(pagination = AuditPagination.Offset(limit = 10, offset = 5))
-        val violations = QueryCapabilityValidator.check(
-            query,
-            QueryCapabilityDescriptor(setOf(QueryCapability.CURSOR_PAGINATION)),
-        )
+        val violations =
+            QueryCapabilityValidator.check(
+                query,
+                QueryCapabilityDescriptor(setOf(QueryCapability.CURSOR_PAGINATION)),
+            )
         assertEquals(1, violations.size)
         assertEquals(QueryCapability.OFFSET_PAGINATION, violations.single().capability)
     }
@@ -163,10 +175,11 @@ class QueryCapabilityTest {
 
     @Test
     fun `check returns multiple violations when several features are unsupported`() {
-        val query = baseQuery(
-            text = AuditTextQuery("search term"),
-            pagination = AuditPagination.Cursor(after = "abc"),
-        )
+        val query =
+            baseQuery(
+                text = AuditTextQuery("search term"),
+                pagination = AuditPagination.Cursor(after = "abc"),
+            )
         val violations = QueryCapabilityValidator.check(query, QueryCapabilityDescriptor.MINIMAL)
         val capabilities = violations.map { it.capability }
         assertTrue(QueryCapability.TEXT_SEARCH in capabilities)
@@ -178,9 +191,10 @@ class QueryCapabilityTest {
     @Test
     fun `validate throws UnsupportedQueryCapabilityException on violations`() {
         val query = baseQuery(text = AuditTextQuery("hello"))
-        val ex = assertFailsWith<UnsupportedQueryCapabilityException> {
-            QueryCapabilityValidator.validate(query, QueryCapabilityDescriptor.MINIMAL)
-        }
+        val ex =
+            assertFailsWith<UnsupportedQueryCapabilityException> {
+                QueryCapabilityValidator.validate(query, QueryCapabilityDescriptor.MINIMAL)
+            }
         assertEquals(1, ex.violations.size)
         assertEquals(QueryCapability.TEXT_SEARCH, ex.violations.single().capability)
         assertIs<IllegalArgumentException>(ex)
@@ -203,12 +217,13 @@ class QueryCapabilityTest {
 
     @Test
     fun `UnsupportedQueryCapabilityException message contains capability names`() {
-        val ex = UnsupportedQueryCapabilityException(
-            listOf(
-                QueryCapabilityViolation(QueryCapability.TEXT_SEARCH, "text is set"),
-                QueryCapabilityViolation(QueryCapability.CURSOR_PAGINATION, "cursor used"),
-            ),
-        )
+        val ex =
+            UnsupportedQueryCapabilityException(
+                listOf(
+                    QueryCapabilityViolation(QueryCapability.TEXT_SEARCH, "text is set"),
+                    QueryCapabilityViolation(QueryCapability.CURSOR_PAGINATION, "cursor used"),
+                ),
+            )
         assertTrue(ex.message!!.contains("TEXT_SEARCH"))
         assertTrue(ex.message!!.contains("CURSOR_PAGINATION"))
     }
@@ -217,11 +232,13 @@ class QueryCapabilityTest {
 
     @Test
     fun `QueryCapabilityAware implementation exposes capabilities`() {
-        val service: AuditSearchQueryService = object : AuditSearchQueryService, QueryCapabilityAware {
-            override val capabilities = QueryCapabilityDescriptor.FULL
-            override fun search(query: AuditSearchQuery): AuditQueryResult =
-                AuditQueryResult(records = emptyList(), total = 0)
-        }
+        val service: AuditSearchQueryService =
+            object : AuditSearchQueryService, QueryCapabilityAware {
+                override val capabilities = QueryCapabilityDescriptor.FULL
+
+                override fun search(query: AuditSearchQuery): AuditQueryResult =
+                    AuditQueryResult(records = emptyList(), total = 0)
+            }
 
         val caps = (service as? QueryCapabilityAware)?.capabilities
         assertEquals(QueryCapabilityDescriptor.FULL, caps)
@@ -229,10 +246,11 @@ class QueryCapabilityTest {
 
     @Test
     fun `QueryCapabilityAware is absent when not implemented`() {
-        val service: AuditSearchQueryService = object : AuditSearchQueryService {
-            override fun search(query: AuditSearchQuery): AuditQueryResult =
-                AuditQueryResult(records = emptyList(), total = 0)
-        }
+        val service: AuditSearchQueryService =
+            object : AuditSearchQueryService {
+                override fun search(query: AuditSearchQuery): AuditQueryResult =
+                    AuditQueryResult(records = emptyList(), total = 0)
+            }
         val caps = (service as? QueryCapabilityAware)?.capabilities
         assertEquals(null, caps)
     }
