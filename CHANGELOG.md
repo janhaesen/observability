@@ -7,6 +7,15 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 ## [Unreleased]
 
 ### Added
+- **Query capability negotiation** in `query-spi` (issue #10):
+  - New `QueryCapability` enum declaring all query features a backend may support: `TEXT_SEARCH`, `SORT`, `NESTED_CRITERIA`, `OFFSET_PAGINATION`, `CURSOR_PAGINATION`, `PROJECTIONS`.
+  - New `QueryCapabilityDescriptor` — immutable set of supported capabilities with a `supports(capability)` helper and two built-in presets: `FULL` (all capabilities) and `MINIMAL` (offset pagination only).
+  - New `QueryCapabilityAware` interface — optional mixin for `AuditSearchQueryService` implementations to expose their `QueryCapabilityDescriptor`. Existing implementations remain valid without changes.
+  - New `QueryCapabilityValidator` — utility with two entry points:
+    - `check(query, capabilities)` — returns a `List<QueryCapabilityViolation>` (empty means compatible).
+    - `validate(query, capabilities)` — throws `UnsupportedQueryCapabilityException` (a subclass of `IllegalArgumentException`) if any violation is found.
+  - New `QueryCapabilityViolation` — structured violation value carrying the offending `QueryCapability` and a human-readable `detail` message.
+  - New `UnsupportedQueryCapabilityException` — exposes the full `violations` list for programmatic inspection.
 - **Cursor-based pagination** in `query-spi` (issue #9):
   - New `AuditPagination` sealed type with two subtypes:
     - `AuditPagination.Offset(limit, offset)` — traditional limit/offset pagination, equivalent to the existing `AuditPage` semantics.
