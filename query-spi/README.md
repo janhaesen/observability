@@ -137,6 +137,73 @@ or silently fall back to offset pagination if no stable sort is present.
 Elasticsearch `search_after` payload) and handle `AuditPagination.Cursor.after` in queries.
 Backends that do not support cursors may ignore the `after` field and leave `nextCursor` as `null`.
 
+## Capability negotiation
+
+Not all backends support the same feature set. A backend can declare which capabilities it
+supports by implementing the `QueryCapabilityAware` interface alongside `AuditSearchQueryService`.
+
+### Declaring capabilities in a backend
+
+```kotlin
+class MyAuditQueryService : AuditSearchQueryService, QueryCapabilityAware {
+    override val capabilities = QueryCapabilityDescriptor(
+        setOf(
+            QueryCapability.OFFSET_PAGINATION,
+            QueryCapability.SORT,
+            QueryCapability.TEXT_SEARCH,
+        )
+    )
+
+    override fun search(query: AuditSearchQuery): AuditQueryResult {
+        TODO("map query to backend")
+    }
+}
+```
+
+Use the built-in presets when appropriate:
+
+| Preset | Included capabilities |
+|---|---|
+| `QueryCapabilityDescriptor.FULL` | All known capabilities |
+| `QueryCapabilityDescriptor.MINIMAL` | `OFFSET_PAGINATION` only |
+
+### Inspecting capabilities as a consumer
+
+```kotlin
+val caps = (queryService as? QueryCapabilityAware)?.capabilities
+    ?: QueryCapabilityDescriptor.MINIMAL  // conservative default for non-aware backends
+```
+
+### Validating a query before execution
+
+Use `QueryCapabilityValidator` to fail fast when a query requires features the backend has not
+declared:
+
+```kotlin
+// Returns a list of violations — empty means compatible.
+val violations = QueryCapabilityValidator.check(query, caps)
+
+// Throws UnsupportedQueryCapabilityException if any violations are found.
+QueryCapabilityValidator.validate(query, caps)
+```
+
+`UnsupportedQueryCapabilityException` is a subclass of `IllegalArgumentException` and carries the
+full list of `QueryCapabilityViolation` objects for programmatic inspection.
+
+### Available capabilities
+
+| Capability | Triggered when |
+|---|---|
+| `TEXT_SEARCH` | `query.text` is non-null |
+| `SORT` | `query.sort` differs from the default (single timestamp DESC) |
+| `NESTED_CRITERIA` | any criterion contains an `AuditCriterion.Group` |
+| `OFFSET_PAGINATION` | resolved pagination is `AuditPagination.Offset` |
+| `CURSOR_PAGINATION` | resolved pagination is `AuditPagination.Cursor` |
+| `PROJECTIONS` | forward-looking: not yet modelled in the shared query contract |
+
+`QueryCapabilityAware` is **opt-in** — existing `AuditSearchQueryService` implementations remain
+valid without any changes.
+
 ## Query semantics guidance
 
 Recommended semantics for portable behavior across backends:

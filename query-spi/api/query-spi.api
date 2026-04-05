@@ -364,6 +364,64 @@ public final class io/github/aeshen/observability/query/AuditValue$TextList : io
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/aeshen/observability/query/QueryCapability : java/lang/Enum {
+	public static final field CURSOR_PAGINATION Lio/github/aeshen/observability/query/QueryCapability;
+	public static final field NESTED_CRITERIA Lio/github/aeshen/observability/query/QueryCapability;
+	public static final field OFFSET_PAGINATION Lio/github/aeshen/observability/query/QueryCapability;
+	public static final field PROJECTIONS Lio/github/aeshen/observability/query/QueryCapability;
+	public static final field SORT Lio/github/aeshen/observability/query/QueryCapability;
+	public static final field TEXT_SEARCH Lio/github/aeshen/observability/query/QueryCapability;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/aeshen/observability/query/QueryCapability;
+	public static fun values ()[Lio/github/aeshen/observability/query/QueryCapability;
+}
+
+public abstract interface class io/github/aeshen/observability/query/QueryCapabilityAware {
+	public abstract fun getCapabilities ()Lio/github/aeshen/observability/query/QueryCapabilityDescriptor;
+}
+
+public final class io/github/aeshen/observability/query/QueryCapabilityDescriptor {
+	public static final field Companion Lio/github/aeshen/observability/query/QueryCapabilityDescriptor$Companion;
+	public fun <init> (Ljava/util/Set;)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun copy (Ljava/util/Set;)Lio/github/aeshen/observability/query/QueryCapabilityDescriptor;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/QueryCapabilityDescriptor;Ljava/util/Set;ILjava/lang/Object;)Lio/github/aeshen/observability/query/QueryCapabilityDescriptor;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSupported ()Ljava/util/Set;
+	public fun hashCode ()I
+	public final fun supports (Lio/github/aeshen/observability/query/QueryCapability;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/QueryCapabilityDescriptor$Companion {
+	public final fun getFULL ()Lio/github/aeshen/observability/query/QueryCapabilityDescriptor;
+	public final fun getMINIMAL ()Lio/github/aeshen/observability/query/QueryCapabilityDescriptor;
+}
+
+public final class io/github/aeshen/observability/query/QueryCapabilityValidator {
+	public static final field INSTANCE Lio/github/aeshen/observability/query/QueryCapabilityValidator;
+	public final fun check (Lio/github/aeshen/observability/query/AuditSearchQuery;Lio/github/aeshen/observability/query/QueryCapabilityDescriptor;)Ljava/util/List;
+	public final fun validate (Lio/github/aeshen/observability/query/AuditSearchQuery;Lio/github/aeshen/observability/query/QueryCapabilityDescriptor;)V
+}
+
+public final class io/github/aeshen/observability/query/QueryCapabilityViolation {
+	public fun <init> (Lio/github/aeshen/observability/query/QueryCapability;Ljava/lang/String;)V
+	public final fun component1 ()Lio/github/aeshen/observability/query/QueryCapability;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lio/github/aeshen/observability/query/QueryCapability;Ljava/lang/String;)Lio/github/aeshen/observability/query/QueryCapabilityViolation;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/query/QueryCapabilityViolation;Lio/github/aeshen/observability/query/QueryCapability;Ljava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/query/QueryCapabilityViolation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCapability ()Lio/github/aeshen/observability/query/QueryCapability;
+	public final fun getDetail ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/aeshen/observability/query/UnsupportedQueryCapabilityException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/util/List;)V
+	public final fun getViolations ()Ljava/util/List;
+}
+
 public abstract interface class io/github/aeshen/observability/query/reference/AuditFieldMapper {
 	public abstract fun map-Jr6fKy0 (Ljava/lang/String;)Ljava/lang/Object;
 }
