@@ -2,7 +2,7 @@
 
 An opinionated, production-ready Kotlin framework for structured application observability.
 
-Provides a single, type-safe entry point to emit structured events with typed context metadata and route them through a processing pipeline to one or more configurable sinks (console, SLF4J, file, zip, OpenTelemetry), with optional encryption, async delivery, batching, and retry.
+Provides a single, type-safe entry point to emit structured events with typed context metadata and route them through a processing pipeline to one or more configurable sinks (console, SLF4J, file, zip, OpenTelemetry, Kafka), with optional encryption, async delivery, batching, and retry.
 
 ## Table of Contents
 
@@ -78,7 +78,7 @@ Sinks (fan-out)      (write to Console, File, OpenTelemetry, …)
 
 - **Unified event API** — `trace`, `debug`, `info`, `warn`, `error`, and `emit`
 - **Type-safe context** — typed keys (`StringKey`, `LongKey`, `DoubleKey`, `BooleanKey`) and namespaced key grouping
-- **Multiple sinks with fan-out** — Console, SLF4J, File (JSONL), ZipFile, OpenTelemetry OTLP
+- **Multiple sinks with fan-out** — Console, SLF4J, File (JSONL), ZipFile, OpenTelemetry OTLP, Kafka
 - **Optional encryption** — AES-GCM with a fixed key, or per-event data key wrapped with RSA-OAEP-256
 - **Sensitive-field filtering** — ordered allow/mask/remove processors for `context.*`, `metadata.*`, `message`, and `payload`
 - **Reliability decorators** — `AsyncObservabilitySink`, `BatchingObservabilitySink`, `RetryingObservabilitySink`
@@ -460,6 +460,35 @@ val config =
                 maxExportBatchSize = 512,
                 headers = mapOf("Authorization" to "Bearer token"),
             ),
+            Kafka(
+                bootstrapServers = "broker1:9092,broker2:9092",
+                topic = "observability-events",
+                clientId = "my-service-observability",
+                timeoutMillis = 5_000,
+                // additionalProperties can carry SASL/SSL settings or any producer config
+                additionalProperties = mapOf(
+                    "security.protocol" to "SASL_SSL",
+                    "sasl.mechanism" to "PLAIN",
+                ),
+            ),
+            Webhook(
+                endpoint = "https://hooks.example.com/observability",
+                secret = "my-signing-secret",
+                signatureHeader = "X-Hub-Signature-256",
+                headers = mapOf("Content-Type" to "application/json"),
+            ),
+            S3(
+                bucket = "my-observability-archive",
+                region = "eu-west-1",
+                keyPrefix = "events/",
+                timeoutMillis = 30_000,
+                // endpoint = "http://localhost:9000"  // optional: MinIO / R2 / compatible storage
+            ),
+            Redis(
+                uri = "redis://localhost:6379",
+                streamKey = "observability:events",
+                maxlen = 100_000,   // optional: approximate MAXLEN trimming
+            ),
         ),
         failOnSinkError = false, // best-effort (default)
     )
@@ -473,6 +502,10 @@ val config =
 | `ZipFile`        | Appends JSONL entries to a ZIP archive, preserving existing entries via startup replay | None                                              |
 | `Http`           | Sends encoded payload bytes to an arbitrary HTTP/HTTPS endpoint (`POST`, `PUT`, `PATCH`) | None                                              |
 | `OpenTelemetry`  | Exports via OTLP HTTP to any OTel-compatible backend      | `opentelemetry-api`, `-sdk`, `-exporter-otlp`     |
+| `Kafka`          | Produces encoded events to a Kafka topic; supports SASL/SSL via `additionalProperties` | `org.apache.kafka:kafka-clients`                  |
+| `Webhook`        | HTTP POST with HMAC-SHA256 request signature; compatible with GitHub-style webhook consumers | None                                              |
+| `S3`             | Uploads events as gzipped JSONL objects to S3-compatible storage; one upload per event or batch | `software.amazon.awssdk:s3`                       |
+| `Redis`          | Publishes events to a Redis Stream (`XADD`) with optional approximate MAXLEN trimming | `io.lettuce:lettuce-core`                         |
 
 All sinks receive fan-out delivery. `IllegalArgumentException` and `IllegalStateException` from one sink do not block others (unless `failOnSinkError = true`).
 
@@ -481,6 +514,35 @@ All sinks receive fan-out delivery. `IllegalArgumentException` and `IllegalState
 - `timeoutMillis` applies to request connect/send timing.
 - Any non-2xx response throws `IllegalStateException` (so `RetryingObservabilitySink` can retry).
 - Transport errors (`IOException`, `InterruptedException`) are surfaced as `IllegalStateException`.
+
+`Kafka` sink behavior:
+
+- Each event is published as a `ProducerRecord` where the key is the resolved event name (from metadata), falling back to `"observability"` if absent.
+- `timeoutMillis` governs the synchronous `Future.get()` call on send and the graceful `producer.close()` duration.
+- Send failures and timeouts surface as `IllegalStateException` (compatible with `RetryingObservabilitySink`).
+- `additionalProperties` is passed directly to the underlying `KafkaProducer`, enabling SASL/SSL, compression, and other standard producer settings.
+- `kafka-clients` must be present on the runtime classpath; a missing dependency produces a clear `IllegalStateException` with instructions.
+
+`Webhook` sink behavior:
+
+- Each event payload is sent as an HTTP POST body to `endpoint`.
+- If `secret` is non-empty, an HMAC-SHA256 signature is computed over the payload and added as `sha256=<hex>` in `signatureHeader` (default `X-Hub-Signature-256`).
+- Any non-2xx response or network error surfaces as `IllegalStateException` (compatible with `RetryingObservabilitySink`).
+- `timeoutMillis` governs JDK `HttpURLConnection` connect and read timeouts.
+
+`S3` sink behavior:
+
+- Each event (or batch when using `BatchCapableObservabilitySink`) is gzip-compressed and uploaded as a JSONL object.
+- Object keys follow the pattern `{keyPrefix}{yyyy/MM/dd/HH}/{uuid}.jsonl.gz` for natural time partitioning.
+- Set `endpoint` for MinIO, Cloudflare R2, or other S3-compatible storage (path-style access is enabled automatically).
+- `software.amazon.awssdk:s3` must be on the runtime classpath; a missing dependency produces a clear `IllegalStateException` with instructions.
+
+`Redis` sink behavior:
+
+- Events are appended to the configured Redis Stream via `XADD`, with `eventName` and `payload` as message fields.
+- The Lettuce connection is established lazily on the first `handle()` call — construction never blocks even if Redis is unreachable.
+- Set `maxlen` to enable approximate MAXLEN trimming (uses `~` mode for efficiency); leave unset for unlimited stream growth.
+- `io.lettuce:lettuce-core` must be on the runtime classpath; a missing dependency produces a clear `IllegalStateException` with instructions.
 
 ### Default JSONL Format
 
