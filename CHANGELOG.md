@@ -7,6 +7,11 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 ## [Unreleased]
 
 ### Added
+- **Expanded built-in sink ecosystem** (issue #11) — four new production-ready sinks, all optional-dependency-safe (missing runtime deps produce a clear `IllegalStateException` with guidance):
+  - **`Kafka`** — produces encoded events as `ProducerRecord<String, ByteArray>` to a configurable topic; event name used as partition key; SASL/SSL and any other producer settings passed via `additionalProperties`. Optional dep: `org.apache.kafka:kafka-clients`.
+  - **`Webhook`** — HTTP POST with HMAC-SHA256 request signing (`sha256=<hex>` in a configurable header, defaulting to `X-Hub-Signature-256`, compatible with GitHub-style webhook consumers). No new runtime dependency — uses JDK `javax.crypto.Mac`.
+  - **`S3`** — archives events as gzip-compressed JSONL objects to S3-compatible storage; keys follow a `{prefix}/{yyyy/MM/dd/HH}/{uuid}.jsonl.gz` pattern for natural time-partitioning; implements `BatchCapableObservabilitySink` so batching reduces upload frequency when composed with `BatchingObservabilitySink`; custom `endpoint` enables MinIO and Cloudflare R2. Optional dep: `software.amazon.awssdk:s3`.
+  - **`Redis`** — publishes events to a Redis Stream via `XADD` with optional approximate MAXLEN trimming; connection is established lazily on first use so construction never blocks; command timeout applied via `RedisURI`. Optional dep: `io.lettuce:lettuce-core`.
 - **Query capability negotiation** in `query-spi` (issue #10):
   - New `QueryCapability` enum declaring all query features a backend may support: `TEXT_SEARCH`, `SORT`, `NESTED_CRITERIA`, `OFFSET_PAGINATION`, `CURSOR_PAGINATION`, `PROJECTIONS`.
   - New `QueryCapabilityDescriptor` — immutable set of supported capabilities with a `supports(capability)` helper and two built-in presets: `FULL` (all capabilities) and `MINIMAL` (offset pagination only).
