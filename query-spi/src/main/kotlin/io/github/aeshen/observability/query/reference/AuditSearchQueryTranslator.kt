@@ -5,6 +5,7 @@ import io.github.aeshen.observability.query.AuditCriterion
 import io.github.aeshen.observability.query.AuditField
 import io.github.aeshen.observability.query.AuditLogicalOperator
 import io.github.aeshen.observability.query.AuditPage
+import io.github.aeshen.observability.query.AuditPagination
 import io.github.aeshen.observability.query.AuditSearchQuery
 import io.github.aeshen.observability.query.AuditSort
 import io.github.aeshen.observability.query.AuditSortDirection
@@ -13,6 +14,9 @@ import io.github.aeshen.observability.query.AuditValue
 
 /**
  * Backend-neutral translation output produced from an [AuditSearchQuery].
+ *
+ * The [pagination] field carries the resolved pagination strategy. The [page] property is kept
+ * for backward compatibility but is deprecated — prefer [pagination].
  */
 data class TranslatedAuditQuery<P, S, T>(
     val fromEpochMillis: Long,
@@ -20,8 +24,20 @@ data class TranslatedAuditQuery<P, S, T>(
     val filter: P?,
     val text: T?,
     val sort: List<S>,
-    val page: AuditPage,
-)
+    val pagination: AuditPagination,
+) {
+    /** Backward-compatible accessor derived from [pagination]. Prefer [pagination] for new code. */
+    @Deprecated(
+        message = "Use pagination instead.",
+        replaceWith = ReplaceWith("pagination"),
+    )
+    val page: AuditPage
+        get() =
+            when (val p = pagination) {
+                is AuditPagination.Offset -> AuditPage(limit = p.limit, offset = p.offset)
+                is AuditPagination.Cursor -> AuditPage(limit = p.limit, offset = 0)
+            }
+}
 
 /**
  * Maps [AuditField] values into backend-specific field identifiers.
@@ -88,7 +104,7 @@ class AuditSearchQueryTranslator<F, P, S, T>(
             filter = filter,
             text = text,
             sort = sort,
-            page = query.page,
+            pagination = query.resolvedPagination,
         )
     }
 

@@ -79,7 +79,7 @@ class QueryModelValidationTest {
 
         assertEquals(10, typed.fromEpochMillis)
         assertEquals(20, typed.toEpochMillis)
-        assertEquals(AuditPage(limit = 25, offset = 5), typed.page)
+        assertEquals(AuditPagination.Offset(limit = 25, offset = 5), typed.resolvedPagination)
         assertEquals(
             listOf(
                 AuditCriterion.Comparison(
@@ -144,7 +144,7 @@ class QueryModelValidationTest {
         val service =
             object : AuditSearchQueryService {
                 override fun search(query: AuditSearchQuery): AuditQueryResult {
-                    assertEquals(AuditPage(limit = 7, offset = 3), query.page)
+                    assertEquals(AuditPagination.Offset(limit = 7, offset = 3), query.resolvedPagination)
                     assertEquals(AuditTextQuery("billing"), query.text)
                     return AuditQueryResult(records = emptyList(), total = 1)
                 }
@@ -221,7 +221,59 @@ class QueryModelValidationTest {
     }
 
     @Test
-    fun `audit query result validates total constraints`() {
+    fun `audit pagination offset validates constraints`() {
+        assertFailsWith<IllegalArgumentException> {
+            AuditPagination.Offset(limit = 0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AuditPagination.Offset(offset = -1)
+        }
+        val valid = AuditPagination.Offset(limit = 50, offset = 100)
+        assertEquals(50, valid.limit)
+        assertEquals(100, valid.offset)
+    }
+
+    @Test
+    fun `audit pagination cursor validates constraints`() {
+        assertFailsWith<IllegalArgumentException> {
+            AuditPagination.Cursor(limit = 0, after = "token")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AuditPagination.Cursor(limit = 10, after = "   ")
+        }
+        val valid = AuditPagination.Cursor(limit = 25, after = "opaque-token-abc")
+        assertEquals(25, valid.limit)
+        assertEquals("opaque-token-abc", valid.after)
+    }
+
+    @Test
+    fun `audit search query resolved pagination falls back to page when pagination is null`() {
+        @Suppress("DEPRECATION")
+        val query =
+            AuditSearchQuery(
+                fromEpochMillis = 0,
+                toEpochMillis = 100,
+                page = AuditPage(limit = 30, offset = 60),
+            )
+        val resolved = query.resolvedPagination
+        assertEquals(AuditPagination.Offset(limit = 30, offset = 60), resolved)
+    }
+
+    @Test
+    fun `audit search query resolved pagination prefers pagination over page`() {
+        @Suppress("DEPRECATION")
+        val query =
+            AuditSearchQuery(
+                fromEpochMillis = 0,
+                toEpochMillis = 100,
+                page = AuditPage(limit = 30, offset = 60),
+                pagination = AuditPagination.Cursor(limit = 20, after = "my-cursor"),
+            )
+        assertEquals(AuditPagination.Cursor(limit = 20, after = "my-cursor"), query.resolvedPagination)
+    }
+
+    @Test
+    fun `audit query result stores next cursor`() {
         val record =
             AuditRecord(
                 id = "id-1",
@@ -231,12 +283,10 @@ class QueryModelValidationTest {
                 message = null,
                 context = emptyMap(),
             )
+        val withCursor = AuditQueryResult(records = listOf(record), total = 1, nextCursor = "eyJpZCI6Imxhc3QifQ==")
+        assertEquals("eyJpZCI6Imxhc3QifQ==", withCursor.nextCursor)
 
-        assertFailsWith<IllegalArgumentException> {
-            AuditQueryResult(records = listOf(record), total = -1)
-        }
-        assertFailsWith<IllegalArgumentException> {
-            AuditQueryResult(records = listOf(record), total = 0)
-        }
+        val withoutCursor = AuditQueryResult(records = listOf(record), total = 1)
+        assertEquals(null, withoutCursor.nextCursor)
     }
 }
