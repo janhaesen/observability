@@ -106,7 +106,6 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 - Config-driven sink creation: custom `SinkConfig` + `SinkRegistry.builder().register<...> { ... }.build()`.
 - Operator diagnostics: implement `ObservabilityDiagnostics` and pass through `ObservabilityFactory.Config`.
 - Runtime sink wiring: pass `SinkConfig` entries via `ObservabilityFactory.Config.sinks` and resolve through `SinkRegistry`.
-- Legacy compatibility: `ObservabilityFactory.create(vararg sinks, ...)` still exists as a deprecated bridge and is not the recommended SPI wiring path.
 - Reliability wrappers: `RetryingObservabilitySink`, `AsyncObservabilitySink`, `BatchingObservabilitySink`, `PersistentObservabilitySink`.
 - Audit queries: implement `AuditSearchQueryService` with `AuditSearchQuery` and `AuditPagination`.
 

@@ -115,8 +115,6 @@ public final class io/github/aeshen/observability/ObservabilityEvents {
 public final class io/github/aeshen/observability/ObservabilityFactory {
 	public static final field INSTANCE Lio/github/aeshen/observability/ObservabilityFactory;
 	public static final fun create (Lio/github/aeshen/observability/ObservabilityFactory$Config;)Lio/github/aeshen/observability/Observability;
-	public final fun create ([Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;)Lio/github/aeshen/observability/Observability;
-	public static synthetic fun create$default (Lio/github/aeshen/observability/ObservabilityFactory;[Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;ILjava/lang/Object;)Lio/github/aeshen/observability/Observability;
 }
 
 public final class io/github/aeshen/observability/ObservabilityFactory$Config {
