@@ -4,7 +4,6 @@ import io.github.aeshen.observability.query.AuditComparisonOperator
 import io.github.aeshen.observability.query.AuditCriterion
 import io.github.aeshen.observability.query.AuditField
 import io.github.aeshen.observability.query.AuditLogicalOperator
-import io.github.aeshen.observability.query.AuditPage
 import io.github.aeshen.observability.query.AuditPagination
 import io.github.aeshen.observability.query.AuditSearchQuery
 import io.github.aeshen.observability.query.AuditSort
@@ -47,7 +46,7 @@ class TranslatorKitTest {
                 AuditSearchQuery(
                     fromEpochMillis = 10,
                     toEpochMillis = 20,
-                    page = AuditPage(limit = 25, offset = 5),
+                    pagination = AuditPagination.Offset(limit = 25, offset = 5),
                     criteria =
                         listOf(
                             AuditCriterion.Comparison(
@@ -132,7 +131,7 @@ class TranslatorKitTest {
                 AuditSearchQuery(
                     fromEpochMillis = 1_710_000_000_000,
                     toEpochMillis = 1_710_003_600_000,
-                    page = AuditPage(limit = 100, offset = 200),
+                    pagination = AuditPagination.Offset(limit = 100, offset = 200),
                     criteria =
                         listOf(
                             AuditCriterion.Comparison(

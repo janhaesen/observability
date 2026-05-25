@@ -133,7 +133,6 @@ Stable extension seams (per `docs/spi-contract.md` and `docs/extensions.md`):
 - `ObservabilityDiagnostics`
 - `ObservabilitySinkConformanceSuite`
 - `AuditSearchQueryService` (in `query-spi`)
-- `AuditQueryService` (deprecated compatibility surface in `query-spi`)
 
 Compatibility promise:
 - patch/minor releases preserve binary compatibility for stable SPI symbols.
@@ -144,12 +143,11 @@ Compatibility promise:
 Module: `:query-spi` (optional artifact)
 
 Provides backend-agnostic audit query interfaces:
-- `AuditQuery`
 - `AuditSearchQuery`
+- `AuditPagination`
 - `AuditRecord`
 - `AuditQueryResult`
 - `AuditSearchQueryService`
-- `AuditQueryService` (deprecated compatibility bridge)
 
 Intended for backend-specific implementations (OpenSearch, ClickHouse, PostgreSQL, etc.).
 Module is lightweight and has no heavy runtime dependencies.

@@ -1237,8 +1237,7 @@ The reference semantics are intentionally explicit: top-level criteria are `AND`
 import io.github.aeshen.observability.query.AuditComparisonOperator
 import io.github.aeshen.observability.query.AuditCriterion
 import io.github.aeshen.observability.query.AuditField
-import io.github.aeshen.observability.query.AuditPage
-import io.github.aeshen.observability.query.AuditQuery
+import io.github.aeshen.observability.query.AuditPagination
 import io.github.aeshen.observability.query.AuditQueryResult
 import io.github.aeshen.observability.query.AuditSearchQuery
 import io.github.aeshen.observability.query.AuditSearchQueryService
@@ -1256,7 +1255,7 @@ val result =
         AuditSearchQuery(
             fromEpochMillis = System.currentTimeMillis() - 3_600_000,
             toEpochMillis = System.currentTimeMillis(),
-            page = AuditPage(limit = 50, offset = 0),
+            pagination = AuditPagination.Offset(limit = 50, offset = 0),
             criteria =
                 listOf(
                     AuditCriterion.Comparison(
@@ -1283,20 +1282,6 @@ result.records.forEach { record ->
     println(record)
 }
 // result.total = total matching records before pagination
-
-// Legacy AuditQuery is still supported and can be mapped when needed.
-val legacy =
-    AuditQuery(
-        fromEpochMillis = System.currentTimeMillis() - 3_600_000,
-        toEpochMillis = System.currentTimeMillis(),
-        filters = mapOf("level" to "ERROR", "context.request_id" to "req-123"),
-        freeText = "payment",
-    )
-
-val typed = legacy.toSearchQuery()
-
-// If you still need to serve legacy callers, use the deprecated compatibility bridge.
-// Prefer implementing AuditSearchQueryService directly for new integrations.
 ```
 
 ---

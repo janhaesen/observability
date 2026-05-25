@@ -3,32 +3,8 @@ package io.github.aeshen.observability.query
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
 
 class QueryModelValidationTest {
-    @Test
-    fun `audit query validates time window and pagination`() {
-        assertFailsWith<IllegalArgumentException> {
-            AuditQuery(fromEpochMillis = -1, toEpochMillis = 1)
-        }
-        assertFailsWith<IllegalArgumentException> {
-            AuditQuery(fromEpochMillis = 10, toEpochMillis = 1)
-        }
-        assertFailsWith<IllegalArgumentException> {
-            AuditQuery(fromEpochMillis = 1, toEpochMillis = 10, limit = 0)
-        }
-        assertFailsWith<IllegalArgumentException> {
-            AuditQuery(fromEpochMillis = 1, toEpochMillis = 10, offset = -1)
-        }
-        assertFailsWith<IllegalArgumentException> {
-            AuditQuery(
-                fromEpochMillis = 1,
-                toEpochMillis = 10,
-                filters = mapOf("" to "ERROR"),
-            )
-        }
-    }
-
     @Test
     fun `audit search query validates model constraints`() {
         assertFailsWith<IllegalArgumentException> {
@@ -36,12 +12,6 @@ class QueryModelValidationTest {
         }
         assertFailsWith<IllegalArgumentException> {
             AuditSearchQuery(fromEpochMillis = 10, toEpochMillis = 1)
-        }
-        assertFailsWith<IllegalArgumentException> {
-            AuditPage(limit = 0)
-        }
-        assertFailsWith<IllegalArgumentException> {
-            AuditPage(limit = 10, offset = -1)
         }
         assertFailsWith<IllegalArgumentException> {
             AuditCriterion.Group(operator = AuditLogicalOperator.AND, criteria = emptyList())
@@ -64,106 +34,14 @@ class QueryModelValidationTest {
     }
 
     @Test
-    fun `legacy audit query maps into typed audit search query`() {
-        val legacy =
-            AuditQuery(
+    fun `audit search query defaults to offset pagination`() {
+        val query =
+            AuditSearchQuery(
                 fromEpochMillis = 10,
                 toEpochMillis = 20,
-                limit = 25,
-                offset = 5,
-                filters = mapOf("level" to "ERROR"),
-                freeText = " payment ",
             )
 
-        val typed = legacy.toSearchQuery()
-
-        assertEquals(10, typed.fromEpochMillis)
-        assertEquals(20, typed.toEpochMillis)
-        assertEquals(AuditPagination.Offset(limit = 25, offset = 5), typed.resolvedPagination)
-        assertEquals(
-            listOf(
-                AuditCriterion.Comparison(
-                    field = AuditField.custom("level"),
-                    operator = AuditComparisonOperator.EQ,
-                    value = AuditValue.Text("ERROR"),
-                ),
-            ),
-            typed.criteria,
-        )
-        assertEquals(AuditTextQuery("payment"), typed.text)
-    }
-
-    @Test
-    fun `legacy mapper drops blank free text`() {
-        val legacy =
-            AuditQuery(
-                fromEpochMillis = 10,
-                toEpochMillis = 20,
-                freeText = "   ",
-            )
-
-        val typed = legacy.toSearchQuery()
-
-        assertNull(typed.text)
-    }
-
-    @Test
-    fun `legacy mapper preserves canonical prefixed filter fields`() {
-        val legacy =
-            AuditQuery(
-                fromEpochMillis = 10,
-                toEpochMillis = 20,
-                filters =
-                    mapOf(
-                        "context.request_id" to "req-123",
-                        "metadata.ingestedAt" to "1710000000000",
-                    ),
-            )
-
-        val typed = legacy.toSearchQuery()
-
-        assertEquals(
-            listOf(
-                AuditCriterion.Comparison(
-                    field = AuditField.context("request_id"),
-                    operator = AuditComparisonOperator.EQ,
-                    value = AuditValue.Text("req-123"),
-                ),
-                AuditCriterion.Comparison(
-                    field = AuditField.metadata("ingestedAt"),
-                    operator = AuditComparisonOperator.EQ,
-                    value = AuditValue.Text("1710000000000"),
-                ),
-            ),
-            typed.criteria,
-        )
-    }
-
-    @Test
-    fun `typed service adapter delegates using typed mapping`() {
-        val service =
-            object : AuditSearchQueryService {
-                override fun search(query: AuditSearchQuery): AuditQueryResult {
-                    assertEquals(AuditPagination.Offset(limit = 7, offset = 3), query.resolvedPagination)
-                    assertEquals(AuditTextQuery("billing"), query.text)
-                    return AuditQueryResult(records = emptyList(), total = 1)
-                }
-            }
-
-        val result =
-            service
-                .asLegacyService()
-                .search(
-                    AuditQuery(
-                        fromEpochMillis = 1,
-                        toEpochMillis = 2,
-                        limit = 7,
-                        offset = 3,
-                        freeText = "billing",
-                    ),
-                )
-
-        assertEquals(1, result.total)
+        assertEquals(AuditPagination.Offset(), query.pagination)
     }
 
     @Test
@@ -247,29 +125,14 @@ class QueryModelValidationTest {
     }
 
     @Test
-    fun `audit search query resolved pagination falls back to page when pagination is null`() {
-        @Suppress("DEPRECATION")
+    fun `audit search query stores explicit pagination`() {
         val query =
             AuditSearchQuery(
                 fromEpochMillis = 0,
                 toEpochMillis = 100,
-                page = AuditPage(limit = 30, offset = 60),
-            )
-        val resolved = query.resolvedPagination
-        assertEquals(AuditPagination.Offset(limit = 30, offset = 60), resolved)
-    }
-
-    @Test
-    fun `audit search query resolved pagination prefers pagination over page`() {
-        @Suppress("DEPRECATION")
-        val query =
-            AuditSearchQuery(
-                fromEpochMillis = 0,
-                toEpochMillis = 100,
-                page = AuditPage(limit = 30, offset = 60),
                 pagination = AuditPagination.Cursor(limit = 20, after = "my-cursor"),
             )
-        assertEquals(AuditPagination.Cursor(limit = 20, after = "my-cursor"), query.resolvedPagination)
+        assertEquals(AuditPagination.Cursor(limit = 20, after = "my-cursor"), query.pagination)
     }
 
     @Test

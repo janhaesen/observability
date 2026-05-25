@@ -49,8 +49,8 @@ private val DEFAULT_SORT = listOf(AuditSort(field = AuditField.TIMESTAMP_EPOCH_M
  * | [QueryCapability.TEXT_SEARCH] | `query.text != null` |
  * | [QueryCapability.SORT] | sort list differs from the default (single timestamp DESC) |
  * | [QueryCapability.NESTED_CRITERIA] | any criterion tree node is an [AuditCriterion.Group] |
- * | [QueryCapability.OFFSET_PAGINATION] | resolved pagination is [AuditPagination.Offset] |
- * | [QueryCapability.CURSOR_PAGINATION] | resolved pagination is [AuditPagination.Cursor] |
+ * | [QueryCapability.OFFSET_PAGINATION] | [AuditSearchQuery.pagination] is [AuditPagination.Offset] |
+ * | [QueryCapability.CURSOR_PAGINATION] | [AuditSearchQuery.pagination] is [AuditPagination.Cursor] |
  *
  * @see QueryCapabilityDescriptor
  * @see QueryCapabilityAware
@@ -94,14 +94,14 @@ object QueryCapabilityValidator {
                 )
         }
 
-        when (query.resolvedPagination) {
+        when (query.pagination) {
             is AuditPagination.Offset -> {
                 if (!capabilities.supports(QueryCapability.OFFSET_PAGINATION)) {
                     violations +=
                         QueryCapabilityViolation(
                             capability = QueryCapability.OFFSET_PAGINATION,
                             detail =
-                                "resolved pagination is Offset but the backend does not " +
+                                "query.pagination is Offset but the backend does not " +
                                     "support offset pagination.",
                         )
                 }
@@ -113,7 +113,7 @@ object QueryCapabilityValidator {
                         QueryCapabilityViolation(
                             capability = QueryCapability.CURSOR_PAGINATION,
                             detail =
-                                "resolved pagination is Cursor but the backend does not " +
+                                "query.pagination is Cursor but the backend does not " +
                                     "support cursor pagination.",
                         )
                 }

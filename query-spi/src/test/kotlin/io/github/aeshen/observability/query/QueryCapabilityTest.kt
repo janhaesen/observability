@@ -261,7 +261,7 @@ class QueryCapabilityTest {
         text: AuditTextQuery? = null,
         sort: List<AuditSort> = listOf(AuditSort(field = AuditField.TIMESTAMP_EPOCH_MILLIS)),
         criteria: List<AuditCriterion> = emptyList(),
-        pagination: AuditPagination? = null,
+        pagination: AuditPagination = AuditPagination.Offset(),
     ) = AuditSearchQuery(
         fromEpochMillis = 0L,
         toEpochMillis = 1000L,
