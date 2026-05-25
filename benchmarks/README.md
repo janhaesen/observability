@@ -10,6 +10,16 @@ It is designed for:
 
 It is **not** intended to be a universal performance claim for all JVMs, workloads, or deployment environments.
 
+## Benchmark language
+
+**Benchmark Scenario**:
+A named workload configuration used to compare observability runtime behavior under a specific sink or decorator pattern.
+_Avoid_: one-off run, ad hoc test
+
+**Comparative Result**:
+A documented side-by-side benchmark outcome that helps readers compare scenarios, while explicitly remaining illustrative rather than a hard performance guarantee.
+_Avoid_: guarantee, SLA
+
 ## What the suite covers
 
 The current scenario set includes:

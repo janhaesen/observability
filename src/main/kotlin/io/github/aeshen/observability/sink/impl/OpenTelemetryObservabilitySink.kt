@@ -3,6 +3,7 @@ package io.github.aeshen.observability.sink.impl
 import io.github.aeshen.observability.codec.EncodedEvent
 import io.github.aeshen.observability.sink.EventLevel
 import io.github.aeshen.observability.sink.ObservabilitySink
+import io.github.aeshen.observability.sink.decorator.ReplayedObservabilityException
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -125,9 +126,19 @@ private fun EncodedEvent.toAttributes(): Attributes {
     }
 
     original.error?.let { throwable ->
-        putAttribute(builder, EXCEPTION_TYPE_KEY, throwable.javaClass.name)
-        throwable.message?.let { putAttribute(builder, EXCEPTION_MESSAGE_KEY, it) }
-        putAttribute(builder, EXCEPTION_STACKTRACE_KEY, throwable.stackTraceToString())
+        when (throwable) {
+            is ReplayedObservabilityException -> {
+                putAttribute(builder, EXCEPTION_TYPE_KEY, throwable.originalClassName)
+                throwable.originalMessage?.let { putAttribute(builder, EXCEPTION_MESSAGE_KEY, it) }
+                putAttribute(builder, EXCEPTION_STACKTRACE_KEY, throwable.originalStacktrace)
+            }
+
+            else -> {
+                putAttribute(builder, EXCEPTION_TYPE_KEY, throwable.javaClass.name)
+                throwable.message?.let { putAttribute(builder, EXCEPTION_MESSAGE_KEY, it) }
+                putAttribute(builder, EXCEPTION_STACKTRACE_KEY, throwable.stackTraceToString())
+            }
+        }
     }
 
     return builder.build()

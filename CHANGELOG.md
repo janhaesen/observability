@@ -6,7 +6,14 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 
 ## [Unreleased]
 
-No unreleased changes yet.
+### Added
+- **Persistent disk-backed buffering and replay** (issue #13):
+  - New `PersistentObservabilitySink` decorator that journals encoded events to disk before delegated delivery and replays unacknowledged events after restart.
+  - Deterministic in-order replay with bounded retention via `maxPendingEvents` and `maxJournalBytes`.
+  - Strict corruption handling: truncated journal tails are discarded on recovery, while other journal corruption fails fast.
+
+### Changed
+- Clarified reliability documentation to distinguish `AUDIT_DURABLE` in-memory hardening from crash-safe persistent buffering and to document safe decorator composition around the new persistence boundary.
 
 ## [1.2.0] - 2026-03-30
 

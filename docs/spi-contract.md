@@ -46,6 +46,8 @@ The `AUDIT_DURABLE` profile enforces strict reliability semantics:
 - Enables `failOnSinkError = true` to surface failures
 - All outcomes are reported via `ObservabilityDiagnostics`
 
+`AUDIT_DURABLE` is not crash-safe persistence. If events must survive process restarts, wrap the runtime sink with `PersistentObservabilitySink` explicitly.
+
 Use when strict audit compliance is required:
 
 ```kotlin
@@ -108,7 +110,7 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 - Operator diagnostics: implement `ObservabilityDiagnostics` and pass through `ObservabilityFactory.Config`.
 - Runtime sink wiring: pass `SinkConfig` entries via `ObservabilityFactory.Config.sinks` and resolve through `SinkRegistry`.
 - Legacy compatibility: `ObservabilityFactory.create(vararg sinks, ...)` still exists as a deprecated bridge and is not the recommended SPI wiring path.
-- Reliability wrappers: `RetryingObservabilitySink`, `AsyncObservabilitySink`, `BatchingObservabilitySink`.
+- Reliability wrappers: `RetryingObservabilitySink`, `AsyncObservabilitySink`, `BatchingObservabilitySink`, `PersistentObservabilitySink`.
 - Audit queries: implement `AuditSearchQueryService`; expose `AuditQueryService` only as a compatibility adapter when needed.
 
 ## Compatibility Process

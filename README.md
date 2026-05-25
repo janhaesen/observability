@@ -27,6 +27,7 @@ This library may be more than you need if:
 - **Sink integrators**: jump to [Extend with Custom Sinks](#extend-with-custom-sinks), [`docs/extensions.md`](./docs/extensions.md), and [Conformance Testing](#conformance-testing)
 - **Query backend authors**: jump to [Query SPI](#query-spi) and [`query-spi/README.md`](./query-spi/README.md)
 - **Contributors and release maintainers**: see [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`SECURITY.md`](./SECURITY.md), and [`docs/release.md`](./docs/release.md)
+- **Need the repo map first?** Start with [`CONTEXT.md`](./CONTEXT.md) and [`docs/README.md`](./docs/README.md)
 
 ## Table of Contents
 
@@ -52,6 +53,7 @@ This library may be more than you need if:
 - [Reliability Decorators](#reliability-decorators)
   - [AsyncObservabilitySink](#asyncobservabilitysink)
   - [BatchingObservabilitySink](#batchingobservabilitysink)
+  - [PersistentObservabilitySink](#persistentobservabilitysink)
   - [RetryingObservabilitySink](#retryingobservabilitysink)
 - [Profiles](#profiles)
 - [Configure Encryption](#configure-encryption)
@@ -108,7 +110,7 @@ Sinks (fan-out)      (write to Console, File, OpenTelemetry, …)
 - **Multiple sinks with fan-out** — Console, SLF4J, File (JSONL), ZipFile, OpenTelemetry OTLP, Kafka
 - **Optional encryption** — AES-GCM with a fixed key, or per-event data key wrapped with RSA-OAEP-256
 - **Sensitive-field filtering** — ordered allow/mask/remove processors for `context.*`, `metadata.*`, `message`, and `payload`
-- **Reliability decorators** — `AsyncObservabilitySink`, `BatchingObservabilitySink`, `RetryingObservabilitySink`
+- **Reliability decorators** — `AsyncObservabilitySink`, `BatchingObservabilitySink`, `PersistentObservabilitySink`, `RetryingObservabilitySink`
 - **Profiles** — `STANDARD` (best-effort) or `AUDIT_DURABLE` (strict, retried, batched)
 - **Pluggable codec** — default JSONL, fully replaceable
 - **Sink SPI** — register custom sinks via `SinkConfig` + `SinkRegistry`
@@ -688,6 +690,44 @@ val batchedSink =
 
 Remaining buffered events are flushed synchronously on `close()`.
 
+### PersistentObservabilitySink
+
+Durably journals encoded events to a local directory before delegated delivery so unacknowledged events survive process restarts and replay in-order on the next startup:
+
+```kotlin
+import io.github.aeshen.observability.sink.decorator.PersistentObservabilitySink
+import io.github.aeshen.observability.sink.decorator.RetryingObservabilitySink
+
+val durableSink =
+    PersistentObservabilitySink(
+        delegate =
+            RetryingObservabilitySink(
+                delegate = mySink,
+                maxAttempts = 5,
+            ),
+        directory = Path.of("./.observability-buffer"),
+        maxPendingEvents = 10_000,
+        maxJournalBytes = 64L * 1024 * 1024,
+        retryDelayMillis = 1000,
+        closeTimeoutMillis = 5000,
+    )
+```
+
+Delivery semantics:
+
+- `handle()` returns after the event is durably appended to the journal.
+- Delivery is **at-least-once**. If the process crashes after journaling but before acknowledgement, the event is replayed after restart.
+- Replay is deterministic and ordered: the oldest unacknowledged event is retried first, and later events wait behind it.
+- Retention is bounded by `maxPendingEvents` and `maxJournalBytes`; exceeding either limit throws `IllegalStateException` and rejects the new event.
+- A truncated tail caused by a crash during append is discarded automatically on restart. Other journal corruption fails fast during startup.
+
+Composition guidance:
+
+- Wrap **synchronous** sinks or synchronous decorators inside `PersistentObservabilitySink`.
+- `RetryingObservabilitySink` composes well inside the persistence boundary.
+- Do **not** wrap `BatchingObservabilitySink` or `AsyncObservabilitySink` inside `PersistentObservabilitySink`; they acknowledge before the underlying sink has actually delivered.
+- `AUDIT_DURABLE` does not enable persistent buffering. Use `PersistentObservabilitySink` explicitly when restart survival is required.
+
 ### RetryingObservabilitySink
 
 Retries transient sink failures with configurable backoff:
@@ -741,6 +781,8 @@ val observability =
         ),
     )
 ```
+
+`AUDIT_DURABLE` improves in-memory reliability but is **not** crash-safe. Add `PersistentObservabilitySink` explicitly if events must survive restarts.
 
 ---
 
@@ -1117,6 +1159,7 @@ All decorator constructors use `@JvmOverloads`; optional parameters default to s
 ObservabilitySink retrying  = new RetryingObservabilitySink(delegate);
 ObservabilitySink batching  = new BatchingObservabilitySink(delegate);
 ObservabilitySink async     = new AsyncObservabilitySink(delegate);
+ObservabilitySink durable   = new PersistentObservabilitySink(delegate, bufferDir);
 ```
 
 ### Backoff strategies
@@ -1389,6 +1432,17 @@ To auto-format Kotlin sources:
 ./gradlew ktlintFormat
 ```
 
+IntelliJ alignment notes:
+
+- Gradle is the source of truth here; the build pins **ktlint `1.2.1`** and reads rules from [`.editorconfig`](./.editorconfig).
+- Keep IntelliJ **EditorConfig support enabled** and re-import the Gradle project after formatting-related changes.
+- If you use an IntelliJ ktlint plugin, configure it to the same ktlint version. If you cannot, prefer disabling the plugin inspection and rely on Gradle `ktlintCheck` / `ktlintFormat` to avoid false discrepancies.
+- To verify a main-source mismatch exactly as CI sees it, run:
+
+```bash
+./gradlew ktlintMainSourceSetCheck --no-daemon
+```
+
 ---
 
 ## Module Structure
@@ -1399,6 +1453,8 @@ To auto-format Kotlin sources:
 | `:query-spi`                            | Optional: backend-agnostic audit record query SPI                    |
 | `:benchmarks`                           | Comparative performance and backpressure harness                     |
 | `:examples:third-party-sink-example`    | Example custom sink module with SPI wiring and conformance tests     |
+
+For the contributor-facing repository map and deeper doc index, see [`CONTEXT.md`](./CONTEXT.md) and [`docs/README.md`](./docs/README.md).
 
 ---
 
