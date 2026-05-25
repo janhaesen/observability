@@ -15,6 +15,18 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 ### Changed
 - Clarified delivery semantics and reliability documentation (issues #13, #14) to distinguish best-effort, strict, and durable delivery, to document `AUDIT_DURABLE` as an in-memory hardening profile rather than crash-safe durability, and to keep safe decorator composition explicit around the persistence boundary.
 
+### Breaking changes (`query-spi`)
+- **Removed deprecated legacy query SPI** (issue #28):
+  - Deleted `AuditQueryService`, `AuditQuery`, `AuditPage`, and the `asLegacyService()` bridge extension.
+  - `AuditSearchQuery` now uses `pagination: AuditPagination` as the only paging API; the deprecated `page` field and `resolvedPagination` helper were removed.
+  - `TranslatedAuditQuery` now exposes only `pagination`; the deprecated `page` accessor was removed.
+
+### Migration notes (`query-spi`)
+- Replace `AuditQueryService` implementations with `AuditSearchQueryService`.
+- Replace `AuditQuery` construction with `AuditSearchQuery`, mapping legacy `filters` to typed `criteria` and `freeText` to `text`.
+- Replace `AuditPage(limit, offset)` with `AuditPagination.Offset(limit, offset)`.
+- Update any code reading `resolvedPagination` or `TranslatedAuditQuery.page` to use `pagination`.
+
 ## [1.2.0] - 2026-03-30
 
 ### Added

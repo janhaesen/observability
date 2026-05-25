@@ -4,36 +4,20 @@ package io.github.aeshen.observability.query
 
 /**
  * Typed, backend-agnostic query contract intended for long-term API stability.
- *
- * Use [pagination] to control how results are paged. When [pagination] is non-null it takes
- * precedence over the deprecated [page] field. Use [resolvedPagination] to obtain the effective
- * pagination strategy regardless of which field was set.
  */
 data class AuditSearchQuery(
     val fromEpochMillis: Long,
     val toEpochMillis: Long,
-    @Deprecated(
-        message = "Use pagination instead.",
-        replaceWith = ReplaceWith("pagination"),
-    )
-    val page: AuditPage = AuditPage(),
     val criteria: List<AuditCriterion> = emptyList(),
     val text: AuditTextQuery? = null,
     val sort: List<AuditSort> = listOf(AuditSort(field = AuditField.TIMESTAMP_EPOCH_MILLIS)),
-    val pagination: AuditPagination? = null,
+    val pagination: AuditPagination = AuditPagination.Offset(),
 ) {
     init {
         require(fromEpochMillis >= 0) { "fromEpochMillis must be greater than or equal to 0." }
         require(toEpochMillis >= 0) { "toEpochMillis must be greater than or equal to 0." }
         require(fromEpochMillis <= toEpochMillis) { "fromEpochMillis must be less than or equal to toEpochMillis." }
     }
-
-    /**
-     * The effective pagination strategy. When [pagination] is set it is returned directly;
-     * otherwise falls back to an [AuditPagination.Offset] derived from the deprecated [page] field.
-     */
-    val resolvedPagination: AuditPagination
-        get() = pagination ?: AuditPagination.Offset(limit = page.limit, offset = page.offset)
 
     companion object {
         /** Java-friendly entry point for the fluent builder. */
@@ -61,7 +45,7 @@ data class AuditSearchQuery(
         private var criteria: List<AuditCriterion> = emptyList()
         private var text: AuditTextQuery? = null
         private var sort: List<AuditSort> = listOf(AuditSort(field = AuditField.TIMESTAMP_EPOCH_MILLIS))
-        private var pagination: AuditPagination? = null
+        private var pagination: AuditPagination = AuditPagination.Offset()
 
         fun criteria(criteria: List<AuditCriterion>) = apply { this.criteria = criteria }
 
@@ -80,16 +64,6 @@ data class AuditSearchQuery(
                 sort = sort,
                 pagination = pagination,
             )
-    }
-}
-
-data class AuditPage(
-    val limit: Int = 100,
-    val offset: Int = 0,
-) {
-    init {
-        require(limit > 0) { "limit must be greater than 0." }
-        require(offset >= 0) { "offset must be greater than or equal to 0." }
     }
 }
 

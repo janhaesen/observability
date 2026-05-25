@@ -8,10 +8,10 @@ Prefer implementing `AuditSearchQueryService` in backend-specific modules (for e
 
 The module now exposes a typed query contract designed to stay stack-agnostic over time:
 
-- `AuditSearchQuery` keeps the stable transport shape: time window, page, sort, typed criteria, optional text query.
+- `AuditSearchQuery` keeps the stable transport shape: time window, pagination, sort, typed criteria, optional text query.
 - `AuditCriterion` models portable intent instead of backend-specific syntax.
 - `AuditField` is string-backed so vendors can extend beyond the built-in fields without forking the SPI.
-- `AuditQuery` remains available as a legacy compatibility type and can be converted with `toSearchQuery()`.
+- `AuditPagination` makes paging strategy explicit for both offset and cursor-based backends.
 
 ## Canonical field naming for dynamic fields
 
@@ -96,9 +96,8 @@ For a full reference translation demo (criteria groups, text semantics, sort map
 
 ## Cursor-based pagination
 
-By default `AuditSearchQuery` uses offset pagination via the `AuditPage` type. For large datasets
-or real-time feeds, cursor-based pagination avoids the row-shift problem and is more efficient on
-most backends.
+By default `AuditSearchQuery` uses `AuditPagination.Offset()`. For large datasets or real-time
+feeds, cursor-based pagination avoids the row-shift problem and is more efficient on most backends.
 
 Use `AuditPagination.Cursor` to opt in:
 
@@ -199,8 +198,8 @@ full list of `QueryCapabilityViolation` objects for programmatic inspection.
 | `TEXT_SEARCH` | `query.text` is non-null |
 | `SORT` | `query.sort` differs from the default (single timestamp DESC) |
 | `NESTED_CRITERIA` | any criterion contains an `AuditCriterion.Group` |
-| `OFFSET_PAGINATION` | resolved pagination is `AuditPagination.Offset` |
-| `CURSOR_PAGINATION` | resolved pagination is `AuditPagination.Cursor` |
+| `OFFSET_PAGINATION` | `query.pagination` is `AuditPagination.Offset` |
+| `CURSOR_PAGINATION` | `query.pagination` is `AuditPagination.Cursor` |
 | `PROJECTIONS` | forward-looking: not yet modelled in the shared query contract |
 
 `QueryCapabilityAware` is **opt-in** — existing `AuditSearchQueryService` implementations remain
@@ -219,7 +218,7 @@ Recommended semantics for portable behavior across backends:
 - `AuditTextQuery.EXACT`: full-string match
 - `AuditTextQuery.PREFIX`: starts-with match
 - `AuditSort`: apply in declaration order
-- `AuditPage`: apply `limit` and `offset` after filtering and sorting
+- `AuditPagination.Offset`: apply `limit` and `offset` after filtering and sorting
 
 ```kotlin
 class OpenSearchAuditQueryService : io.github.aeshen.observability.query.AuditSearchQueryService {
@@ -236,7 +235,7 @@ val query =
     io.github.aeshen.observability.query.AuditSearchQuery(
         fromEpochMillis = 1_710_000_000_000,
         toEpochMillis = 1_710_003_600_000,
-        page = io.github.aeshen.observability.query.AuditPage(limit = 100, offset = 0),
+        pagination = io.github.aeshen.observability.query.AuditPagination.Offset(limit = 100, offset = 0),
         criteria =
             listOf(
                 io.github.aeshen.observability.query.AuditCriterion.Comparison(
@@ -257,13 +256,40 @@ val query =
     )
 ```
 
-Legacy `AuditQuery.filters` can already carry the same canonical keys, for example
-`mapOf("context.request_id" to "req-123")`.
+## 2.0 migration guide
 
-If you still expose the old SPI to consumers, bridge a typed implementation back to it.
-`AuditQueryService` is deprecated and should be treated as a migration bridge only:
+Replace the removed legacy SPI with the typed query model:
 
 ```kotlin
-val legacyService: io.github.aeshen.observability.query.AuditQueryService =
-    io.github.aeshen.observability.query.asLegacyService(OpenSearchAuditQueryService())
+// Before
+class MyBackend : io.github.aeshen.observability.query.AuditQueryService {
+    override fun search(query: io.github.aeshen.observability.query.AuditQuery): io.github.aeshen.observability.query.AuditQueryResult {
+        TODO("legacy implementation")
+    }
+}
+
+// After
+class MyBackend : io.github.aeshen.observability.query.AuditSearchQueryService {
+    override fun search(query: io.github.aeshen.observability.query.AuditSearchQuery): io.github.aeshen.observability.query.AuditQueryResult {
+        TODO("typed implementation")
+    }
+}
+```
+
+Replace `AuditPage` with `AuditPagination.Offset`:
+
+```kotlin
+// Before
+val query = io.github.aeshen.observability.query.AuditSearchQuery(
+    fromEpochMillis = from,
+    toEpochMillis = to,
+    page = io.github.aeshen.observability.query.AuditPage(limit = 50, offset = 0),
+)
+
+// After
+val query = io.github.aeshen.observability.query.AuditSearchQuery(
+    fromEpochMillis = from,
+    toEpochMillis = to,
+    pagination = io.github.aeshen.observability.query.AuditPagination.Offset(limit = 50, offset = 0),
+)
 ```

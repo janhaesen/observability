@@ -18,7 +18,6 @@ Behavior changes to the sink-extension symbols above are treated as breaking cha
 For `query-spi`, the stability story is slightly different:
 
 - `io.github.aeshen.observability.query.AuditSearchQueryService` is the stable service entry point.
-- `io.github.aeshen.observability.query.AuditQueryService` remains a deprecated compatibility bridge.
 - `AuditSearchQuery` and the related typed query model are the preferred contract, but they are Kotlin data classes and builders. Additive evolution can still require recompilation of precompiled Kotlin consumers when generated signatures change.
 
 When `query-spi` evolution has recompilation or migration impact, the release notes and changelog must call it out explicitly.
@@ -87,8 +86,6 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 - Query using a typed contract: time range, paging, sorting, criteria groups, and portable text-search intent
 - Use `AuditField` for standard fields or custom vendor fields without coupling the SPI to one storage stack
 - Prefer canonical dynamic field prefixes for portable queries: `context.<key>` for `AuditRecord.context` and `metadata.<key>` for `AuditRecord.metadata`
-- Continue accepting `AuditQuery` during migration and convert via `AuditQuery.toSearchQuery()`
-- `AuditQueryService` remains available for compatibility but is deprecated in favor of `AuditSearchQueryService`
 - Surfaces `AuditRecord` with timestamp, event, level, message, context, and metadata
 - Use `AuditSearchQueryTranslator` + `StandardAuditFieldMapper` to implement reusable field/criterion/text/sort translation logic
 - `ReferenceBackendTranslator` provides a documented end-to-end implementation pattern for third-party backends
@@ -102,7 +99,7 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 - Map `AuditCriterion.Exists(field, false)` to field-missing/null semantics
 - Apply `AuditTextQuery.CONTAINS` as substring, `EXACT` as full-string, and `PREFIX` as starts-with
 - Preserve `AuditSort` declaration order
-- Apply `AuditPage.limit` and `AuditPage.offset` after filtering and sorting
+- Apply `AuditPagination.Offset.limit` and `AuditPagination.Offset.offset` after filtering and sorting
 
 ## Recommended Extension Patterns
 
@@ -111,12 +108,11 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 - Runtime sink wiring: pass `SinkConfig` entries via `ObservabilityFactory.Config.sinks` and resolve through `SinkRegistry`.
 - Legacy compatibility: `ObservabilityFactory.create(vararg sinks, ...)` still exists as a deprecated bridge and is not the recommended SPI wiring path.
 - Reliability wrappers: `RetryingObservabilitySink`, `AsyncObservabilitySink`, `BatchingObservabilitySink`, `PersistentObservabilitySink`.
-- Audit queries: implement `AuditSearchQueryService`; expose `AuditQueryService` only as a compatibility adapter when needed.
+- Audit queries: implement `AuditSearchQueryService` with `AuditSearchQuery` and `AuditPagination`.
 
 ## Compatibility Process
 
 - Patch releases preserve binary compatibility for the stable API and sink SPI symbols above.
 - Minor releases preserve binary compatibility for the stable API and sink SPI surfaces above unless an exception is documented in the release notes.
 - `query-spi` changes aim to remain source-compatible for normal call sites, but Kotlin consumers may still need recompilation when generated data-class signatures evolve; if that happens, migration notes must be included in the changelog.
-- Deprecated query fields (`AuditQuery.filters`, `AuditQuery.freeText`) remain additive compatibility shims until a future major release.
 - Major releases may remove deprecated SPI with migration notes.
