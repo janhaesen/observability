@@ -39,6 +39,22 @@ Keep changes aligned with that ordering unless you are intentionally changing th
 
 ## Language
 
+**Delivery profile**:
+A named bundle of delivery defaults applied by `ObservabilityFactory`, such as `STANDARD` or `AUDIT_DURABLE`.
+_Avoid_: Reliability mode, guarantee level
+
+**Best-effort delivery**:
+Delivery where sink failures are observed through diagnostics but are not surfaced back to the caller by default.
+_Avoid_: Fire-and-forget, reliable by default
+
+**Strict delivery**:
+Delivery where sink failures are surfaced back to the caller instead of being swallowed by the pipeline.
+_Avoid_: Durable, guaranteed delivery
+
+**Durable delivery**:
+Delivery that survives process restarts because each event is appended to a persistent buffer before delegated handling continues.
+_Avoid_: Strict delivery, in-memory durability
+
 **Persistent buffering**:
 Appending encoded events to a local durable journal before delegated delivery so unacknowledged events can survive process restarts.
 _Avoid_: Spool, disk queue, WAL
@@ -51,8 +67,16 @@ _Avoid_: Recovery resend, best-effort resend
 A journaled event whose delegated delivery completed, allowing the persistent buffer to advance retention and cleanup.
 _Avoid_: Flushed event, processed event
 
+## Flagged ambiguities
+
+- `AUDIT_DURABLE` is a public profile name, but it is not **durable delivery** in the glossary sense because it does not enable persistent buffering. Treat it as an audit-oriented profile that makes delivery stricter with retry and batching while keeping the canonical meaning of **durable delivery** reserved for restart-surviving persistence.
+
 ### Example dialogue
 
+> **Developer:** If I set `AUDIT_DURABLE`, do I now have durable delivery?
+>
+> **Domain expert:** No. That profile makes delivery stricter and more resilient in memory, but **durable delivery** still requires a **persistent buffer**.
+>
 > **Developer:** If the process crashes after buffering but before the sink confirms delivery, what do we call the next startup behavior?
 >
 > **Domain expert:** That's a **replay** of the unacknowledged events from the **persistent buffer**.

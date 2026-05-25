@@ -111,7 +111,7 @@ Sinks (fan-out)      (write to Console, File, OpenTelemetry, …)
 - **Optional encryption** — AES-GCM with a fixed key, or per-event data key wrapped with RSA-OAEP-256
 - **Sensitive-field filtering** — ordered allow/mask/remove processors for `context.*`, `metadata.*`, `message`, and `payload`
 - **Reliability decorators** — `AsyncObservabilitySink`, `BatchingObservabilitySink`, `PersistentObservabilitySink`, `RetryingObservabilitySink`
-- **Profiles** — `STANDARD` (best-effort) or `AUDIT_DURABLE` (strict, retried, batched)
+- **Profiles** — `STANDARD` (best-effort) or `AUDIT_DURABLE` (strict, retried, batched; not crash-safe by itself)
 - **Pluggable codec** — default JSONL, fully replaceable
 - **Sink SPI** — register custom sinks via `SinkConfig` + `SinkRegistry`
 - **Global context injection** — `ContextProvider` merges ambient context into every event
@@ -761,6 +761,20 @@ val fixedRetrySink =
 
 ---
 
+## Delivery semantics
+
+Use these terms consistently when describing sink behavior:
+
+| Term | Meaning | Minimum configuration |
+| --- | --- | --- |
+| **Best-effort delivery** | Sink failures may be reported to diagnostics, but the pipeline does not surface them to the caller by default. | `STANDARD` profile, or any configuration with `failOnSinkError = false` |
+| **Strict delivery** | Sink failures are surfaced to the caller instead of being swallowed. | `failOnSinkError = true` |
+| **Durable delivery** | `handle()` returns only after the event has been appended to a persistent journal so it can replay after restart. | `PersistentObservabilitySink` |
+
+`RetryingObservabilitySink` and `BatchingObservabilitySink` improve delivery behavior, but neither one makes delivery durable on its own.
+
+---
+
 ## Profiles
 
 ### STANDARD (default)
@@ -769,7 +783,7 @@ Best-effort delivery. `IllegalArgumentException` and `IllegalStateException` fro
 
 ### AUDIT_DURABLE
 
-Automatically wraps all sinks with retry (5 attempts, exponential backoff), batching (100-event batches, 250 ms flush), and enforces `failOnSinkError = true`. Use for audit compliance scenarios:
+Automatically wraps all sinks with retry (5 attempts, exponential backoff), batching (100-event batches, 250 ms flush), and enforces `failOnSinkError = true`. Use for audit compliance scenarios when you want a stricter in-memory delivery profile:
 
 ```kotlin
 val observability =
@@ -782,7 +796,7 @@ val observability =
     )
 ```
 
-`AUDIT_DURABLE` improves in-memory reliability but is **not** crash-safe. Add `PersistentObservabilitySink` explicitly if events must survive restarts.
+`AUDIT_DURABLE` is a compatibility profile name, not the canonical definition of **durable delivery**. It improves in-memory reliability but is **not** crash-safe. Add `PersistentObservabilitySink` explicitly if events must survive restarts.
 
 ---
 

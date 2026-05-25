@@ -20,7 +20,7 @@ Use this directory as the **map of deep references**, not as a second project ov
 | Compatibility policy for stable SPI surfaces | [`spi-contract.md`](./spi-contract.md) |
 | Encoded event envelope contract | [`event-schema.md`](./event-schema.md) |
 | Machine-readable schemas | [`schema/README.md`](./schema/README.md) |
-| Recorded architecture decisions | [`adr/0001-separate-query-spi-module.md`](./adr/0001-separate-query-spi-module.md) |
+| Recorded architecture decisions | [`adr/`](./adr/) |
 
 ## Operations and release
 

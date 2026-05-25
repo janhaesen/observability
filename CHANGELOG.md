@@ -13,7 +13,7 @@ The format is based on Keep a Changelog and the project follows Semantic Version
   - Strict corruption handling: truncated journal tails are discarded on recovery, while other journal corruption fails fast.
 
 ### Changed
-- Clarified reliability documentation to distinguish `AUDIT_DURABLE` in-memory hardening from crash-safe persistent buffering and to document safe decorator composition around the new persistence boundary.
+- Clarified delivery semantics and reliability documentation (issues #13, #14) to distinguish best-effort, strict, and durable delivery, to document `AUDIT_DURABLE` as an in-memory hardening profile rather than crash-safe durability, and to keep safe decorator composition explicit around the persistence boundary.
 
 ## [1.2.0] - 2026-03-30
 
