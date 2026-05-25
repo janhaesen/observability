@@ -276,7 +276,7 @@ class MyBackend : io.github.aeshen.observability.query.AuditSearchQueryService {
 }
 ```
 
-Replace `AuditPage` with `AuditPagination.Offset`:
+Replace removed `AuditPage` / `page` usage with `pagination`:
 
 ```kotlin
 // Before
@@ -287,9 +287,7 @@ val query = io.github.aeshen.observability.query.AuditSearchQuery(
 )
 
 // After
-val query = io.github.aeshen.observability.query.AuditSearchQuery(
-    fromEpochMillis = from,
-    toEpochMillis = to,
-    pagination = io.github.aeshen.observability.query.AuditPagination.Offset(limit = 50, offset = 0),
-)
+val query = io.github.aeshen.observability.query.AuditSearchQuery.builder(from, to)
+    .pagination(io.github.aeshen.observability.query.AuditPagination.Offset(limit = 50, offset = 0))
+    .build()
 ```
