@@ -15,6 +15,16 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 ### Changed
 - Clarified delivery semantics and reliability documentation (issues #13, #14) to distinguish best-effort, strict, and durable delivery, to document `AUDIT_DURABLE` as an in-memory hardening profile rather than crash-safe durability, and to keep safe decorator composition explicit around the persistence boundary.
 
+### Breaking changes
+- **Removed deprecated direct-sink factory overload** (issue #30):
+  - Deleted `ObservabilityFactory.create(vararg sinks, ...)`.
+  - Removed the internal `LegacyDirectSinkConfig` compatibility shim.
+  - `ObservabilityFactory` sink wiring now always goes through `Config.sinks` and `SinkRegistry`.
+
+### Migration notes
+- Replace `ObservabilityFactory.create(ConsoleObservabilitySink(), ...)` with `ObservabilityFactory.create(ObservabilityFactory.Config(sinks = listOf(Console), ...))`.
+- If you need to pass a runtime sink instance, wrap it in a local `SinkConfig` and register a matching provider in a `SinkRegistry`, then pass both through `ObservabilityFactory.Config`.
+
 ### Breaking changes (`query-spi`)
 - **Removed deprecated legacy query SPI** (issue #28):
   - Deleted `AuditQueryService`, `AuditQuery`, `AuditPage`, and the `asLegacyService()` bridge extension.

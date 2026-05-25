@@ -24,9 +24,6 @@ object ObservabilityFactory {
     private const val AUDIT_MAX_ATTEMPTS = 5
     private const val AUDIT_MAX_BATCH_SIZE = 100
     private const val AUDIT_FLUSH_INTERVAL_MILLIS = 250L
-    private const val LEGACY_CREATE_DEPRECATION_MESSAGE =
-        "Use create(Config) with SinkRegistry-based sink wiring. " +
-            "This overload is kept for backward compatibility."
 
     enum class Profile {
         STANDARD,
@@ -140,45 +137,6 @@ object ObservabilityFactory {
         )
     }
 
-    /**
-     * Legacy runtime-sink convenience API.
-     *
-     * Prefer [create] with [Config] and explicit [SinkRegistry] wiring.
-     */
-    @Deprecated(
-        message = LEGACY_CREATE_DEPRECATION_MESSAGE,
-    )
-    fun create(
-        vararg sinks: ObservabilitySink,
-        encryption: EncryptionConfig? = null,
-        failOnSinkError: Boolean = false,
-        codec: ObservabilityCodec = JsonLineCodec(),
-        contextProviders: List<ContextProvider> = emptyList(),
-        metadataEnrichers: List<MetadataEnricher> = emptyList(),
-        diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP,
-        profile: Profile = Profile.STANDARD,
-    ): Observability {
-        val registry =
-            SinkRegistry
-                .builder()
-                .register<LegacyDirectSinkConfig> { cfg -> cfg.sink }
-                .build()
-
-        return create(
-            Config(
-                sinks = sinks.map { sink -> LegacyDirectSinkConfig(sink) },
-                encryption = encryption,
-                failOnSinkError = failOnSinkError,
-                sinkRegistry = registry,
-                codec = codec,
-                contextProviders = contextProviders,
-                metadataEnrichers = metadataEnrichers,
-                diagnostics = diagnostics,
-                profile = profile,
-            ),
-        )
-    }
-
     private fun buildSinks(config: Config): List<ObservabilitySink> = config.sinkRegistry.resolveAll(config.sinks)
 
     private fun buildProcessors(
@@ -216,10 +174,6 @@ object ObservabilityFactory {
         explicit: Boolean,
         profile: Profile,
     ): Boolean = if (profile == Profile.AUDIT_DURABLE) true else explicit
-
-    private data class LegacyDirectSinkConfig(
-        val sink: ObservabilitySink,
-    ) : SinkConfig
 
     private fun applyProfile(
         sinks: List<ObservabilitySink>,
