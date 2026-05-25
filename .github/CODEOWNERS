@@ -1,0 +1,23 @@
+# Repository-wide fallback
+* @janhaesen
+
+# Core library
+/src/ @janhaesen
+/api/ @janhaesen
+/config/ @janhaesen
+
+# Documentation and release surfaces
+/README.md @janhaesen
+/CONTEXT.md @janhaesen
+/CONTRIBUTING.md @janhaesen
+/CHANGELOG.md @janhaesen
+/docs/ @janhaesen
+
+# Modules and examples
+/query-spi/ @janhaesen
+/benchmarks/ @janhaesen
+/examples/ @janhaesen
+/otel/ @janhaesen
+
+# CI and automation
+/.github/ @janhaesen

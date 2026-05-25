@@ -5,8 +5,21 @@ Thanks for contributing to `observability`.
 ## Before you open a PR
 
 1. Read the root [`README.md`](./README.md) for the user-facing project shape.
-2. Read [`docs/spi-contract.md`](./docs/spi-contract.md) if your change touches extension points or `query-spi`.
-3. Read [`docs/release.md`](./docs/release.md) if your change affects versioning, release automation, or changelog flow.
+2. Read [`CONTEXT.md`](./CONTEXT.md) and [`docs/README.md`](./docs/README.md) for the repository map and doc index.
+3. Read [`docs/spi-contract.md`](./docs/spi-contract.md) if your change touches extension points or `query-spi`.
+4. Read [`docs/release.md`](./docs/release.md) if your change affects versioning, release automation, or changelog flow.
+
+## Project structure at a glance
+
+| Path | Purpose |
+| --- | --- |
+| `src/main/kotlin/io/github/aeshen/observability/` | core public API, pipeline, sinks, codecs, processors, diagnostics |
+| `src/test/` | behavior-focused tests for the core library |
+| `src/testFixtures/` | shared conformance and support fixtures consumed by examples and extension modules |
+| `query-spi/` | optional audit query contracts for backend authors |
+| `benchmarks/` | comparative performance scenarios |
+| `examples/third-party-sink-example/` | reference external sink/provider module |
+| `api/observability.api` | binary compatibility baseline managed by the Kotlin binary compatibility validator |
 
 ## Local validation
 
@@ -21,8 +34,11 @@ Useful focused commands:
 ```bash
 ./gradlew :query-spi:test --no-daemon
 ./gradlew :examples:third-party-sink-example:test --no-daemon
+./gradlew apiDump --no-daemon
 ./gradlew publish --dry-run --no-daemon
 ```
+
+Use `apiDump` when you intentionally change the published binary API and need to refresh `api/observability.api` after reviewing the compatibility impact.
 
 ## Contribution expectations
 

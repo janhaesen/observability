@@ -1,9 +1,12 @@
 # Agent Context: observability
 
-Last updated: 2026-03-22
+Last updated: 2026-05-25
 Repository: `observability`
 Primary language: Kotlin (JVM, Kotlin 2.3.20)
 Build tool: Gradle Kotlin DSL
+
+Shared repository entry point: [`CONTEXT.md`](../../CONTEXT.md)
+Use `CONTEXT.md` for the thin repo-wide map and this document for deeper agent-specific implementation context.
 
 ## Project Purpose
 

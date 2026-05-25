@@ -27,6 +27,7 @@ This library may be more than you need if:
 - **Sink integrators**: jump to [Extend with Custom Sinks](#extend-with-custom-sinks), [`docs/extensions.md`](./docs/extensions.md), and [Conformance Testing](#conformance-testing)
 - **Query backend authors**: jump to [Query SPI](#query-spi) and [`query-spi/README.md`](./query-spi/README.md)
 - **Contributors and release maintainers**: see [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`SECURITY.md`](./SECURITY.md), and [`docs/release.md`](./docs/release.md)
+- **Need the repo map first?** Start with [`CONTEXT.md`](./CONTEXT.md) and [`docs/README.md`](./docs/README.md)
 
 ## Table of Contents
 
@@ -1399,6 +1400,8 @@ To auto-format Kotlin sources:
 | `:query-spi`                            | Optional: backend-agnostic audit record query SPI                    |
 | `:benchmarks`                           | Comparative performance and backpressure harness                     |
 | `:examples:third-party-sink-example`    | Example custom sink module with SPI wiring and conformance tests     |
+
+For the contributor-facing repository map and deeper doc index, see [`CONTEXT.md`](./CONTEXT.md) and [`docs/README.md`](./docs/README.md).
 
 ---
 

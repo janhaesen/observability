@@ -3,6 +3,9 @@
 Canonical deep reference: `docs/agent/agent.full.md`
 If this file and the full file diverge, treat `docs/agent/agent.full.md` as source of truth.
 
+Shared repository entry point: `CONTEXT.md`
+Use `CONTEXT.md` for the thin repo-wide map, this file for quick agent-oriented landmarks, and `docs/agent/agent.full.md` for deeper implementation context.
+
 ## Mission
 
 `observability` is a Kotlin framework for structured application observability:
