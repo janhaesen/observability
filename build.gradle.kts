@@ -12,6 +12,7 @@ plugins {
     `maven-publish`
 }
 
+val ktlintVersion = "1.2.1"
 val openTelemetryVersion = "1.49.0"
 
 group = providers.gradleProperty("GROUP").get()
@@ -34,7 +35,7 @@ tasks.withType<Detekt>().configureEach {
 }
 
 configure<KtlintExtension> {
-    version.set("1.2.1")
+    version.set(ktlintVersion)
 }
 
 tasks.matching { it.name == "check" }.configureEach {
@@ -58,7 +59,7 @@ subprojects {
     }
 
     extensions.configure<KtlintExtension> {
-        version.set("1.2.1")
+        version.set(ktlintVersion)
     }
 
     tasks.matching { it.name == "check" }.configureEach {

@@ -805,6 +805,19 @@ public final class io/github/aeshen/observability/sink/decorator/BatchingObserva
 	public fun handle (Lio/github/aeshen/observability/codec/EncodedEvent;)V
 }
 
+public final class io/github/aeshen/observability/sink/decorator/PersistentObservabilitySink : io/github/aeshen/observability/sink/ObservabilitySink {
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/nio/file/Path;)V
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/nio/file/Path;I)V
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/nio/file/Path;IJ)V
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/nio/file/Path;IJJ)V
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/nio/file/Path;IJJJ)V
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/nio/file/Path;IJJJLkotlin/jvm/functions/Function2;)V
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/nio/file/Path;IJJJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/nio/file/Path;IJJJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun handle (Lio/github/aeshen/observability/codec/EncodedEvent;)V
+}
+
 public final class io/github/aeshen/observability/sink/decorator/RetryingObservabilitySink : io/github/aeshen/observability/sink/ObservabilitySink {
 	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;)V
 	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;I)V

@@ -147,8 +147,11 @@ Processors are applied in the order provided. When encryption is enabled, custom
 
 - `AsyncObservabilitySink` offloads writes to a worker queue and supports deterministic close timeout/policy.
 - `BatchingObservabilitySink` buffers events and flushes by size/interval.
+- `PersistentObservabilitySink` journals events to disk before delegated delivery and replays unacknowledged events after restart.
 - `BatchCapableObservabilitySink` allows optimized batch delivery.
 - `RetryingObservabilitySink` retries transient failures using `BackoffStrategy`.
+
+`PersistentObservabilitySink` assumes its wrapped delegate is the acknowledgement boundary. It composes well with synchronous sinks and `RetryingObservabilitySink`, but not with `AsyncObservabilitySink` or `BatchingObservabilitySink` inside the persistence boundary because those decorators return before final delivery.
 
 ```kotlin
 val reliable =
@@ -200,4 +203,3 @@ Use `ObservabilitySinkConformanceSuite` from test fixtures in your sink module a
 - `observedEvents()`
 
 This verifies baseline behavior for event forwarding and close semantics.
-

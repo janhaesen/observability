@@ -34,11 +34,23 @@ Useful focused commands:
 ```bash
 ./gradlew :query-spi:test --no-daemon
 ./gradlew :examples:third-party-sink-example:test --no-daemon
+./gradlew ktlintMainSourceSetCheck --no-daemon
 ./gradlew apiDump --no-daemon
 ./gradlew publish --dry-run --no-daemon
 ```
 
 Use `apiDump` when you intentionally change the published binary API and need to refresh `api/observability.api` after reviewing the compatibility impact.
+
+## IntelliJ and ktlint
+
+Gradle is the source of truth for Kotlin formatting in this repository. The build pins **ktlint `1.2.1`** and reads formatting rules from the root [`.editorconfig`](./.editorconfig).
+
+To keep IntelliJ aligned with CI:
+
+1. Re-import the Gradle project after pulling formatting-related changes.
+2. Keep IntelliJ **EditorConfig support enabled** so the repo's Kotlin formatting rules are applied.
+3. If you use an IntelliJ ktlint plugin, configure it to use **ktlint `1.2.1`**. If the plugin cannot match the Gradle-pinned version, prefer disabling the plugin inspection and rely on `./gradlew ktlintCheck` / `./gradlew ktlintFormat` instead.
+4. When IntelliJ and Gradle disagree, trust the Gradle result and use `./gradlew ktlintMainSourceSetCheck --no-daemon` to confirm the exact file-level outcome.
 
 ## Contribution expectations
 

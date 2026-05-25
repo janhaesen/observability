@@ -86,6 +86,7 @@ OpenTelemetry config validates queue/batch/timing constraints and defaults to OT
 Sink decorators under `sink/decorator/`:
 - `AsyncObservabilitySink`
 - `BatchingObservabilitySink`
+- `PersistentObservabilitySink`
 - `RetryingObservabilitySink`
 - `BackoffStrategy`
 
