@@ -6,14 +6,14 @@ data class Webhook
     @JvmOverloads
     constructor(
         val endpoint: String,
-        val secret: String,
+        val secret: String? = null,
         val signatureHeader: String = "X-Hub-Signature-256",
         val headers: Map<String, String> = emptyMap(),
         val timeoutMillis: Long = 5_000,
     ) : SinkConfig {
         init {
             require(endpoint.isNotBlank()) { "endpoint must not be blank." }
-            require(secret.isNotBlank()) { "secret must not be blank." }
+            require(secret == null || secret.isNotBlank()) { "secret must not be blank when provided." }
             require(signatureHeader.isNotBlank()) { "signatureHeader must not be blank." }
             require(timeoutMillis > 0) { "timeoutMillis must be greater than 0." }
             require(headers.keys.none { it.isBlank() }) { "headers must not contain blank keys." }

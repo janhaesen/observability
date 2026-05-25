@@ -7,9 +7,9 @@ import kotlin.test.assertFailsWith
 class WebhookConfigTest {
     @Test
     fun `valid config constructs successfully`() {
-        val config = Webhook(endpoint = "https://hooks.example.com/events", secret = "s3cr3t")
+        val config = Webhook(endpoint = "https://hooks.example.com/events")
         assertEquals("https://hooks.example.com/events", config.endpoint)
-        assertEquals("s3cr3t", config.secret)
+        assertEquals(null, config.secret)
         assertEquals("X-Hub-Signature-256", config.signatureHeader)
         assertEquals(emptyMap(), config.headers)
         assertEquals(5_000L, config.timeoutMillis)
@@ -30,9 +30,12 @@ class WebhookConfigTest {
     }
 
     @Test
-    fun `blank secret is rejected`() {
+    fun `blank secret is rejected when provided`() {
         assertFailsWith<IllegalArgumentException> {
             Webhook(endpoint = "https://hooks.example.com/events", secret = "")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            Webhook(endpoint = "https://hooks.example.com/events", secret = "  ")
         }
     }
 

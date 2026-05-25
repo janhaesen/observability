@@ -18,7 +18,7 @@ private const val HMAC_SHA256 = "HmacSHA256"
 
 internal class WebhookObservabilitySink internal constructor(
     private val endpoint: URI,
-    private val signingKey: SecretKeySpec,
+    private val signingKey: SecretKeySpec?,
     private val signatureHeader: String,
     private val headers: Map<String, String>,
     private val timeoutMillis: Long,
@@ -26,7 +26,10 @@ internal class WebhookObservabilitySink internal constructor(
 ) : ObservabilitySink {
     constructor(config: Webhook) : this(
         endpoint = URI.create(config.endpoint),
-        signingKey = SecretKeySpec(config.secret.toByteArray(Charsets.UTF_8), HMAC_SHA256),
+        signingKey =
+            config.secret?.let {
+                SecretKeySpec(it.toByteArray(Charsets.UTF_8), HMAC_SHA256)
+            },
         signatureHeader = config.signatureHeader,
         headers = config.headers,
         timeoutMillis = config.timeoutMillis,
@@ -34,8 +37,8 @@ internal class WebhookObservabilitySink internal constructor(
     )
 
     override fun handle(event: EncodedEvent) {
-        val signature = sign(event.encoded)
-        val allHeaders = headers + mapOf(signatureHeader to signature)
+        val allHeaders =
+            signingKey?.let { headers + mapOf(signatureHeader to sign(event.encoded, it)) } ?: headers
 
         val requestBuilder =
             HttpRequest
@@ -51,7 +54,10 @@ internal class WebhookObservabilitySink internal constructor(
         }
     }
 
-    private fun sign(bytes: ByteArray): String {
+    private fun sign(
+        bytes: ByteArray,
+        signingKey: SecretKeySpec,
+    ): String {
         val mac = Mac.getInstance(HMAC_SHA256)
         mac.init(signingKey)
         return "sha256=" + mac.doFinal(bytes).joinToString("") { "%02x".format(it) }
