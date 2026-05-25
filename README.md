@@ -1336,13 +1336,19 @@ The suite verifies event forwarding, close idempotency, concurrent handle safety
 
 ## Benchmarks
 
-The `benchmarks` module provides a lightweight load/backpressure harness for sink decorators:
+The `benchmarks` module provides a lightweight comparative harness for direct, async, batching, retry, and backpressure scenarios:
 
 ```bash
 ./gradlew :benchmarks:run
 ```
 
-Prints elapsed time and events/second for direct vs. async sink configurations.
+You can also run a subset of scenarios:
+
+```bash
+./gradlew :benchmarks:run --args "async-noop-cap-2048 retry-once-every-5th"
+```
+
+The benchmark guide with scenario descriptions, output interpretation notes, and example comparative results lives in [`benchmarks/README.md`](./benchmarks/README.md).
 
 ---
 
@@ -1391,7 +1397,7 @@ To auto-format Kotlin sources:
 |-----------------------------------------|----------------------------------------------------------------------|
 | `:` (root)                              | Core library — pipeline, sinks, codec, encryption, decorators        |
 | `:query-spi`                            | Optional: backend-agnostic audit record query SPI                    |
-| `:benchmarks`                           | Load/backpressure harness for sink decorator performance             |
+| `:benchmarks`                           | Comparative performance and backpressure harness                     |
 | `:examples:third-party-sink-example`    | Example custom sink module with SPI wiring and conformance tests     |
 
 ---
