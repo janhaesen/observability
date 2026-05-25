@@ -70,6 +70,11 @@ In `config/sink/`:
 - `File`
 - `ZipFile`
 - `OpenTelemetry`
+- `Http`
+- `Webhook`
+- `Kafka`
+- `S3`
+- `Redis`
 
 OpenTelemetry config validates queue/batch/timing constraints and defaults to OTLP HTTP endpoint `http://localhost:4318/v1/logs`.
 
@@ -166,8 +171,8 @@ From build scripts/docs:
 ## Current Release Status (from repository files)
 
 From `CHANGELOG.md`:
-- Stable release `1.0.0` (dated 2026-03-21)
-- Includes unified API, pipeline, sinks, decorators, encryption, diagnostics, SPI, query-spi, benchmarks, and example module.
+- Latest stable release `1.2.0` (dated 2026-03-30)
+- Includes the core event pipeline plus HTTP, Kafka, Webhook, S3, Redis, and evolved `query-spi` capabilities alongside the original release surface.
 
 ## Operational Guidelines for Future Agent Sessions
 

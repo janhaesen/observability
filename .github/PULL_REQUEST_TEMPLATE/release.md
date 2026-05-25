@@ -7,7 +7,8 @@
 ## Pre-release checklist (from `docs/release.md`)
 
 - [ ] Updated `CHANGELOG.md` with the planned version section
-- [ ] CI is green for quality gates (`test`, `apiCheck`, `ktlintCheck`, `detekt`, CVE scan, publish dry-run)
+- [ ] `quality-gates` CI is green (`test`, `apiCheck`, `ktlintCheck`, `detekt`, publish dry-run)
+- [ ] Security scanning is green (`osv-scanner-pr.yml` or equivalent PR signal)
 - [ ] Committed version/changelog updates
 
 ## Verification Evidence
@@ -42,7 +43,7 @@
 ## Reviewer Focus
 
 - [ ] Version/changelog correctness
-- [ ] Quality gate completeness
+- [ ] Quality gate and security-scan completeness
 - [ ] Release risk / rollback notes included
 
 ## Additional Notes

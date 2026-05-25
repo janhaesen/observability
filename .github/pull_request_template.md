@@ -15,7 +15,7 @@
 
 - [ ] Core pipeline (`ObservabilityFactory` / `ObservabilityPipeline`)
 - [ ] Providers (`ContextProvider` / `MetadataEnricher` / built-in enrichers)
-- [ ] Built-in sinks / sink decorators (`Console`, `File`, `ZipFile`, `OpenTelemetry`, `Http`)
+- [ ] Built-in sinks / decorators / providers
 - [ ] SPI contracts (`SinkProvider` / `SinkConfig` / codec / enrichers)
 - [ ] Codec / processors / encryption
 - [ ] Reliability / diagnostics (`retry`, `batch`, `async`, `ObservabilityDiagnostics`)
@@ -32,6 +32,7 @@
 - [ ] Ran `./gradlew apiCheck`
 - [ ] Ran `./gradlew ktlintCheck`
 - [ ] Ran `./gradlew detekt`
+- [ ] Security scan status checked when the change affects dependencies or release surfaces
 - [ ] (If applicable) ran benchmark/example module checks
 
 ## Compatibility & risk

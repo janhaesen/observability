@@ -4,7 +4,7 @@ This document defines the compatibility contract for sink extension points.
 
 ## Scope And Stability
 
-The following APIs are considered stable SPI in the current major version:
+The following sink-extension APIs are considered stable SPI in the current major version:
 
 - `io.github.aeshen.observability.config.sink.SinkConfig`
 - `io.github.aeshen.observability.sink.ObservabilitySink`
@@ -12,11 +12,16 @@ The following APIs are considered stable SPI in the current major version:
 - `io.github.aeshen.observability.sink.registry.SinkRegistry`
 - `io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics`
 - `io.github.aeshen.observability.sink.testing.ObservabilitySinkConformanceSuite`
-- `io.github.aeshen.observability.query.AuditQueryService` (query-spi module, deprecated compatibility surface)
-- `io.github.aeshen.observability.query.AuditSearchQueryService` (query-spi module)
-- `io.github.aeshen.observability.query.AuditSearchQuery` and related typed query model
 
-Behavior changes to the above are treated as breaking changes.
+Behavior changes to the sink-extension symbols above are treated as breaking changes.
+
+For `query-spi`, the stability story is slightly different:
+
+- `io.github.aeshen.observability.query.AuditSearchQueryService` is the stable service entry point.
+- `io.github.aeshen.observability.query.AuditQueryService` remains a deprecated compatibility bridge.
+- `AuditSearchQuery` and the related typed query model are the preferred contract, but they are Kotlin data classes and builders. Additive evolution can still require recompilation of precompiled Kotlin consumers when generated signatures change.
+
+When `query-spi` evolution has recompilation or migration impact, the release notes and changelog must call it out explicitly.
 
 ## Behavioral Contract
 
@@ -108,6 +113,8 @@ The optional `query-spi` module enables backend-agnostic audit record retrieval:
 
 ## Compatibility Process
 
-- Patch/minor releases preserve binary compatibility for SPI symbols above.
+- Patch releases preserve binary compatibility for the stable API and sink SPI symbols above.
+- Minor releases preserve binary compatibility for the stable API and sink SPI surfaces above unless an exception is documented in the release notes.
+- `query-spi` changes aim to remain source-compatible for normal call sites, but Kotlin consumers may still need recompilation when generated data-class signatures evolve; if that happens, migration notes must be included in the changelog.
 - Deprecated query fields (`AuditQuery.filters`, `AuditQuery.freeText`) remain additive compatibility shims until a future major release.
 - Major releases may remove deprecated SPI with migration notes.

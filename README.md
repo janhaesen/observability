@@ -2,10 +2,37 @@
 
 An opinionated, production-ready Kotlin framework for structured application observability.
 
-Provides a single, type-safe entry point to emit structured events with typed context metadata and route them through a processing pipeline to one or more configurable sinks (console, SLF4J, file, zip, OpenTelemetry, Kafka), with optional encryption, async delivery, batching, and retry.
+Provides a single, type-safe entry point to emit structured events with typed context metadata and route them through a processing pipeline to one or more configurable sinks, with optional encryption, async delivery, batching, retry, and backend-agnostic audit querying.
+
+## When to use observability
+
+Use this library when you want:
+
+- a typed event model instead of ad-hoc log strings
+- one emit API that can fan out to multiple sinks
+- clear extension seams for custom sinks, processors, codecs, and query backends
+- audit-oriented delivery options such as retry, batching, diagnostics, and strict failure modes
+
+## When not to use observability
+
+This library may be more than you need if:
+
+- plain application logging with an existing logger is already sufficient
+- you only need raw OpenTelemetry instrumentation and do not want an additional event model
+- your team does not want to maintain an explicit event taxonomy or compatibility expectations for emitted records
+
+## Choose your path
+
+- **Application teams**: start with [Install](#install), [Quick Start](#quick-start), and [Global Context with ContextProvider](#global-context-with-contextprovider)
+- **Sink integrators**: jump to [Extend with Custom Sinks](#extend-with-custom-sinks), [`docs/extensions.md`](./docs/extensions.md), and [Conformance Testing](#conformance-testing)
+- **Query backend authors**: jump to [Query SPI](#query-spi) and [`query-spi/README.md`](./query-spi/README.md)
+- **Contributors and release maintainers**: see [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`SECURITY.md`](./SECURITY.md), and [`docs/release.md`](./docs/release.md)
 
 ## Table of Contents
 
+- [When to use observability](#when-to-use-observability)
+- [When not to use observability](#when-not-to-use-observability)
+- [Choose your path](#choose-your-path)
 - [Architecture](#architecture)
 - [Features](#features)
 - [Install](#install)
@@ -103,11 +130,11 @@ Coordinates:
 |------------|----------------------|
 | `group`    | `io.github.aeshen`   |
 | `artifact` | `observability`      |
-| `version`  | `1.0.0`              |
+| `version`  | `1.2.0`              |
 
 ```kotlin
 dependencies {
-    implementation("io.github.aeshen:observability:1.0.0")
+    implementation("io.github.aeshen:observability:1.2.0")
 
     // Required only when using the OpenTelemetry sink
     implementation("io.opentelemetry:opentelemetry-api:1.49.0")
@@ -119,7 +146,19 @@ dependencies {
 }
 ```
 
-`opentelemetry-*` and `slf4j-api` are `compileOnly` in the library. If you configure those sinks without the runtime JARs on the classpath, the factory throws a descriptive `IllegalStateException` at startup.
+Optional runtime integrations:
+
+| Feature | Additional runtime dependency |
+| --- | --- |
+| OpenTelemetry sink or `OpenTelemetryContextProvider` | `io.opentelemetry:opentelemetry-api`, `io.opentelemetry:opentelemetry-sdk`, `io.opentelemetry:opentelemetry-exporter-otlp` |
+| SLF4J sink or `MdcContextProvider` | `org.slf4j:slf4j-api` |
+| Kafka sink | `org.apache.kafka:kafka-clients` |
+| S3 sink | `software.amazon.awssdk:s3` |
+| Redis sink | `io.lettuce:lettuce-core` |
+| Coroutine context provider | `org.jetbrains.kotlinx:kotlinx-coroutines-core` |
+| Console, file, zip, webhook, and HTTP sinks | none |
+
+`opentelemetry-*`, `slf4j-api`, coroutines, Kafka, S3, and Lettuce are kept optional at the library boundary. If you configure an integration without the required runtime JARs on the classpath, the factory fails fast with guidance to add them.
 
 ---
 
@@ -1136,7 +1175,7 @@ Reserve `AuditField.custom("...")` for vendor-specific fields outside the shared
 The reference semantics are intentionally explicit: top-level criteria are `AND`, groups honor their own operator, time bounds are inclusive, text modes map to contains/exact/prefix intent, and pagination is applied after filter/sort.
 
 ```kotlin
-// query-spi artifact: io.github.aeshen:query-spi:1.0.0
+// query-spi artifact: io.github.aeshen:query-spi:1.2.0
 
 import io.github.aeshen.observability.query.AuditComparisonOperator
 import io.github.aeshen.observability.query.AuditCriterion
@@ -1266,7 +1305,7 @@ Test fixtures provide a reusable contract test suite for custom sink implementat
 Add the test-fixtures dependency to your sink module:
 
 ```kotlin
-testImplementation(testFixtures("io.github.aeshen:observability:1.0.0"))
+testImplementation(testFixtures("io.github.aeshen:observability:1.2.0"))
 ```
 
 Extend `ObservabilitySinkConformanceSuite` and implement the two abstract methods:
@@ -1364,7 +1403,7 @@ To auto-format Kotlin sources:
 - Fatal JVM `Error` types are **never** swallowed by the pipeline.
 - The default JSONL codec has no external runtime dependencies.
 - `opentelemetry-*` and `slf4j-api` are `compileOnly`; they must be on the runtime classpath of your application when those sinks are used.
-- Binary compatibility of the public SPI is tracked with `binary-compatibility-validator`. See `api/observability.api` for the current stable surface.
-- Patch and minor releases preserve binary compatibility for all stable SPI symbols. See `docs/spi-contract.md`.
+- Binary compatibility of the published API is tracked with `binary-compatibility-validator`. See `api/observability.api` for the current stable surface.
+- Compatibility guarantees differ by surface area; use `docs/spi-contract.md` and the changelog migration notes when evaluating sink SPI and `query-spi` changes.
 - Release workflow and tagging process are documented in `docs/release.md`; user-facing release history is tracked in `CHANGELOG.md`.
 - Shared builds resolve from `mavenCentral()` by default for reproducibility. Use `mavenLocal()` only in local ad-hoc testing.

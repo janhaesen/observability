@@ -6,6 +6,10 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 
 ## [Unreleased]
 
+No unreleased changes yet.
+
+## [1.2.0] - 2026-03-30
+
 ### Added
 - **Expanded built-in sink ecosystem** (issue #11) — four new production-ready sinks, all optional-dependency-safe (missing runtime deps produce a clear `IllegalStateException` with guidance):
   - **`Kafka`** — produces encoded events as `ProducerRecord<String, ByteArray>` to a configurable topic; event name used as partition key; SASL/SSL and any other producer settings passed via `additionalProperties`. Optional dep: `org.apache.kafka:kafka-clients`.
@@ -55,8 +59,6 @@ recompiled.
   `pagination: AuditPagination`. Code that constructed `TranslatedAuditQuery` directly
   (uncommon — the type is normally produced by `AuditSearchQueryTranslator`) must be updated.
   A backward-compatible `page` accessor is provided as a deprecated computed property.
-
-## [1.2.0] - Unreleased
 
 ### Added
 - Added built-in generic HTTP sink support via `Http` config (`POST`, `PUT`, `PATCH`) for webhook/ingestion endpoint delivery with configurable headers and timeout.

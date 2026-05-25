@@ -5,7 +5,8 @@ This repository uses a PR-first release flow that is compatible with branch prot
 ## Versioning
 
 - Follow Semantic Versioning (`MAJOR.MINOR.PATCH`).
-- The current release version is stored in `gradle.properties` as `VERSION_NAME`.
+- `gradle.properties` stores the current released version in `VERSION_NAME`.
+- This repository does not use snapshot versions on `main`; after a release, `main` may continue to show the latest released version until the next release PR bumps it on a `release/vX.Y.Z` branch.
 - Public API compatibility is validated with `apiCheck` before release.
 
 ## Create a release PR
@@ -25,6 +26,16 @@ The `Create Release PR` workflow will:
 - open a release-labelled PR targeting `main`.
 
 The opened PR will then require the `quality-gates` status check to pass (via `ci.yml`) before it can be merged.
+
+## CI, security, and release checks
+
+Keep these distinct when reviewing release readiness:
+
+- **Quality gates (`ci.yml`)** run `test`, `apiCheck`, `ktlintCheck`, `detekt`, and `publish --dry-run`.
+- **Security scanning** runs in a separate PR workflow (`osv-scanner-pr.yml`).
+- **Workflow linting** runs separately when `.github/workflows/**` changes.
+
+Release prep should reference all relevant signals rather than implying they come from one workflow.
 
 ### Authorization setup
 
@@ -50,4 +61,3 @@ When that PR is merged:
 ## Deprecated workflow
 
 `.github/workflows/prepare-release.yml` is intentionally deprecated because it pushed directly to `main`, which conflicts with repository rules that require pull requests.
-

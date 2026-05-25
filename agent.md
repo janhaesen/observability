@@ -39,6 +39,7 @@ Key orchestration classes:
 
 Built-in sink configs:
 - `Console`, `Slf4j`, `File`, `ZipFile`, `OpenTelemetry`
+- `Http`, `Webhook`, `Kafka`, `S3`, `Redis`
 
 Reliability decorators:
 - `AsyncObservabilitySink`

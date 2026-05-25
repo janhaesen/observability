@@ -2,6 +2,8 @@
 
 Lightweight optional SPI for querying audit records.
 
+For repository-wide release notes and migration guidance, see the root [`CHANGELOG.md`](../CHANGELOG.md). For compatibility expectations across the extension surfaces, see [`docs/spi-contract.md`](../docs/spi-contract.md).
+
 Prefer implementing `AuditSearchQueryService` in backend-specific modules (for example OpenSearch, ClickHouse, PostgreSQL).
 
 The module now exposes a typed query contract designed to stay stack-agnostic over time:
