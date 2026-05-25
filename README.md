@@ -514,7 +514,7 @@ val config =
             ),
             Webhook(
                 endpoint = "https://hooks.example.com/observability",
-                secret = "my-signing-secret",
+                secret = "my-signing-secret", // optional: set to null for unsigned delivery
                 signatureHeader = "X-Hub-Signature-256",
                 headers = mapOf("Content-Type" to "application/json"),
             ),
@@ -544,7 +544,7 @@ val config =
 | `Http`           | Sends encoded payload bytes to an arbitrary HTTP/HTTPS endpoint (`POST`, `PUT`, `PATCH`) | None                                              |
 | `OpenTelemetry`  | Exports via OTLP HTTP to any OTel-compatible backend      | `opentelemetry-api`, `-sdk`, `-exporter-otlp`     |
 | `Kafka`          | Produces encoded events to a Kafka topic; supports SASL/SSL via `additionalProperties` | `org.apache.kafka:kafka-clients`                  |
-| `Webhook`        | HTTP POST with HMAC-SHA256 request signature; compatible with GitHub-style webhook consumers | None                                              |
+| `Webhook`        | HTTP POST with optional HMAC-SHA256 request signature; compatible with GitHub-style webhook consumers | None                                              |
 | `S3`             | Uploads events as gzipped JSONL objects to S3-compatible storage; one upload per event or batch | `software.amazon.awssdk:s3`                       |
 | `Redis`          | Publishes events to a Redis Stream (`XADD`) with optional approximate MAXLEN trimming | `io.lettuce:lettuce-core`                         |
 
@@ -567,9 +567,9 @@ All sinks receive fan-out delivery. `IllegalArgumentException` and `IllegalState
 `Webhook` sink behavior:
 
 - Each event payload is sent as an HTTP POST body to `endpoint`.
-- If `secret` is non-empty, an HMAC-SHA256 signature is computed over the payload and added as `sha256=<hex>` in `signatureHeader` (default `X-Hub-Signature-256`).
+- If `secret` is non-null, an HMAC-SHA256 signature is computed over the payload and added as `sha256=<hex>` in `signatureHeader` (default `X-Hub-Signature-256`).
 - Any non-2xx response or network error surfaces as `IllegalStateException` (compatible with `RetryingObservabilitySink`).
-- `timeoutMillis` governs JDK `HttpURLConnection` connect and read timeouts.
+- `timeoutMillis` governs JDK `HttpClient` connect and request timeouts.
 
 `S3` sink behavior:
 

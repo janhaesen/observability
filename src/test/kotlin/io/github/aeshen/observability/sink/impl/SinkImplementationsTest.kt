@@ -42,6 +42,7 @@ class SinkImplementationsTest {
         val method: String,
         val path: String,
         val contentType: String?,
+        val signatureHeader: String?,
         val body: ByteArray,
     ) {
         override fun equals(other: Any?): Boolean {
@@ -53,6 +54,7 @@ class SinkImplementationsTest {
             if (method != other.method) return false
             if (path != other.path) return false
             if (contentType != other.contentType) return false
+            if (signatureHeader != other.signatureHeader) return false
             if (!body.contentEquals(other.body)) return false
 
             return true
@@ -62,6 +64,7 @@ class SinkImplementationsTest {
             var result = method.hashCode()
             result = 31 * result + path.hashCode()
             result = 31 * result + (contentType?.hashCode() ?: 0)
+            result = 31 * result + (signatureHeader?.hashCode() ?: 0)
             result = 31 * result + body.contentHashCode()
             return result
         }
@@ -175,6 +178,7 @@ class SinkImplementationsTest {
                             method = exchange.requestMethod,
                             path = exchange.requestURI.path,
                             contentType = exchange.requestHeaders.getFirst("Content-Type"),
+                            signatureHeader = exchange.requestHeaders.getFirst("X-Hub-Signature-256"),
                             body = exchange.requestBody.use { it.readBytes() },
                         ),
                     )
@@ -384,6 +388,7 @@ class SinkImplementationsTest {
                             method = exchange.requestMethod,
                             path = exchange.requestURI.path,
                             contentType = exchange.requestHeaders.getFirst("Content-Type"),
+                            signatureHeader = exchange.requestHeaders.getFirst("X-Hub-Signature-256"),
                             body = exchange.requestBody.use { it.readBytes() },
                         ),
                     )
@@ -412,8 +417,49 @@ class SinkImplementationsTest {
             mac.init(SecretKeySpec(secret.toByteArray(Charsets.UTF_8), "HmacSHA256"))
             val expectedSig = "sha256=" + mac.doFinal(payload).joinToString("") { "%02x".format(it) }
 
-            // Verify the captured request body matches what was signed
+            assertEquals(expectedSig, captured.signatureHeader)
             assertEquals(expectedSig, hmacHeader(captured.body, secret))
+        } finally {
+            server.stop(0)
+        }
+    }
+
+    @Test
+    fun `webhook sink skips signature header when secret is null`() {
+        val requests = LinkedBlockingQueue<CapturedHttpRequest>()
+        val server =
+            HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
+                createContext("/hook") { exchange ->
+                    requests.offer(
+                        CapturedHttpRequest(
+                            method = exchange.requestMethod,
+                            path = exchange.requestURI.path,
+                            contentType = exchange.requestHeaders.getFirst("Content-Type"),
+                            signatureHeader = exchange.requestHeaders.getFirst("X-Hub-Signature-256"),
+                            body = exchange.requestBody.use { it.readBytes() },
+                        ),
+                    )
+                    exchange.sendResponseHeaders(204, -1)
+                    exchange.close()
+                }
+                start()
+            }
+
+        try {
+            val sink =
+                WebhookObservabilitySink(
+                    Webhook(
+                        endpoint = "http://127.0.0.1:${server.address.port}/hook",
+                        headers = mapOf("Content-Type" to "application/json"),
+                    ),
+                )
+
+            sink.handle(encoded("{\"event\":\"test\"}\n"))
+
+            val captured = requests.poll(5, TimeUnit.SECONDS)
+            assertNotNull(captured)
+            assertEquals("POST", captured.method)
+            assertEquals(null, captured.signatureHeader)
         } finally {
             server.stop(0)
         }

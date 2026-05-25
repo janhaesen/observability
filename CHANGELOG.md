@@ -14,12 +14,16 @@ The format is based on Keep a Changelog and the project follows Semantic Version
 
 ### Changed
 - Clarified delivery semantics and reliability documentation (issues #13, #14) to distinguish best-effort, strict, and durable delivery, to document `AUDIT_DURABLE` as an in-memory hardening profile rather than crash-safe durability, and to keep safe decorator composition explicit around the persistence boundary.
+- `Webhook.secret` now accepts `null` to disable HMAC signing, and unsigned webhook deliveries omit the signature header entirely (issue #40).
 
 ### Breaking changes
 - **Removed deprecated direct-sink factory overload** (issue #30):
   - Deleted `ObservabilityFactory.create(vararg sinks, ...)`.
   - Removed the internal `LegacyDirectSinkConfig` compatibility shim.
   - `ObservabilityFactory` sink wiring now always goes through `Config.sinks` and `SinkRegistry`.
+- **`Webhook` secret opt-out is now nullable** (issue #40):
+  - `Webhook.secret` changed from `String` to `String?`, with `null` meaning unsigned delivery.
+  - Whitespace-only secrets remain invalid when a signing secret is provided.
 
 ### Migration notes
 - Replace `ObservabilityFactory.create(ConsoleObservabilitySink(), ...)` with `ObservabilityFactory.create(ObservabilityFactory.Config(sinks = listOf(Console), ...))`.
