@@ -1,0 +1,128 @@
+public final class io/github/aeshen/observability/spring/AsyncProperties {
+	public fun <init> ()V
+	public final fun getCapacity ()I
+	public final fun getCloseTimeoutMillis ()J
+	public final fun getEnabled ()Z
+	public final fun getFailOnDrop ()Z
+	public final fun getOfferTimeoutMillis ()J
+	public final fun getShutdownPolicy ()Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$ShutdownPolicy;
+	public final fun setCapacity (I)V
+	public final fun setCloseTimeoutMillis (J)V
+	public final fun setEnabled (Z)V
+	public final fun setFailOnDrop (Z)V
+	public final fun setOfferTimeoutMillis (J)V
+	public final fun setShutdownPolicy (Lio/github/aeshen/observability/sink/decorator/AsyncObservabilitySink$ShutdownPolicy;)V
+}
+
+public final class io/github/aeshen/observability/spring/EncryptionProperties {
+	public fun <init> ()V
+	public final fun getAesKeyBase64 ()Ljava/lang/String;
+	public final fun getAesKeyHex ()Ljava/lang/String;
+	public final fun getRecipientPublicKeyPem ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public final fun setAesKeyBase64 (Ljava/lang/String;)V
+	public final fun setAesKeyHex (Ljava/lang/String;)V
+	public final fun setRecipientPublicKeyPem (Ljava/lang/String;)V
+	public final fun setType (Ljava/lang/String;)V
+	public final fun toEncryptionConfig ()Lio/github/aeshen/observability/config/encryption/EncryptionConfig;
+}
+
+public final class io/github/aeshen/observability/spring/ObservabilityAutoConfiguration {
+	public fun <init> ()V
+	public final fun observability (Lio/github/aeshen/observability/spring/ObservabilityProperties;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;)Lio/github/aeshen/observability/Observability;
+	public final fun observabilityCodec ()Lio/github/aeshen/observability/codec/ObservabilityCodec;
+	public final fun observabilityDiagnostics ()Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;
+	public final fun sinkRegistry (Ljava/util/List;Lio/github/aeshen/observability/spring/ObservabilityProperties;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;)Lio/github/aeshen/observability/sink/registry/SinkRegistry;
+}
+
+public final class io/github/aeshen/observability/spring/ObservabilityAutoConfiguration$ActuatorConfiguration {
+	public fun <init> ()V
+	public final fun observabilityHealthIndicator (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;)Lorg/springframework/boot/actuate/health/HealthIndicator;
+}
+
+public final class io/github/aeshen/observability/spring/ObservabilityAutoConfiguration$MicrometerConfiguration {
+	public fun <init> ()V
+	public final fun observabilityMetricsBinder (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;)Lio/github/aeshen/observability/spring/ObservabilityMetricsBinder;
+}
+
+public final class io/github/aeshen/observability/spring/ObservabilityHealthIndicator : org/springframework/boot/actuate/health/HealthIndicator {
+	public fun <init> (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;)V
+	public fun health ()Lorg/springframework/boot/actuate/health/Health;
+}
+
+public final class io/github/aeshen/observability/spring/ObservabilityMetricsBinder : io/micrometer/core/instrument/binder/MeterBinder {
+	public fun <init> (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;)V
+	public fun bindTo (Lio/micrometer/core/instrument/MeterRegistry;)V
+}
+
+public final class io/github/aeshen/observability/spring/ObservabilityProperties {
+	public fun <init> ()V
+	public final fun getAsync ()Lio/github/aeshen/observability/spring/AsyncProperties;
+	public final fun getEncryption ()Lio/github/aeshen/observability/spring/EncryptionProperties;
+	public final fun getFailOnSinkError ()Z
+	public final fun getProfile ()Lio/github/aeshen/observability/ObservabilityFactory$Profile;
+	public final fun getSinks ()Ljava/util/List;
+	public final fun setAsync (Lio/github/aeshen/observability/spring/AsyncProperties;)V
+	public final fun setEncryption (Lio/github/aeshen/observability/spring/EncryptionProperties;)V
+	public final fun setFailOnSinkError (Z)V
+	public final fun setProfile (Lio/github/aeshen/observability/ObservabilityFactory$Profile;)V
+	public final fun setSinks (Ljava/util/List;)V
+}
+
+public final class io/github/aeshen/observability/spring/SinkProperties {
+	public fun <init> ()V
+	public final fun getAdditionalProperties ()Ljava/util/Map;
+	public final fun getBootstrapServers ()Ljava/lang/String;
+	public final fun getBucket ()Ljava/lang/String;
+	public final fun getClientId ()Ljava/lang/String;
+	public final fun getEndpoint ()Ljava/lang/String;
+	public final fun getExporterTimeoutMillis ()Ljava/lang/Long;
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getInstrumentationScopeName ()Ljava/lang/String;
+	public final fun getKeyPrefix ()Ljava/lang/String;
+	public final fun getLogger ()Ljava/lang/String;
+	public final fun getMaxExportBatchSize ()Ljava/lang/Integer;
+	public final fun getMaxQueueSize ()Ljava/lang/Integer;
+	public final fun getMaxlen ()Ljava/lang/Long;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getRegion ()Ljava/lang/String;
+	public final fun getScheduleDelayMillis ()Ljava/lang/Long;
+	public final fun getSecret ()Ljava/lang/String;
+	public final fun getServiceName ()Ljava/lang/String;
+	public final fun getServiceVersion ()Ljava/lang/String;
+	public final fun getSignatureHeader ()Ljava/lang/String;
+	public final fun getStreamKey ()Ljava/lang/String;
+	public final fun getTimeoutMillis ()Ljava/lang/Long;
+	public final fun getTopic ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public final fun getUri ()Ljava/lang/String;
+	public final fun setAdditionalProperties (Ljava/util/Map;)V
+	public final fun setBootstrapServers (Ljava/lang/String;)V
+	public final fun setBucket (Ljava/lang/String;)V
+	public final fun setClientId (Ljava/lang/String;)V
+	public final fun setEndpoint (Ljava/lang/String;)V
+	public final fun setExporterTimeoutMillis (Ljava/lang/Long;)V
+	public final fun setHeaders (Ljava/util/Map;)V
+	public final fun setInstrumentationScopeName (Ljava/lang/String;)V
+	public final fun setKeyPrefix (Ljava/lang/String;)V
+	public final fun setLogger (Ljava/lang/String;)V
+	public final fun setMaxExportBatchSize (Ljava/lang/Integer;)V
+	public final fun setMaxQueueSize (Ljava/lang/Integer;)V
+	public final fun setMaxlen (Ljava/lang/Long;)V
+	public final fun setMethod (Ljava/lang/String;)V
+	public final fun setPath (Ljava/lang/String;)V
+	public final fun setRegion (Ljava/lang/String;)V
+	public final fun setScheduleDelayMillis (Ljava/lang/Long;)V
+	public final fun setSecret (Ljava/lang/String;)V
+	public final fun setServiceName (Ljava/lang/String;)V
+	public final fun setServiceVersion (Ljava/lang/String;)V
+	public final fun setSignatureHeader (Ljava/lang/String;)V
+	public final fun setStreamKey (Ljava/lang/String;)V
+	public final fun setTimeoutMillis (Ljava/lang/Long;)V
+	public final fun setTopic (Ljava/lang/String;)V
+	public final fun setType (Ljava/lang/String;)V
+	public final fun setUri (Ljava/lang/String;)V
+	public final fun toSinkConfig ()Lio/github/aeshen/observability/config/sink/SinkConfig;
+}
+
