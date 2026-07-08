@@ -161,12 +161,19 @@ class EncryptionProperties {
     }
 
     private fun hexToBytes(hex: String): ByteArray {
+        require(hex.length % 2 == 0) {
+            "AES hex key must contain an even number of characters"
+        }
+
         val len = hex.length
         val data = ByteArray(len / 2)
         var i = 0
         while (i < len) {
             val h1 = Character.digit(hex[i], 16)
             val h2 = Character.digit(hex[i + 1], 16)
+            require(h1 >= 0 && h2 >= 0) {
+                "AES hex key contains an invalid hexadecimal character at index $i"
+            }
             data[i / 2] = ((h1 shl 4) or h2).toByte()
             i += 2
         }

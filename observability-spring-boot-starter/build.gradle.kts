@@ -1,8 +1,10 @@
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 plugins {
     kotlin("jvm") version "2.3.20"
+    kotlin("kapt")
     `java-library`
     `maven-publish`
 }
@@ -14,6 +16,16 @@ repositories {
     mavenCentral()
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
 dependencies {
     api(project(":"))
 
@@ -21,7 +33,7 @@ dependencies {
     compileOnly("org.springframework.boot:spring-boot-actuator:3.4.0")
     compileOnly("io.micrometer:micrometer-core:1.14.0")
 
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:3.4.0")
+    kapt("org.springframework.boot:spring-boot-configuration-processor:3.4.0")
 
     testImplementation(kotlin("test"))
     testImplementation("org.springframework.boot:spring-boot-starter-test:3.4.0")

@@ -71,20 +71,7 @@ class ObservabilityAutoConfiguration {
 
         val defaultRegistry = SinkRegistry.default()
         builder.registerProvider { config ->
-            val sink =
-                try {
-                    defaultRegistry.resolve(config)
-                } catch (
-                    @Suppress(
-                        "TooGenericExceptionCaught",
-                        "SwallowedException",
-                        "detekt.TooGenericExceptionCaught",
-                        "detekt.SwallowedException",
-                    ) e: Exception,
-                ) {
-                    null
-                }
-            sink?.let { wrapIfAsync(it) }
+            wrapIfAsync(defaultRegistry.resolve(config))
         }
 
         return builder.build()
