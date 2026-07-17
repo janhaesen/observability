@@ -32,6 +32,11 @@ class InMemoryOperationalDiagnosticsTest {
             attempts = 3,
             lastError = IllegalStateException("retry"),
         )
+        diagnostics.onDlqWrite(
+            sampleEvent(),
+            dlq = NoopSink,
+            originalError = IllegalStateException("delegate"),
+        )
 
         val snapshot = diagnostics.metricsSnapshot()
 
@@ -39,6 +44,7 @@ class InMemoryOperationalDiagnosticsTest {
         assertEquals(1, snapshot.sinkCloseErrors)
         assertEquals(1, snapshot.asyncDrops)
         assertEquals(1, snapshot.retryExhaustions)
+        assertEquals(1, snapshot.dlqWrites)
         assertEquals(1, snapshot.batchFlushSuccesses)
         assertEquals(1, snapshot.batchFlushFailures)
         assertEquals(2, snapshot.batchFlushTotalCount)
@@ -54,7 +60,7 @@ class InMemoryOperationalDiagnosticsTest {
     fun `collector health is degraded when reliability signals are present`() {
         val diagnostics = InMemoryOperationalDiagnostics()
 
-        diagnostics.onRetryExhaustion(sampleEvent(), attempts = 2, lastError = IllegalStateException("retry"))
+        diagnostics.onDlqWrite(sampleEvent(), dlq = NoopSink, originalError = IllegalStateException("delegate"))
 
         val health = diagnostics.healthSnapshot()
 
