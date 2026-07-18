@@ -204,7 +204,13 @@ class SidecarServer(
     }
 
     private fun parseEvent(input: JsonObject): io.github.aeshen.observability.ObservabilityEvent {
-        input.requireOnly("name", "level", "timestamp", "message", "context", "payloadBase64", "error")
+        input.requireOnly("clientEventId", "name", "level", "timestamp", "message", "context", "payloadBase64", "error")
+        val clientEventId =
+            try {
+                UUID.fromString(input.requiredString("clientEventId"))
+            } catch (_: IllegalArgumentException) {
+                throw RequestValidationException("clientEventId must be a UUID.")
+            }
         val name = input.requiredString("name")
         val level = parseLevel(input.requiredString("level"))
         val timestamp = parseTimestamp(input.requiredString("timestamp"))
@@ -214,7 +220,7 @@ class SidecarServer(
         return event(SubmittedEventName(name)) {
             level(level)
             timestamp(timestamp)
-            context(context.toObservabilityContext())
+            context(context.toObservabilityContext(clientEventId))
             input["message"]?.jsonPrimitive?.contentOrNull?.let(::message)
             payload?.let(::payload)
             remoteError?.let(::error)
@@ -266,8 +272,9 @@ private class RequestValidationException(
 
 private class RequestTooLargeException : RuntimeException()
 
-private fun JsonObject.toObservabilityContext(): ObservabilityContext {
+private fun JsonObject.toObservabilityContext(clientEventId: UUID): ObservabilityContext {
     val builder = ObservabilityContext.builder()
+    builder.put(DynamicContextKey("client_event_id"), clientEventId.toString())
     forEach { (key, value) ->
         val primitive =
             value as? JsonPrimitive ?: throw RequestValidationException(

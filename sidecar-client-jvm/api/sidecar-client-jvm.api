@@ -1,0 +1,62 @@
+public final class io/github/aeshen/observability/sidecar/client/EventSubmission {
+	public static final field Companion Lio/github/aeshen/observability/sidecar/client/EventSubmission$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/Map;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;)Lio/github/aeshen/observability/sidecar/client/EventSubmission;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/sidecar/client/EventSubmission;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/aeshen/observability/sidecar/client/EventSubmission;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientEventId ()Ljava/lang/String;
+	public final fun getContext ()Ljava/util/Map;
+	public final fun getLevel ()Ljava/lang/String;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPayloadBase64 ()Ljava/lang/String;
+	public final fun getTimestamp ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class io/github/aeshen/observability/sidecar/client/EventSubmission$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lio/github/aeshen/observability/sidecar/client/EventSubmission$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/aeshen/observability/sidecar/client/EventSubmission;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/aeshen/observability/sidecar/client/EventSubmission;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/aeshen/observability/sidecar/client/EventSubmission$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/aeshen/observability/sidecar/client/FileOutbox : java/lang/AutoCloseable {
+	public fun <init> (Lio/github/aeshen/observability/sidecar/client/SidecarClient;Ljava/nio/file/Path;IJ)V
+	public synthetic fun <init> (Lio/github/aeshen/observability/sidecar/client/SidecarClient;Ljava/nio/file/Path;IJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun enqueue (Lio/github/aeshen/observability/sidecar/client/EventSubmission;)V
+	public final fun flush ()V
+}
+
+public final class io/github/aeshen/observability/sidecar/client/OutboxCapacityException : java/lang/IllegalStateException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class io/github/aeshen/observability/sidecar/client/SidecarClient {
+	public fun <init> (Ljava/net/URI;Lio/github/aeshen/observability/sidecar/client/TokenProvider;Ljava/net/http/HttpClient;)V
+	public synthetic fun <init> (Ljava/net/URI;Lio/github/aeshen/observability/sidecar/client/TokenProvider;Ljava/net/http/HttpClient;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun submit (Lio/github/aeshen/observability/sidecar/client/EventSubmission;)V
+}
+
+public abstract interface class io/github/aeshen/observability/sidecar/client/TokenProvider {
+	public abstract fun token ()Ljava/lang/String;
+}
+

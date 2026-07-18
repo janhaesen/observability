@@ -12,6 +12,8 @@
             <option value="$PROJECT_DIR$/examples" />
             <option value="$PROJECT_DIR$/examples/third-party-sink-example" />
             <option value="$PROJECT_DIR$/query-spi" />
+            <option value="$PROJECT_DIR$/sidecar" />
+            <option value="$PROJECT_DIR$/sidecar-client-jvm" />
           </set>
         </option>
       </GradleProjectSettings>

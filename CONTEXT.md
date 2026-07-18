@@ -69,6 +69,10 @@ _Avoid_: Recovery resend, best-effort resend
 A journaled event whose delegated delivery completed, allowing the persistent buffer to advance retention and cleanup.
 _Avoid_: Flushed event, processed event
 
+**Client event ID**:
+A stable UUID assigned before API submission and preserved through sidecar processing so downstream consumers can deduplicate at-least-once delivery.
+_Avoid_: Envelope ID, transport ID, request ID
+
 **Dead-letter routing**:
 Delivery behavior where a decorator writes an event to a designated **DLQ sink** after delegated delivery fails with an eligible exception.
 _Avoid_: Failure routing, fallback mirroring, durable delivery
