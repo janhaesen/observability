@@ -119,11 +119,12 @@ public final class io/github/aeshen/observability/ObservabilityFactory {
 
 public final class io/github/aeshen/observability/ObservabilityFactory$Config {
 	public static final field Companion Lio/github/aeshen/observability/ObservabilityFactory$Config$Companion;
-	public fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/nio/file/Path;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/nio/file/Path;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun aesGcmFromRawKeyBytes ([B)Lio/github/aeshen/observability/config/encryption/AesGcm;
 	public final fun component1 ()Ljava/util/List;
-	public final fun component10 ()Ljava/util/List;
+	public final fun component10 ()Ljava/nio/file/Path;
+	public final fun component11 ()Ljava/util/List;
 	public final fun component2 ()Lio/github/aeshen/observability/config/encryption/EncryptionConfig;
 	public final fun component3 ()Z
 	public final fun component4 ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
@@ -132,8 +133,8 @@ public final class io/github/aeshen/observability/ObservabilityFactory$Config {
 	public final fun component7 ()Ljava/util/List;
 	public final fun component8 ()Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;
 	public final fun component9 ()Lio/github/aeshen/observability/ObservabilityFactory$Profile;
-	public final fun copy (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
-	public static synthetic fun copy$default (Lio/github/aeshen/observability/ObservabilityFactory$Config;Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;ILjava/lang/Object;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
+	public final fun copy (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/nio/file/Path;Ljava/util/List;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/ObservabilityFactory$Config;Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/nio/file/Path;Ljava/util/List;ILjava/lang/Object;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCodec ()Lio/github/aeshen/observability/codec/ObservabilityCodec;
 	public final fun getContextProviders ()Ljava/util/List;
@@ -141,6 +142,7 @@ public final class io/github/aeshen/observability/ObservabilityFactory$Config {
 	public final fun getEncryption ()Lio/github/aeshen/observability/config/encryption/EncryptionConfig;
 	public final fun getFailOnSinkError ()Z
 	public final fun getMetadataEnrichers ()Ljava/util/List;
+	public final fun getPersistentBufferDirectory ()Ljava/nio/file/Path;
 	public final fun getProcessors ()Ljava/util/List;
 	public final fun getProfile ()Lio/github/aeshen/observability/ObservabilityFactory$Profile;
 	public final fun getSinkRegistry ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
@@ -158,6 +160,7 @@ public final class io/github/aeshen/observability/ObservabilityFactory$Config$Bu
 	public final fun encryption (Lio/github/aeshen/observability/config/encryption/EncryptionConfig;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
 	public final fun failOnSinkError (Z)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
 	public final fun metadataEnrichers (Ljava/util/List;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
+	public final fun persistentBufferDirectory (Ljava/nio/file/Path;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
 	public final fun processors (Ljava/util/List;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
 	public final fun profile (Lio/github/aeshen/observability/ObservabilityFactory$Profile;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
 	public final fun sinkRegistry (Lio/github/aeshen/observability/sink/registry/SinkRegistry;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
