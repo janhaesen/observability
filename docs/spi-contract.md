@@ -68,6 +68,7 @@ ObservabilityFactory.create(
 - `onAsyncWorkerError`: async worker thread exceptions
 - `onBatchFlush`: batch delivery outcomes (size, elapsed, success/error)
 - `onRetryExhaustion`: retry limit exceeded with last error
+- `onDlqWrite`: event routed to the configured dead-letter sink
 
 Implement for monitoring, alerting, or metrics collection without side effects.
 

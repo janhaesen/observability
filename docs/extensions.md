@@ -150,6 +150,7 @@ Processors are applied in the order provided. When encryption is enabled, custom
 - `PersistentObservabilitySink` journals events to disk before delegated delivery and replays unacknowledged events after restart.
 - `BatchCapableObservabilitySink` allows optimized batch delivery.
 - `RetryingObservabilitySink` retries transient failures using `BackoffStrategy`.
+- `DlqObservabilitySink` routes eligible delegated-delivery failures to a fallback dead-letter sink.
 
 `PersistentObservabilitySink` assumes its wrapped delegate is the acknowledgement boundary. It composes well with synchronous sinks and `RetryingObservabilitySink`, but not with `AsyncObservabilitySink` or `BatchingObservabilitySink` inside the persistence boundary because those decorators return before final delivery.
 

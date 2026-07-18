@@ -55,6 +55,7 @@ This library may be more than you need if:
   - [BatchingObservabilitySink](#batchingobservabilitysink)
   - [PersistentObservabilitySink](#persistentobservabilitysink)
   - [RetryingObservabilitySink](#retryingobservabilitysink)
+  - [DlqObservabilitySink](#dlqobservabilitysink)
 - [Profiles](#profiles)
 - [Configure Encryption](#configure-encryption)
   - [AES-GCM with a fixed key](#aes-gcm-with-a-fixed-key)
@@ -110,13 +111,13 @@ Sinks (fan-out)      (write to Console, File, OpenTelemetry, …)
 - **Multiple sinks with fan-out** — Console, SLF4J, File (JSONL), ZipFile, OpenTelemetry OTLP, Kafka
 - **Optional encryption** — AES-GCM with a fixed key, or per-event data key wrapped with RSA-OAEP-256
 - **Sensitive-field filtering** — ordered allow/mask/remove processors for `context.*`, `metadata.*`, `message`, and `payload`
-- **Reliability decorators** — `AsyncObservabilitySink`, `BatchingObservabilitySink`, `PersistentObservabilitySink`, `RetryingObservabilitySink`
+- **Reliability decorators** — `AsyncObservabilitySink`, `BatchingObservabilitySink`, `PersistentObservabilitySink`, `RetryingObservabilitySink`, `DlqObservabilitySink`
 - **Profiles** — `STANDARD` (best-effort) or `AUDIT_DURABLE` (strict, retried, batched; not crash-safe by itself)
 - **Pluggable codec** — default JSONL, fully replaceable
 - **Sink SPI** — register custom sinks via `SinkConfig` + `SinkRegistry`
 - **Global context injection** — `ContextProvider` merges ambient context into every event
 - **Binary payload support** — attach opaque bytes to any event
-- **Diagnostics hooks** — `ObservabilityDiagnostics` for drops, retries, batch flushes, queue depth, worker health, and sink errors
+- **Diagnostics hooks** — `ObservabilityDiagnostics` for drops, retries, DLQ writes, batch flushes, queue depth, worker health, and sink errors
 - **Built-in operational collector** — `InMemoryOperationalDiagnostics` provides lightweight counters and health snapshots
 - **Binary compatibility tracking** — enforced via `binary-compatibility-validator`
 - **Audit query SPI** — `query-spi` module for backend-agnostic retrieval of audit records
@@ -759,6 +760,33 @@ val fixedRetrySink =
 
 `onRetryExhaustion` on `ObservabilityDiagnostics` is called before the final exception is rethrown.
 
+### DlqObservabilitySink
+
+Routes eligible delegated delivery failures to a fallback dead-letter sink:
+
+```kotlin
+import io.github.aeshen.observability.sink.decorator.DlqObservabilitySink
+import io.github.aeshen.observability.sink.decorator.RetryingObservabilitySink
+
+val sink =
+    DlqObservabilitySink(
+        delegate =
+            RetryingObservabilitySink(
+                delegate = myPrimarySink,
+                maxAttempts = 5,
+                diagnostics = myDiagnostics,
+            ),
+        dlq = myDlqSink,
+        diagnostics = myDiagnostics,
+    )
+```
+
+- `DlqObservabilitySink` catches the same handled sink failure types as the pipeline (`IllegalArgumentException` and `IllegalStateException`).
+- Successful dead-letter routing returns normally; the event has been handed to the configured DLQ sink instead of being dropped.
+- `onDlqWrite` on `ObservabilityDiagnostics` is called after the fallback sink accepts the event.
+- If the DLQ sink itself fails, the secondary failure is surfaced and the original delegated-delivery failure is attached as a suppressed exception.
+- A DLQ sink improves recoverability, but it is only **durable delivery** if the configured fallback sink persists events durably.
+
 ---
 
 ## Delivery semantics
@@ -1072,6 +1100,10 @@ val diagnostics =
         override fun onRetryExhaustion(event: EncodedEvent, attempts: Int, lastError: Exception) {
             logger.error("Retry exhausted after $attempts attempts: ${lastError.message}")
         }
+
+        override fun onDlqWrite(event: EncodedEvent, dlq: ObservabilitySink, originalError: Exception) {
+            metrics.increment("observability.dlq_write", "sink" to (dlq::class.simpleName ?: "unknown"))
+        }
     }
 
 val observability =
@@ -1093,6 +1125,7 @@ val observability =
 | `onAsyncWorkerState`  | Async worker health state changes                         |
 | `onBatchFlush`        | A batch is flushed (success or failure)                   |
 | `onRetryExhaustion`   | Retry limit exceeded; last error is rethrown              |
+| `onDlqWrite`          | An event is written to the configured DLQ sink            |
 
 ---
 

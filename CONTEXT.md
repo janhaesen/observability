@@ -67,9 +67,18 @@ _Avoid_: Recovery resend, best-effort resend
 A journaled event whose delegated delivery completed, allowing the persistent buffer to advance retention and cleanup.
 _Avoid_: Flushed event, processed event
 
+**Dead-letter routing**:
+Delivery behavior where a decorator writes an event to a designated **DLQ sink** after delegated delivery fails with an eligible exception.
+_Avoid_: Failure routing, fallback mirroring, durable delivery
+
+**DLQ sink**:
+The fallback sink that receives events from **dead-letter routing** so they can be inspected, replayed, or recovered later.
+_Avoid_: Retry sink, durable buffer, primary sink
+
 ## Flagged ambiguities
 
 - `AUDIT_DURABLE` is a public profile name, but it is not **durable delivery** in the glossary sense because it does not enable persistent buffering. Treat it as an audit-oriented profile that makes delivery stricter with retry and batching while keeping the canonical meaning of **durable delivery** reserved for restart-surviving persistence.
+- A **DLQ sink** is a fallback destination used after delegated delivery fails. It is not automatically **durable delivery**; it is only restart-safe if the configured DLQ sink itself persists events durably.
 
 ### Example dialogue
 
@@ -84,6 +93,10 @@ _Avoid_: Flushed event, processed event
 > **Developer:** And once the delegate sink accepts one of those events?
 >
 > **Domain expert:** It becomes an **acknowledged event**, so the buffer can clean it up.
+>
+> **Developer:** If retries are exhausted but a fallback file sink stores the event, what happened?
+>
+> **Domain expert:** That's **dead-letter routing** to a **DLQ sink**. It improved recoverability, but it did not turn the primary path into **durable delivery**.
 
 ## Where to look next
 
