@@ -61,6 +61,19 @@ jobs:
       - name: Build artifacts
         run: ./gradlew :jar :query-spi:jar --no-daemon
 
+      - name: Log in to GitHub Container Registry
+        run: echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+
+      - name: Build and publish sidecar image
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/observability-sidecar"
+          docker build -f sidecar/Dockerfile \
+            -t "${IMAGE}:${RELEASE_TAG}" \
+            -t "${IMAGE}:${GITHUB_SHA}" \
+            .
+          docker push "${IMAGE}:${RELEASE_TAG}"
+          docker push "${IMAGE}:${GITHUB_SHA}"
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
         with:

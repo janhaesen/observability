@@ -16,7 +16,7 @@ The format is based on Keep a Changelog and the project follows Semantic Version
   - New `ObservabilityDiagnostics.onDlqWrite` hook for successful dead-letter writes.
 
 ### Changed
-- Clarified delivery semantics and reliability documentation (issues #13, #14) to distinguish best-effort, strict, and durable delivery, to document `AUDIT_DURABLE` as an in-memory hardening profile rather than crash-safe durability, and to keep safe decorator composition explicit around the persistence boundary.
+- `AUDIT_DURABLE` now requires `persistentBufferDirectory` and journals events before retrying delivery, making the profile restart-safe and at-least-once durable. This changes its operational requirements from in-memory hardening to durable local storage (issue #50).
 - `Webhook.secret` now accepts `null` to disable HMAC signing, and unsigned webhook deliveries omit the signature header entirely (issue #40).
 - Built-in diagnostics snapshots now count DLQ writes as a reliability signal.
 

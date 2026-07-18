@@ -4,6 +4,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
     kotlin("jvm") version "2.3.20"
+    id("org.openapi.generator") version "7.12.0" apply false
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"

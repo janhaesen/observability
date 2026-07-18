@@ -52,7 +52,7 @@ Reliability decorators:
 
 Profiles:
 - `STANDARD`
-- `AUDIT_DURABLE` (retry + batching + strict sink error propagation)
+- `AUDIT_DURABLE` (persistent journal + retry + restart replay; requires `persistentBufferDirectory`)
 
 Encryption configs:
 - `AesGcm`
@@ -78,6 +78,7 @@ From `settings.gradle.kts`:
 - `:` core observability library
 - `:query-spi` optional audit query SPI
 - `:benchmarks` sink/backpressure benchmark harness
+- `:sidecar` runnable OpenAPI-described HTTP ingestion sidecar
 - `:examples:third-party-sink-example` custom sink/provider example + conformance tests
 
 ## Working Guardrails

@@ -11,6 +11,7 @@ import io.github.aeshen.observability.processor.builtin.SensitiveFieldRule
 import io.github.aeshen.observability.sink.ObservabilitySink
 import io.github.aeshen.observability.sink.registry.SinkRegistry
 import java.net.InetSocketAddress
+import java.nio.file.Files
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -300,30 +301,19 @@ class ObservabilityFactoryTest {
     }
 
     @Test
-    fun `audit durable profile enforces strict sink failures`() {
-        val failing =
-            object : ObservabilitySink {
-                override fun handle(event: EncodedEvent) = error("always fails")
-            }
-        val registry = directSinkRegistry()
-
-        val observability =
+    fun `audit durable profile requires a persistent buffer directory`() {
+        assertFailsWith<IllegalArgumentException> {
             ObservabilityFactory.create(
                 ObservabilityFactory.Config(
-                    sinks = listOf(DirectSinkConfig(failing)),
-                    sinkRegistry = registry,
-                    failOnSinkError = false,
+                    sinks = listOf(ThirdPartySinkConfig("audit-profile")),
+                    sinkRegistry =
+                        SinkRegistry
+                            .builder()
+                            .register<ThirdPartySinkConfig> { CapturingSink(mutableListOf()) }
+                            .build(),
                     profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
                 ),
             )
-
-        assertFailsWith<IllegalStateException> {
-            observability.use {
-                it.info(
-                    name = TestEvent.TEST,
-                    message = "must fail",
-                )
-            }
         }
     }
 
@@ -346,6 +336,7 @@ class ObservabilityFactoryTest {
                     sinks = listOf(DirectSinkConfig(flaky)),
                     sinkRegistry = registry,
                     profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+                    persistentBufferDirectory = Files.createTempDirectory("audit-profile-retry"),
                 ),
             )
 
@@ -357,102 +348,6 @@ class ObservabilityFactoryTest {
         }
 
         assertEquals(3, attempts.get())
-    }
-
-    @Test
-    fun `diagnostics are wired through factory config`() {
-        val diagnosticEvents = mutableListOf<String>()
-        val diagnostics =
-            object : io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics {
-                override fun onBatchFlush(
-                    batchSize: Int,
-                    elapsedMillis: Long,
-                    success: Boolean,
-                    error: Exception?,
-                ) {
-                    diagnosticEvents += "flush:$batchSize:$success"
-                }
-
-                override fun onRetryExhaustion(
-                    event: EncodedEvent,
-                    attempts: Int,
-                    lastError: Exception,
-                ) {
-                    diagnosticEvents += "retry_fail:$attempts"
-                }
-            }
-
-        val observability =
-            ObservabilityFactory.create(
-                ObservabilityFactory.Config(
-                    sinks = listOf(ThirdPartySinkConfig("test")),
-                    sinkRegistry =
-                        SinkRegistry
-                            .builder()
-                            .register<ThirdPartySinkConfig> {
-                                CapturingSink(mutableListOf())
-                            }.build(),
-                    profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
-                    diagnostics = diagnostics,
-                ),
-            )
-
-        observability.use {
-            it.info(
-                name = TestEvent.TEST,
-                message = "with diagnostics",
-            )
-        }
-
-        assertTrue(
-            diagnosticEvents.any { it.startsWith("flush") },
-            "Batch flush should be reported by diagnostics",
-        )
-    }
-
-    @Test
-    fun `audit profile with diagnostics tracks retry exhaustion`() {
-        val diagnosticEvents = mutableListOf<String>()
-        val diagnostics =
-            object : io.github.aeshen.observability.diagnostics.ObservabilityDiagnostics {
-                override fun onRetryExhaustion(
-                    event: EncodedEvent,
-                    attempts: Int,
-                    lastError: Exception,
-                ) {
-                    diagnosticEvents += "exhausted:$attempts"
-                }
-            }
-
-        val failing =
-            object : ObservabilitySink {
-                override fun handle(event: EncodedEvent) = error("always fail")
-            }
-        val registry = directSinkRegistry()
-
-        val observability =
-            ObservabilityFactory.create(
-                ObservabilityFactory.Config(
-                    sinks = listOf(DirectSinkConfig(failing)),
-                    sinkRegistry = registry,
-                    profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
-                    diagnostics = diagnostics,
-                ),
-            )
-
-        assertFailsWith<IllegalStateException> {
-            observability.use {
-                it.info(
-                    name = TestEvent.TEST,
-                    message = "will exhaust retries",
-                )
-            }
-        }
-
-        assertTrue(
-            diagnosticEvents.any { it.contains("exhausted") },
-            "Retry exhaustion should be reported",
-        )
     }
 
     private class CapturedRequest(

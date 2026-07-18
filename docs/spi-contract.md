@@ -38,14 +38,15 @@ When `query-spi` evolution has recompilation or migration impact, the release no
 
 ## Audit-Hardening Profile
 
-The `AUDIT_DURABLE` profile enforces strict reliability semantics:
+The `AUDIT_DURABLE` profile enforces durable audit delivery:
 
 - Automatically wraps sinks with `RetryingObservabilitySink` (5 attempts, exponential backoff)
-- Applies `BatchingObservabilitySink` for efficient delivery (100-event batches, 250ms flush)
-- Enables `failOnSinkError = true` to surface failures
+- Wraps the retrying delegate with `PersistentObservabilitySink`
+- Requires `persistentBufferDirectory`; an event is accepted only after durable journal append
+- Replays unacknowledged events in order after restart
 - All outcomes are reported via `ObservabilityDiagnostics`
 
-`AUDIT_DURABLE` is not crash-safe persistence. If events must survive process restarts, wrap the runtime sink with `PersistentObservabilitySink` explicitly.
+Do not place asynchronous or batching decorators inside the persistent boundary because they would acknowledge before delegated delivery completes.
 
 Use when strict audit compliance is required:
 
@@ -53,6 +54,7 @@ Use when strict audit compliance is required:
 ObservabilityFactory.create(
     config.copy(
         profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+        persistentBufferDirectory = Path.of("./.observability-audit-buffer"),
         diagnostics = myDiagnostics
     )
 )

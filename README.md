@@ -112,7 +112,7 @@ Sinks (fan-out)      (write to Console, File, OpenTelemetry, …)
 - **Optional encryption** — AES-GCM with a fixed key, or per-event data key wrapped with RSA-OAEP-256
 - **Sensitive-field filtering** — ordered allow/mask/remove processors for `context.*`, `metadata.*`, `message`, and `payload`
 - **Reliability decorators** — `AsyncObservabilitySink`, `BatchingObservabilitySink`, `PersistentObservabilitySink`, `RetryingObservabilitySink`, `DlqObservabilitySink`
-- **Profiles** — `STANDARD` (best-effort) or `AUDIT_DURABLE` (strict, retried, batched; not crash-safe by itself)
+- **Profiles** — `STANDARD` (best-effort) or `AUDIT_DURABLE` (persistent, retried, restart-safe audit delivery)
 - **Pluggable codec** — default JSONL, fully replaceable
 - **Sink SPI** — register custom sinks via `SinkConfig` + `SinkRegistry`
 - **Global context injection** — `ContextProvider` merges ambient context into every event
@@ -727,7 +727,7 @@ Composition guidance:
 - Wrap **synchronous** sinks or synchronous decorators inside `PersistentObservabilitySink`.
 - `RetryingObservabilitySink` composes well inside the persistence boundary.
 - Do **not** wrap `BatchingObservabilitySink` or `AsyncObservabilitySink` inside `PersistentObservabilitySink`; they acknowledge before the underlying sink has actually delivered.
-- `AUDIT_DURABLE` does not enable persistent buffering. Use `PersistentObservabilitySink` explicitly when restart survival is required.
+- `AUDIT_DURABLE` requires `persistentBufferDirectory` and journals events before delivery.
 
 ### RetryingObservabilitySink
 
@@ -811,7 +811,7 @@ Best-effort delivery. `IllegalArgumentException` and `IllegalStateException` fro
 
 ### AUDIT_DURABLE
 
-Automatically wraps all sinks with retry (5 attempts, exponential backoff), batching (100-event batches, 250 ms flush), and enforces `failOnSinkError = true`. Use for audit compliance scenarios when you want a stricter in-memory delivery profile:
+Automatically wraps all sinks with a persistent journal and retry (5 attempts, exponential backoff). The journal append is the acceptance boundary: events replay in order after restart until the wrapped sink acknowledges them.
 
 ```kotlin
 val observability =
@@ -819,12 +819,13 @@ val observability =
         ObservabilityFactory.Config(
             sinks = listOf(File(Path.of("./logs/audit.jsonl"))),
             profile = ObservabilityFactory.Profile.AUDIT_DURABLE,
+            persistentBufferDirectory = Path.of("./.observability-audit-buffer"),
             diagnostics = myDiagnostics,
         ),
     )
 ```
 
-`AUDIT_DURABLE` is a compatibility profile name, not the canonical definition of **durable delivery**. It improves in-memory reliability but is **not** crash-safe. Add `PersistentObservabilitySink` explicitly if events must survive restarts.
+`AUDIT_DURABLE` is durable delivery. It requires writable local persistent storage and provides at-least-once delivery; a successful emit means the event is journaled, not that an external sink has completed delivery.
 
 ---
 
