@@ -37,6 +37,7 @@ This library may be more than you need if:
 - [Architecture](#architecture)
 - [Features](#features)
 - [Install](#install)
+- [Spring Boot Starter](#spring-boot-starter)
 - [Quick Start](#quick-start)
 - [Defining Event Names](#defining-event-names)
 - [Emitting Events](#emitting-events)
@@ -162,6 +163,88 @@ Optional runtime integrations:
 | Console, file, zip, webhook, and HTTP sinks | none |
 
 `opentelemetry-*`, `slf4j-api`, coroutines, Kafka, S3, and Lettuce are kept optional at the library boundary. If you configure an integration without the required runtime JARs on the classpath, the factory fails fast with guidance to add them.
+
+
+---
+
+## Spring Boot Starter
+
+Provides a zero-boilerplate setup for Spring Boot applications using `observability-spring-boot-starter`.
+
+### Dependency
+
+```kotlin
+dependencies {
+    implementation("io.github.aeshen:observability-spring-boot-starter:1.2.0")
+}
+```
+
+### Configuration
+
+Configure the observability pipeline directly in `application.yml` or `application.properties`:
+
+```yaml
+observability:
+  sinks:
+    - type: console
+    - type: slf4j
+      logger: com.example.MyApplication
+    - type: kafka
+      bootstrap-servers: broker:9092
+      topic: app-events
+    - type: s3
+      bucket: my-logs
+      region: eu-west-1
+  fail-on-sink-error: false
+  profile: standard  # or audit_durable
+  async:
+    enabled: true
+    capacity: 2048
+```
+
+### Actuator Integration
+
+When Spring Boot Actuator is on the classpath, the starter exposes an `ObservabilityHealthIndicator` reporting worker state, queue depth, and drop counts:
+
+```json
+{
+  "status": "UP",
+  "details": {
+    "status": "READY",
+    "asyncWorkerHealthy": true,
+    "asyncWorkerMessage": "OK",
+    "asyncQueueDepth": 0,
+    "asyncQueueCapacity": 2048,
+    "asyncQueueDepthMax": 12,
+    "sinkHandleErrors": 0,
+    "sinkCloseErrors": 0,
+    "asyncDrops": 0,
+    "retryExhaustions": 0
+  }
+}
+```
+
+### Micrometer Metrics
+
+When Micrometer is on the classpath, the starter automatically registers metrics gauges and function counters:
+- `observability.sink.errors.handle` (counter)
+- `observability.sink.errors.close` (counter)
+- `observability.async.drops` (counter)
+- `observability.async.worker.errors` (counter)
+- `observability.retry.exhaustions` (counter)
+- `observability.batch.flush.successes` (counter)
+- `observability.batch.flush.failures` (counter)
+- `observability.batch.flushed.events` (counter)
+- `observability.async.queue.depth` (gauge)
+- `observability.async.queue.capacity` (gauge)
+
+### Autowired Beans
+
+The starter automatically configures:
+- `Observability` — Primary bean, `@ConditionalOnMissingBean`
+- `SinkRegistry` — Can be extended by registering custom `SinkProvider` beans
+- `ObservabilityDiagnostics` — `InMemoryOperationalDiagnostics` by default, `@ConditionalOnMissingBean`
+- Custom `ContextProvider`, `MetadataEnricher`, and `ObservabilityProcessor` beans in the ApplicationContext are automatically discovered and registered.
 
 ---
 
