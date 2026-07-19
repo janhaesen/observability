@@ -1,0 +1,155 @@
+openapi: 3.0.3
+info:
+  title: Observability Sidecar API
+  version: 1.0.0
+  description: Versioned ingress API for submitting structured observability events to a local sidecar.
+servers:
+  - url: http://127.0.0.1:8080
+security:
+  - bearerAuth: []
+paths:
+  /v1/events:
+    post:
+      operationId: submitEvent
+      summary: Submit one event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventSubmission'
+      responses:
+        '202':
+          description: Event accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionReceipt'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '413':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+  /v1/events:batch:
+    post:
+      operationId: submitEvents
+      summary: Submit an atomic batch of events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventBatchSubmission'
+      responses:
+        '202':
+          description: All events accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionReceipt'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '413':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+  responses:
+    Problem:
+      description: Request could not be processed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    EventSubmission:
+      type: object
+      additionalProperties: false
+      required: [clientEventId, name, level, timestamp, context]
+      properties:
+        clientEventId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+        level:
+          type: string
+          enum: [TRACE, DEBUG, INFO, WARN, ERROR]
+        timestamp:
+          type: string
+          format: date-time
+        message:
+          type: string
+          nullable: true
+        context:
+          type: object
+          additionalProperties:
+            nullable: true
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+        payloadBase64:
+          type: string
+          format: byte
+        error:
+          $ref: '#/components/schemas/RemoteError'
+    EventBatchSubmission:
+      type: object
+      additionalProperties: false
+      required: [events]
+      properties:
+        events:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/EventSubmission'
+    RemoteError:
+      type: object
+      additionalProperties: false
+      required: [type, stacktrace]
+      properties:
+        type:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          nullable: true
+        stacktrace:
+          type: string
+          minLength: 1
+    SubmissionReceipt:
+      type: object
+      required: [submissionId, acceptedCount]
+      properties:
+        submissionId:
+          type: string
+          format: uuid
+        acceptedCount:
+          type: integer
+          minimum: 1
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string

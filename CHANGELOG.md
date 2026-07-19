@@ -11,10 +11,14 @@ The format is based on Keep a Changelog and the project follows Semantic Version
   - New `PersistentObservabilitySink` decorator that journals encoded events to disk before delegated delivery and replays unacknowledged events after restart.
   - Deterministic in-order replay with bounded retention via `maxPendingEvents` and `maxJournalBytes`.
   - Strict corruption handling: truncated journal tails are discarded on recovery, while other journal corruption fails fast.
+- **Dead-letter routing decorator** (issue #31):
+  - New `DlqObservabilitySink` decorator that routes eligible delegated-delivery failures to a fallback DLQ sink after retries or other synchronous handling are exhausted.
+  - New `ObservabilityDiagnostics.onDlqWrite` hook for successful dead-letter writes.
 
 ### Changed
-- Clarified delivery semantics and reliability documentation (issues #13, #14) to distinguish best-effort, strict, and durable delivery, to document `AUDIT_DURABLE` as an in-memory hardening profile rather than crash-safe durability, and to keep safe decorator composition explicit around the persistence boundary.
+- `AUDIT_DURABLE` now requires `persistentBufferDirectory` and journals events before retrying delivery, making the profile restart-safe and at-least-once durable. This changes its operational requirements from in-memory hardening to durable local storage (issue #50).
 - `Webhook.secret` now accepts `null` to disable HMAC signing, and unsigned webhook deliveries omit the signature header entirely (issue #40).
+- Built-in diagnostics snapshots now count DLQ writes as a reliability signal.
 
 ### Breaking changes
 - **Removed deprecated direct-sink factory overload** (issue #30):

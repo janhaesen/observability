@@ -23,6 +23,7 @@ Keep changes aligned with that ordering unless you are intentionally changing th
 | --- | --- |
 | `src/main/kotlin/io/github/aeshen/observability/` | core public API, pipeline, sinks, processors, diagnostics |
 | `query-spi/` | optional backend-agnostic audit query SPI |
+| `sidecar/` | runnable OpenAPI-described HTTP ingestion sidecar |
 | `benchmarks/` | comparative performance and backpressure harness |
 | `examples/third-party-sink-example/` | reference external sink/provider module with conformance tests |
 | `docs/` | architecture notes, extension contracts, release docs, schemas, ADRs |
@@ -34,6 +35,7 @@ Keep changes aligned with that ordering unless you are intentionally changing th
 - Treat this as a structured event framework, not a thin logging wrapper.
 - Preserve `Closeable` lifecycle semantics for `Observability` and sinks.
 - Keep optional integrations optional at runtime boundaries.
+- The sidecar's OpenAPI contract lives at `sidecar/src/main/openapi/sidecar-v1.yaml`; generated Kotlin models are build outputs.
 - Treat stable SPI surfaces carefully; see [`docs/spi-contract.md`](./docs/spi-contract.md).
 - Validate reliability-sensitive changes against `AUDIT_DURABLE`.
 
@@ -67,15 +69,28 @@ _Avoid_: Recovery resend, best-effort resend
 A journaled event whose delegated delivery completed, allowing the persistent buffer to advance retention and cleanup.
 _Avoid_: Flushed event, processed event
 
+**Client event ID**:
+A stable UUID assigned before API submission and preserved through sidecar processing so downstream consumers can deduplicate at-least-once delivery.
+_Avoid_: Envelope ID, transport ID, request ID
+
+**Dead-letter routing**:
+Delivery behavior where a decorator writes an event to a designated **DLQ sink** after delegated delivery fails with an eligible exception.
+_Avoid_: Failure routing, fallback mirroring, durable delivery
+
+**DLQ sink**:
+The fallback sink that receives events from **dead-letter routing** so they can be inspected, replayed, or recovered later.
+_Avoid_: Retry sink, durable buffer, primary sink
+
 ## Flagged ambiguities
 
-- `AUDIT_DURABLE` is a public profile name, but it is not **durable delivery** in the glossary sense because it does not enable persistent buffering. Treat it as an audit-oriented profile that makes delivery stricter with retry and batching while keeping the canonical meaning of **durable delivery** reserved for restart-surviving persistence.
+- `AUDIT_DURABLE` is a restart-safe **durable delivery** profile. It requires a `persistentBufferDirectory`, journals events before accepting them, and replays unacknowledged events after restart.
+- A **DLQ sink** is a fallback destination used after delegated delivery fails. It is not automatically **durable delivery**; it is only restart-safe if the configured DLQ sink itself persists events durably.
 
 ### Example dialogue
 
 > **Developer:** If I set `AUDIT_DURABLE`, do I now have durable delivery?
 >
-> **Domain expert:** No. That profile makes delivery stricter and more resilient in memory, but **durable delivery** still requires a **persistent buffer**.
+> **Domain expert:** Yes. The profile requires a **persistent buffer**, journals before acceptance, and replays unacknowledged events after restart.
 >
 > **Developer:** If the process crashes after buffering but before the sink confirms delivery, what do we call the next startup behavior?
 >
@@ -84,6 +99,10 @@ _Avoid_: Flushed event, processed event
 > **Developer:** And once the delegate sink accepts one of those events?
 >
 > **Domain expert:** It becomes an **acknowledged event**, so the buffer can clean it up.
+>
+> **Developer:** If retries are exhausted but a fallback file sink stores the event, what happened?
+>
+> **Domain expert:** That's **dead-letter routing** to a **DLQ sink**. It improved recoverability, but it did not turn the primary path into **durable delivery**.
 
 ## Where to look next
 

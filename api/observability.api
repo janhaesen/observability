@@ -119,11 +119,12 @@ public final class io/github/aeshen/observability/ObservabilityFactory {
 
 public final class io/github/aeshen/observability/ObservabilityFactory$Config {
 	public static final field Companion Lio/github/aeshen/observability/ObservabilityFactory$Config$Companion;
-	public fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/nio/file/Path;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/nio/file/Path;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun aesGcmFromRawKeyBytes ([B)Lio/github/aeshen/observability/config/encryption/AesGcm;
 	public final fun component1 ()Ljava/util/List;
-	public final fun component10 ()Ljava/util/List;
+	public final fun component10 ()Ljava/nio/file/Path;
+	public final fun component11 ()Ljava/util/List;
 	public final fun component2 ()Lio/github/aeshen/observability/config/encryption/EncryptionConfig;
 	public final fun component3 ()Z
 	public final fun component4 ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
@@ -132,8 +133,8 @@ public final class io/github/aeshen/observability/ObservabilityFactory$Config {
 	public final fun component7 ()Ljava/util/List;
 	public final fun component8 ()Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;
 	public final fun component9 ()Lio/github/aeshen/observability/ObservabilityFactory$Profile;
-	public final fun copy (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
-	public static synthetic fun copy$default (Lio/github/aeshen/observability/ObservabilityFactory$Config;Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/util/List;ILjava/lang/Object;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
+	public final fun copy (Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/nio/file/Path;Ljava/util/List;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/ObservabilityFactory$Config;Ljava/util/List;Lio/github/aeshen/observability/config/encryption/EncryptionConfig;ZLio/github/aeshen/observability/sink/registry/SinkRegistry;Lio/github/aeshen/observability/codec/ObservabilityCodec;Ljava/util/List;Ljava/util/List;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/ObservabilityFactory$Profile;Ljava/nio/file/Path;Ljava/util/List;ILjava/lang/Object;)Lio/github/aeshen/observability/ObservabilityFactory$Config;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCodec ()Lio/github/aeshen/observability/codec/ObservabilityCodec;
 	public final fun getContextProviders ()Ljava/util/List;
@@ -141,6 +142,7 @@ public final class io/github/aeshen/observability/ObservabilityFactory$Config {
 	public final fun getEncryption ()Lio/github/aeshen/observability/config/encryption/EncryptionConfig;
 	public final fun getFailOnSinkError ()Z
 	public final fun getMetadataEnrichers ()Ljava/util/List;
+	public final fun getPersistentBufferDirectory ()Ljava/nio/file/Path;
 	public final fun getProcessors ()Ljava/util/List;
 	public final fun getProfile ()Lio/github/aeshen/observability/ObservabilityFactory$Profile;
 	public final fun getSinkRegistry ()Lio/github/aeshen/observability/sink/registry/SinkRegistry;
@@ -158,6 +160,7 @@ public final class io/github/aeshen/observability/ObservabilityFactory$Config$Bu
 	public final fun encryption (Lio/github/aeshen/observability/config/encryption/EncryptionConfig;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
 	public final fun failOnSinkError (Z)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
 	public final fun metadataEnrichers (Ljava/util/List;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
+	public final fun persistentBufferDirectory (Ljava/nio/file/Path;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
 	public final fun processors (Ljava/util/List;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
 	public final fun profile (Lio/github/aeshen/observability/ObservabilityFactory$Profile;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
 	public final fun sinkRegistry (Lio/github/aeshen/observability/sink/registry/SinkRegistry;)Lio/github/aeshen/observability/ObservabilityFactory$Config$Builder;
@@ -486,6 +489,7 @@ public final class io/github/aeshen/observability/diagnostics/InMemoryOperationa
 	public fun onAsyncWorkerError (Ljava/lang/Exception;)V
 	public fun onAsyncWorkerState (ZLjava/lang/String;)V
 	public fun onBatchFlush (IJZLjava/lang/Exception;)V
+	public fun onDlqWrite (Lio/github/aeshen/observability/codec/EncodedEvent;Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/lang/Exception;)V
 	public fun onRetryExhaustion (Lio/github/aeshen/observability/codec/EncodedEvent;ILjava/lang/Exception;)V
 	public fun onSinkCloseError (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/lang/Exception;)V
 	public fun onSinkHandleError (Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/codec/EncodedEvent;Ljava/lang/Exception;)V
@@ -500,6 +504,7 @@ public abstract interface class io/github/aeshen/observability/diagnostics/Obser
 	public fun onAsyncWorkerState (ZLjava/lang/String;)V
 	public static synthetic fun onAsyncWorkerState$default (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;ZLjava/lang/String;ILjava/lang/Object;)V
 	public fun onBatchFlush (IJZLjava/lang/Exception;)V
+	public fun onDlqWrite (Lio/github/aeshen/observability/codec/EncodedEvent;Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/lang/Exception;)V
 	public fun onRetryExhaustion (Lio/github/aeshen/observability/codec/EncodedEvent;ILjava/lang/Exception;)V
 	public fun onSinkCloseError (Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/lang/Exception;)V
 	public fun onSinkHandleError (Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/codec/EncodedEvent;Ljava/lang/Exception;)V
@@ -515,6 +520,7 @@ public final class io/github/aeshen/observability/diagnostics/ObservabilityDiagn
 	public static fun onAsyncWorkerState (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;ZLjava/lang/String;)V
 	public static synthetic fun onAsyncWorkerState$default (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;ZLjava/lang/String;ILjava/lang/Object;)V
 	public static fun onBatchFlush (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;IJZLjava/lang/Exception;)V
+	public static fun onDlqWrite (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/codec/EncodedEvent;Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/lang/Exception;)V
 	public static fun onRetryExhaustion (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/codec/EncodedEvent;ILjava/lang/Exception;)V
 	public static fun onSinkCloseError (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/sink/ObservabilitySink;Ljava/lang/Exception;)V
 	public static fun onSinkHandleError (Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/codec/EncodedEvent;Ljava/lang/Exception;)V
@@ -538,12 +544,13 @@ public final class io/github/aeshen/observability/diagnostics/OperationalHealthS
 }
 
 public final class io/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot {
-	public fun <init> (JJJJJJJJJJIII)V
+	public fun <init> (JJJJJJJJJJJIII)V
 	public final fun component1 ()J
 	public final fun component10 ()J
-	public final fun component11 ()I
+	public final fun component11 ()J
 	public final fun component12 ()I
 	public final fun component13 ()I
+	public final fun component14 ()I
 	public final fun component2 ()J
 	public final fun component3 ()J
 	public final fun component4 ()J
@@ -552,8 +559,8 @@ public final class io/github/aeshen/observability/diagnostics/OperationalMetrics
 	public final fun component7 ()J
 	public final fun component8 ()J
 	public final fun component9 ()J
-	public final fun copy (JJJJJJJJJJIII)Lio/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot;
-	public static synthetic fun copy$default (Lio/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot;JJJJJJJJJJIIIILjava/lang/Object;)Lio/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot;
+	public final fun copy (JJJJJJJJJJJIII)Lio/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot;
+	public static synthetic fun copy$default (Lio/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot;JJJJJJJJJJJIIIILjava/lang/Object;)Lio/github/aeshen/observability/diagnostics/OperationalMetricsSnapshot;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAsyncDrops ()J
 	public final fun getAsyncQueueCapacity ()I
@@ -566,6 +573,7 @@ public final class io/github/aeshen/observability/diagnostics/OperationalMetrics
 	public final fun getBatchFlushTotalCount ()J
 	public final fun getBatchFlushTotalElapsedMillis ()J
 	public final fun getBatchFlushedEvents ()J
+	public final fun getDlqWrites ()J
 	public final fun getRetryExhaustions ()J
 	public final fun getSinkCloseErrors ()J
 	public final fun getSinkHandleErrors ()J
@@ -800,6 +808,15 @@ public final class io/github/aeshen/observability/sink/decorator/BatchingObserva
 	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;IJ)V
 	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;IJLio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;)V
 	public synthetic fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;IJLio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun handle (Lio/github/aeshen/observability/codec/EncodedEvent;)V
+}
+
+public final class io/github/aeshen/observability/sink/decorator/DlqObservabilitySink : io/github/aeshen/observability/sink/ObservabilitySink {
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/sink/ObservabilitySink;)V
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;)V
+	public fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/sink/ObservabilitySink;Lio/github/aeshen/observability/diagnostics/ObservabilityDiagnostics;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun close ()V
 	public fun handle (Lio/github/aeshen/observability/codec/EncodedEvent;)V
 }

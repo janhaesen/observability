@@ -446,6 +446,151 @@ class RetryingObservabilitySinkTest {
     }
 }
 
+class DlqObservabilitySinkTest {
+    @Test
+    fun `routes eligible delegate failures to dlq and reports diagnostics`() {
+        val dlqEvents = mutableListOf<EncodedEvent>()
+        val routed = mutableListOf<String>()
+        val diagnostics =
+            object : ObservabilityDiagnostics {
+                override fun onDlqWrite(
+                    event: EncodedEvent,
+                    dlq: ObservabilitySink,
+                    originalError: Exception,
+                ) {
+                    routed += "${event.encoded.toString(Charsets.UTF_8)}:${originalError.message}"
+                }
+            }
+
+        val sink =
+            DlqObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) = error("delegate-failed")
+                    },
+                dlq = CapturingSink(dlqEvents),
+                diagnostics = diagnostics,
+            )
+
+        sink.handle(sample("dlq"))
+
+        assertEquals(listOf("dlq"), dlqEvents.map { it.encoded.toString(Charsets.UTF_8) })
+        assertEquals(listOf("dlq:delegate-failed"), routed)
+    }
+
+    @Test
+    fun `rethrows delegate failures rejected by filter`() {
+        val dlqEvents = mutableListOf<EncodedEvent>()
+        val sink =
+            DlqObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) = error("delegate-failed")
+                    },
+                dlq = CapturingSink(dlqEvents),
+                errorFilter = { false },
+            )
+
+        val failure =
+            assertFailsWith<IllegalStateException> {
+                sink.handle(sample("skip"))
+            }
+
+        assertEquals("delegate-failed", failure.message)
+        assertTrue(dlqEvents.isEmpty())
+    }
+
+    @Test
+    fun `surfaces secondary dlq failure without recursion`() {
+        val secondaryErrors = mutableListOf<String>()
+        val diagnostics =
+            object : ObservabilityDiagnostics {
+                override fun onSinkHandleError(
+                    sink: ObservabilitySink,
+                    event: EncodedEvent,
+                    error: Exception,
+                ) {
+                    secondaryErrors += "${sink::class.simpleName}:${error.message}"
+                }
+            }
+
+        val dlq =
+            object : ObservabilitySink {
+                override fun handle(event: EncodedEvent) = error("dlq-failed")
+            }
+
+        val sink =
+            DlqObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) = error("delegate-failed")
+                    },
+                dlq = dlq,
+                diagnostics = diagnostics,
+            )
+
+        val failure =
+            assertFailsWith<IllegalStateException> {
+                sink.handle(sample("secondary"))
+            }
+
+        assertEquals("Dead-letter routing failed after delegated delivery error.", failure.message)
+        assertEquals("dlq-failed", failure.cause?.message)
+        assertEquals(1, secondaryErrors.size)
+        assertTrue(secondaryErrors.single().endsWith(":dlq-failed"))
+        assertEquals(listOf("delegate-failed"), failure.suppressed.mapNotNull { it.message })
+    }
+
+    @Test
+    fun `close closes both sinks and can be called repeatedly`() {
+        val closeCount = AtomicInteger(0)
+        val dlqCloseCount = AtomicInteger(0)
+        val sink =
+            DlqObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) = Unit
+
+                        override fun close() {
+                            closeCount.incrementAndGet()
+                        }
+                    },
+                dlq =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) = Unit
+
+                        override fun close() {
+                            dlqCloseCount.incrementAndGet()
+                        }
+                    },
+            )
+
+        sink.close()
+        sink.close()
+
+        assertEquals(1, closeCount.get())
+        assertEquals(1, dlqCloseCount.get())
+    }
+
+    @Test
+    fun `close rejects further writes deterministically`() {
+        val sink =
+            DlqObservabilitySink(
+                delegate = CapturingSink(mutableListOf()),
+                dlq = CapturingSink(mutableListOf()),
+            )
+
+        sink.close()
+
+        val failure =
+            assertFailsWith<IllegalStateException> {
+                sink.handle(sample("after-close"))
+            }
+
+        assertEquals("DlqObservabilitySink is closed.", failure.message)
+    }
+}
+
 class DiagnosticsIntegrationTest {
     @Test
     fun `diagnostics tracks async drops, batch flushes, and retry outcomes`() {
@@ -480,6 +625,14 @@ class DiagnosticsIntegrationTest {
                 ) {
                     events.getOrPut("retry_exhaustion") { mutableListOf() } += "$attempts:${lastError.message}"
                 }
+
+                override fun onDlqWrite(
+                    event: EncodedEvent,
+                    dlq: ObservabilitySink,
+                    originalError: Exception,
+                ) {
+                    events.getOrPut("dlq_writes") { mutableListOf() } += originalError.message.orEmpty()
+                }
             }
 
         val handled = mutableListOf<EncodedEvent>()
@@ -501,6 +654,36 @@ class DiagnosticsIntegrationTest {
             "Batch flush should be reported as success with size 2",
         )
         sink.close()
+    }
+
+    @Test
+    fun `diagnostics tracks dlq writes`() {
+        val events = mutableMapOf<String, MutableList<String>>()
+        val diagnostics =
+            object : ObservabilityDiagnostics {
+                override fun onDlqWrite(
+                    event: EncodedEvent,
+                    dlq: ObservabilitySink,
+                    originalError: Exception,
+                ) {
+                    events.getOrPut("dlq_writes") { mutableListOf() } +=
+                        "${event.encoded.toString(Charsets.UTF_8)}:${originalError.message}"
+                }
+            }
+
+        val sink =
+            DlqObservabilitySink(
+                delegate =
+                    object : ObservabilitySink {
+                        override fun handle(event: EncodedEvent) = error("primary")
+                    },
+                dlq = CapturingSink(mutableListOf()),
+                diagnostics = diagnostics,
+            )
+
+        sink.handle(sample("dlq-event"))
+
+        assertEquals(listOf("dlq-event:primary"), events["dlq_writes"] ?: emptyList())
     }
 }
 

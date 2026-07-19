@@ -48,6 +48,12 @@ interface ObservabilityDiagnostics {
         lastError: Exception,
     ) {}
 
+    fun onDlqWrite(
+        event: EncodedEvent,
+        dlq: ObservabilitySink,
+        originalError: Exception,
+    ) {}
+
     companion object {
         @JvmField
         val NOOP: ObservabilityDiagnostics = object : ObservabilityDiagnostics {}

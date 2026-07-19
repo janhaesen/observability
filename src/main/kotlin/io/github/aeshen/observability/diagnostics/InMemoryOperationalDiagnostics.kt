@@ -17,6 +17,7 @@ class InMemoryOperationalDiagnostics : ObservabilityDiagnostics {
     private val asyncDrops = AtomicLong(0)
     private val asyncWorkerErrors = AtomicLong(0)
     private val retryExhaustions = AtomicLong(0)
+    private val dlqWrites = AtomicLong(0)
     private val batchFlushSuccesses = AtomicLong(0)
     private val batchFlushFailures = AtomicLong(0)
     private val batchFlushTotalCount = AtomicLong(0)
@@ -101,6 +102,14 @@ class InMemoryOperationalDiagnostics : ObservabilityDiagnostics {
         retryExhaustions.incrementAndGet()
     }
 
+    override fun onDlqWrite(
+        event: EncodedEvent,
+        dlq: ObservabilitySink,
+        originalError: Exception,
+    ) {
+        dlqWrites.incrementAndGet()
+    }
+
     fun metricsSnapshot(): OperationalMetricsSnapshot =
         OperationalMetricsSnapshot(
             sinkHandleErrors = sinkHandleErrors.get(),
@@ -108,6 +117,7 @@ class InMemoryOperationalDiagnostics : ObservabilityDiagnostics {
             asyncDrops = asyncDrops.get(),
             asyncWorkerErrors = asyncWorkerErrors.get(),
             retryExhaustions = retryExhaustions.get(),
+            dlqWrites = dlqWrites.get(),
             batchFlushSuccesses = batchFlushSuccesses.get(),
             batchFlushFailures = batchFlushFailures.get(),
             batchFlushTotalCount = batchFlushTotalCount.get(),
@@ -139,6 +149,7 @@ class InMemoryOperationalDiagnostics : ObservabilityDiagnostics {
             sinkCloseErrors.get() > 0 ||
             asyncDrops.get() > 0 ||
             retryExhaustions.get() > 0 ||
+            dlqWrites.get() > 0 ||
             batchFlushFailures.get() > 0
 }
 
@@ -161,6 +172,7 @@ data class OperationalMetricsSnapshot(
     val asyncDrops: Long,
     val asyncWorkerErrors: Long,
     val retryExhaustions: Long,
+    val dlqWrites: Long,
     val batchFlushSuccesses: Long,
     val batchFlushFailures: Long,
     val batchFlushTotalCount: Long,

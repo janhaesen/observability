@@ -11,10 +11,11 @@ import io.github.aeshen.observability.enricher.MetadataEnricher
 import io.github.aeshen.observability.processor.ObservabilityProcessor
 import io.github.aeshen.observability.processor.encryption.EncryptingObservabilityProcessor
 import io.github.aeshen.observability.sink.ObservabilitySink
-import io.github.aeshen.observability.sink.decorator.BatchingObservabilitySink
+import io.github.aeshen.observability.sink.decorator.PersistentObservabilitySink
 import io.github.aeshen.observability.sink.decorator.RetryingObservabilitySink
 import io.github.aeshen.observability.sink.registry.SinkRegistry
 import io.github.aeshen.observability.util.CryptoUtils
+import java.nio.file.Path
 import javax.crypto.spec.SecretKeySpec
 
 object ObservabilityFactory {
@@ -22,8 +23,6 @@ object ObservabilityFactory {
     private const val BYTE_24 = 24
     private const val BYTE_32 = 32
     private const val AUDIT_MAX_ATTEMPTS = 5
-    private const val AUDIT_MAX_BATCH_SIZE = 100
-    private const val AUDIT_FLUSH_INTERVAL_MILLIS = 250L
 
     enum class Profile {
         STANDARD,
@@ -40,6 +39,7 @@ object ObservabilityFactory {
         val metadataEnrichers: List<MetadataEnricher> = emptyList(),
         val diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP,
         val profile: Profile = Profile.STANDARD,
+        val persistentBufferDirectory: Path? = null,
         val processors: List<ObservabilityProcessor> = emptyList(),
     ) {
         companion object {
@@ -76,6 +76,7 @@ object ObservabilityFactory {
             private var metadataEnrichers: List<MetadataEnricher> = emptyList()
             private var diagnostics: ObservabilityDiagnostics = ObservabilityDiagnostics.NOOP
             private var profile: Profile = Profile.STANDARD
+            private var persistentBufferDirectory: Path? = null
             private var processors: List<ObservabilityProcessor> = emptyList()
 
             fun encryption(value: EncryptionConfig?) = apply { encryption = value }
@@ -94,6 +95,8 @@ object ObservabilityFactory {
 
             fun profile(value: Profile) = apply { profile = value }
 
+            fun persistentBufferDirectory(value: Path?) = apply { persistentBufferDirectory = value }
+
             fun processors(value: List<ObservabilityProcessor>) = apply { processors = value }
 
             fun build(): Config =
@@ -107,6 +110,7 @@ object ObservabilityFactory {
                     metadataEnrichers = metadataEnrichers,
                     diagnostics = diagnostics,
                     profile = profile,
+                    persistentBufferDirectory = persistentBufferDirectory,
                     processors = processors,
                 )
         }
@@ -119,6 +123,7 @@ object ObservabilityFactory {
                 buildSinks(config),
                 config.profile,
                 config.diagnostics,
+                config.persistentBufferDirectory,
             )
 
         require(sinks.isNotEmpty()) { "At least one sink must be configured." }
@@ -179,6 +184,7 @@ object ObservabilityFactory {
         sinks: List<ObservabilitySink>,
         profile: Profile,
         diagnostics: ObservabilityDiagnostics,
+        persistentBufferDirectory: Path?,
     ): List<ObservabilitySink> =
         when (profile) {
             Profile.STANDARD -> {
@@ -186,17 +192,19 @@ object ObservabilityFactory {
             }
 
             Profile.AUDIT_DURABLE -> {
-                sinks.map { sink ->
-                    BatchingObservabilitySink(
+                val directory =
+                    requireNotNull(persistentBufferDirectory) {
+                        "AUDIT_DURABLE requires persistentBufferDirectory."
+                    }
+                sinks.mapIndexed { index, sink ->
+                    PersistentObservabilitySink(
                         delegate =
                             RetryingObservabilitySink(
                                 delegate = sink,
                                 maxAttempts = AUDIT_MAX_ATTEMPTS,
                                 diagnostics = diagnostics,
                             ),
-                        maxBatchSize = AUDIT_MAX_BATCH_SIZE,
-                        flushIntervalMillis = AUDIT_FLUSH_INTERVAL_MILLIS,
-                        diagnostics = diagnostics,
+                        directory = directory.resolve("sink-$index"),
                     )
                 }
             }
