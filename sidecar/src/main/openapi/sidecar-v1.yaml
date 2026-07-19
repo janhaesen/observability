@@ -75,8 +75,11 @@ components:
     EventSubmission:
       type: object
       additionalProperties: false
-      required: [name, level, timestamp, context]
+      required: [clientEventId, name, level, timestamp, context]
       properties:
+        clientEventId:
+          type: string
+          format: uuid
         name:
           type: string
           minLength: 1
